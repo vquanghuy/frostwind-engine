@@ -4,6 +4,10 @@ All notable changes to this experiment are documented in this file.
 
 ## [Unreleased]
 
+### Removed
+
+- Unused automatic screenshot helpers; milestone screenshots are supplied manually by the project owner.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added

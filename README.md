@@ -123,7 +123,6 @@ mini-artillery/
 │   ├── sdl3/                  # Platform SDKs; macOS supplied, Windows/Linux pending
 │   └── glad/                  # Generated native OpenGL loader
 ├── tests/                     # Terrain, gameplay, and protocol verification
-├── tools/                     # Asset preparation and development scripts
 ├── web/                       # Browser HTML shell and web resources
 ├── server/                    # Optional relay for networking experiments
 └── docs/
