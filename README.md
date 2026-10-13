@@ -4,7 +4,7 @@ A C++ experiment exploring **2D destructible terrain**, inspired by **Gunbound**
 
 An artillery-style sandbox provides a setting for testing terrain destruction, projectile impacts, and objects settling on the modified ground. Development starts on native macOS, with WebAssembly as a later portability experiment.
 
-> **Status:** Native OpenGL scaffold implemented. SDL3 3.4.18 and GLAD 2.0.8 create an OpenGL Core context and render a procedural checkerboard quad on macOS. Terrain rendering and destruction remain planned experiments.
+> **Status (0.2.0):** Native OpenGL scaffold implemented. SDL3 3.4.18 and GLAD 2.0.8 create an OpenGL Core context and render a procedural checkerboard quad on macOS. Terrain rendering and destruction remain planned experiments.
 
 See the [changelog](CHANGELOG.md) for development progress and screenshots.
 
@@ -92,7 +92,7 @@ Physics runs at a fixed timestep. Cross-platform consistency, authoritative impa
 
 ## Project structure
 
-The following layout is a guide for organizing the experiments. The root CMake files, `src/main.cpp`, native context and quad-rendering modules, the official SDL3 framework, generated GLAD files, and documentation are present. Remaining modules are added as needed; gameplay, networking, and server folders are optional.
+The following layout is a guide for organizing the experiments. The root CMake files, `src/main.cpp`, `Application`, `Window`, the temporary quad renderer, the official SDL3 framework, generated GLAD files, and documentation are present. Remaining modules are added as needed; gameplay, networking, and server folders are optional.
 
 ```text
 mini-artillery/

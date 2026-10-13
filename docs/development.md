@@ -22,11 +22,41 @@ The preset selects a Debug build for macOS arm64 using Unix Makefiles. Generated
 
 The application opens a resizable 960 × 540 window titled **Mini Artillery** with a centered green/teal checkerboard quad on a dark background. Close the window or press Escape to exit.
 
+## VS Code on macOS
+
+Open the repository root and use Microsoft's C/C++ (`ms-vscode.cpptools`) and CMake Tools (`ms-vscode.cmake-tools`) extensions. Select `native-debug` with **CMake: Select Configure Preset**, then run **CMake: Configure**.
+
+Set the following workspace settings in the ignored `.vscode/settings.json`:
+
+```json
+{
+    "cmake.useCMakePresets": "always",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/native/compile_commands.json"
+}
+```
+
+The preset already exports `build/native/compile_commands.json`, including the compiler, C++17 mode, GLAD headers, and SDL framework search path. IntelliSense should obtain these from CMake rather than a separately maintained `includePath`. See Microsoft's [IntelliSense configuration guide](https://code.visualstudio.com/docs/cpp/configure-intellisense).
+
+If include errors persist after configuring, run **C/C++: Reset IntelliSense Database**, then **Developer: Reload Window**. Native builds and the compile database have been verified; the editor's diagnostic refresh still needs confirmation in the VS Code UI. Local editor settings remain untracked.
+
+### Debugging
+
+Use a `cppdbg` launch configuration with `MIMode` set to `lldb`. Microsoft's C/C++ extension supplies the `lldb-mi` adapter; do not set `miDebuggerPath` to `/usr/bin/lldb`, which does not accept the adapter's `--interpreter=mi` option. See Microsoft's [LLDB-MI setup](https://code.visualstudio.com/docs/cpp/lldb-mi).
+
+The local `.vscode/launch.json` selects **Mini Artillery (native-debug)** and launches `build/native/mini-artillery` with the repository root as its working directory. Its **Build native-debug** pre-launch task in `.vscode/tasks.json` runs the native configure preset followed by the build preset. Select this configuration in **Run and Debug**, then press F5; use it instead of an automatically generated debugger configuration.
+
+When recreating these ignored local files, use `type: cppdbg`, `request: launch`, `MIMode: lldb`, `program: ${workspaceFolder}/build/native/mini-artillery`, `cwd: ${workspaceFolder}`, and `preLaunchTask: Build native-debug`. Define that task to run `cmake --build --preset native-debug --parallel`, depending on a configure task running `cmake --preset native-debug`.
+
+The installed adapter accepted MI commands, loaded the native executable, and resolved a breakpoint in `Application::onInit`. An interactive F5 launch and breakpoint stop still need verification in VS Code.
+
 ## Current implementation
 
 The executable links the imported `SDL3::SDL3` target from `cmake/SDL3.cmake`. The official framework contains both arm64 and x86_64 binaries and matching headers. The native preset builds the application for arm64; no locally compiled SDL archive is used. SDL3 main callbacks handle initialization, events, drawing, and shutdown. The window uses a forward-compatible OpenGL Core context requesting version 3.3. GLAD loads functions through SDL_GL_GetProcAddress. A GLSL 330 program draws a procedural RGBA8 checkerboard texture on two triangles. Frames render continuously with VSync; a small delay limits rendering if VSync is unavailable or the window is minimized. Terrain rendering is not implemented.
 
 Terrain, physics, ImGui, and browser compilation are later milestones. No automated test suite has been added for the window scaffold.
+
+OpenGL 3.3 Core is the desktop API baseline, not an exact runtime version requirement. macOS currently supplies a compatible 4.1 context. The `GLAD loaded 4.1` log reports the detected context version; the generated loader still contains only the requested API through 3.3. GLAD's generator version is independently pinned at 2.0.8.
 
 GLAD 2.0.8 is compiled from local generated C source as a static library and linked through `GLAD::GLAD` in native builds. CMake requires both C and C++ compilers. No generator, Python package, or network access is needed during configuration. `src/app/Application.*` contains static SDL callbacks and owns `Window` and the temporary quad demo. `Window` manages SDL video initialization, the native window, its OpenGL context, GLAD loading, and presentation, with private native handles; `main.cpp` only enables SDL callback mode. SDL pumps events and repeatedly invokes the application’s frame callback. Their responsibilities and destruction order are recorded in [project structure](project-structure.md). See the [GLAD dependency record](../external/glad/README.mini-artillery.md).
 

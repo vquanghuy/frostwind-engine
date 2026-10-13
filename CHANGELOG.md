@@ -4,10 +4,13 @@ All notable changes to this experiment are documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-13
+
 ### Added
 
 - Planned audio technology noted in the README technical approach.
 - C++ coding conventions covering ownership, initialization, callback flow, naming, and validation, linked from project guidance.
+- VS Code setup instructions for CMake-based IntelliSense, the exported native compile database, and LLDB-MI debugging with build-before-launch tasks.
 - RFC 0002 for native OpenGL integration, generated GLAD 2 files, and the planned WebGL 2 rendering path.
 - Generated GLAD 2.0.8 OpenGL 3.3 Core loader, license and provenance record, and local native static CMake target. Native GLAD function loading uses SDL_GL_GetProcAddress.
 - Native OpenGL Core context and procedural checkerboard quad, with shader diagnostics, drawable-pixel viewport sizing, VSync, and graphics cleanup before context destruction.
@@ -35,7 +38,8 @@ All notable changes to this experiment are documented in this file.
 
 *Native window on macOS Apple Silicon, captured on 2026-10-13. Native configuration, build, and launch verified; terrain rendering remains planned.*
 
-[Unreleased]: https://github.com/vquanghuy/mini-artillery/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/vquanghuy/mini-artillery/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/vquanghuy/mini-artillery/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vquanghuy/mini-artillery/tree/v0.1.0
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

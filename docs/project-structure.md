@@ -11,12 +11,21 @@ src/
 │   ├── Application.h
 │   └── Application.cpp           # Initialization, events, and frame coordination
 ├── platform/
-│   └── Window.h/.cpp             # SDL video/window, OpenGL context, and presentation
+│   ├── Window.h
+│   └── Window.cpp                # SDL video/window, OpenGL context, and presentation
 └── rendering/
-    └── QuadRenderer.h/.cpp       # Temporary checkerboard demo
+    ├── QuadRenderer.h
+    └── QuadRenderer.cpp          # Temporary checkerboard demo
 ```
 
 Headers live beside their implementation files. CMake explicitly lists each compiled source. The `app/` directory currently needs only `Application.h` and `Application.cpp`; fixed-step scheduling or configuration helpers will be added when needed.
+
+| Component | Responsibility |
+| --- | --- |
+| `main.cpp` | Enable SDL's generated entry point and callback mode |
+| `Application` | Own the window and demo, handle lifecycle/events, and coordinate one frame |
+| `Window` | Own SDL video initialization, the native window and OpenGL context; load GLAD, configure VSync, query size/state, and present frames |
+| `QuadRenderer` | Own and draw the temporary demo's shader, texture, vertex array, and buffer |
 
 `Application` owns `Window` and the temporary `QuadRenderer`, in that declaration order. `Window` initializes SDL's video subsystem, configures graphics attributes, creates the SDL window and OpenGL context, loads GLAD, and sets VSync. The demo then creates its graphics resources. Constructors start empty; fallible initialization reports errors, and destructors release resources after partial initialization.
 
@@ -31,6 +40,8 @@ Destruction runs in reverse: demo resources first, then `Window` releases its co
 SDL owns the loop. After initialization, it pumps events into `Application::onEvent` and repeatedly calls `Application::onIterate`. That callback executes one frame through `iterate()`: read drawable dimensions, skip minimized/zero-sized windows, draw, and present. Returning success or failure ends the loop and invokes `onQuit`. There is no application-owned `while` loop or manual event polling. Fixed simulation updates will be added within the frame iteration when physics is introduced; browser callback integration remains unverified.
 
 `Window` bundles window and context lifetime for the single-window OpenGL experiment. A separate context abstraction is unnecessary until independent context management is needed. Platform/API-specific code stays in `platform/`; drawing stays in `rendering/`.
+
+The desktop renderer targets OpenGL 3.3 Core. The actual context may be newer: the development Mac supplies OpenGL 4.1. GLAD 2.0.8 was generated for the 3.3 API; its runtime version result reports the actual context, not the generated API limit. Browser rendering will need its own Emscripten integration and validation.
 
 ## Planned rendering resources
 

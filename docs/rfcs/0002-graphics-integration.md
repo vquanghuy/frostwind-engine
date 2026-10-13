@@ -7,7 +7,7 @@
 
 ## Problem
 
-The current scaffold draws an SDL window surface. Terrain textures and GPU destruction masks need a programmable graphics pipeline, with a path to the later browser experiment.
+Before this RFC was implemented, the scaffold drew an SDL window surface. Terrain textures and GPU destruction masks needed a programmable graphics pipeline, with a path to the later browser experiment.
 
 ## Goals and scope
 
