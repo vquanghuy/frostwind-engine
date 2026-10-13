@@ -2,8 +2,7 @@
 
 #include <SDL3/SDL.h>
 
-#include "../platform/SDLWindow.h"
-#include "../platform/OpenGLContext.h"
+#include "../platform/Window.h"
 #include "../rendering/QuadRenderer.h"
 
 class Application {
@@ -18,8 +17,7 @@ private:
     SDL_AppResult handleEvent(const SDL_Event& event);
     SDL_AppResult iterate();
 
-    // Destruction runs in reverse order: demo resources, context, window, SDL.
-    SDLWindow window_;
-    OpenGLContext context_;
+    // Destroy demo resources before Window releases its context and SDL state.
+    Window window_;
     QuadRenderer demoRenderer_;
 };

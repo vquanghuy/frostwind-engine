@@ -43,7 +43,6 @@ void SDLCALL Application::onQuit(void* appstate, SDL_AppResult)
 bool Application::initialize()
 {
     if (!window_.initialize() ||
-        !context_.initialize(window_) ||
         !demoRenderer_.initialize()) {
         return false;
     }
@@ -74,7 +73,7 @@ SDL_AppResult Application::iterate()
         return SDL_APP_CONTINUE;
     }
     demoRenderer_.draw(width, height);
-    if (!context_.present()) {
+    if (!window_.present()) {
         SDL_Log("OpenGL presentation failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }

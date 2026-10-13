@@ -19,7 +19,7 @@ All notable changes to this experiment are documented in this file.
 ### Changed
 
 - Managed application callback ownership with `std::unique_ptr`, including automatic cleanup on initialization failure.
-- Moved lifecycle and frame coordination into static `Application` callbacks, with `SDLWindow` owning SDL video/window lifetime and `OpenGLContext` owning graphics setup. Kept native window access private, removed the project namespace, and documented the SDL-driven loop and resource lifetimes. The quad remains a temporary demo.
+- Moved lifecycle and frame coordination into static `Application` callbacks, with `Window` owning SDL video/window lifetime, OpenGL initialization, and presentation. Kept native window access private, removed the project namespace, and documented the SDL-driven loop and resource lifetimes. The quad remains a temporary demo.
 
 ## [0.1.0] - 2026-10-13
 

@@ -28,7 +28,7 @@ The executable links the imported `SDL3::SDL3` target from `cmake/SDL3.cmake`. T
 
 Terrain, physics, ImGui, and browser compilation are later milestones. No automated test suite has been added for the window scaffold.
 
-GLAD 2.0.8 is compiled from local generated C source as a static library and linked through `GLAD::GLAD` in native builds. CMake requires both C and C++ compilers. No generator, Python package, or network access is needed during configuration. `src/app/Application.*` contains static SDL callbacks and owns `SDLWindow`, `OpenGLContext`, and the temporary quad demo. `SDLWindow` manages SDL video initialization and hides the native window handle; `main.cpp` only enables SDL callback mode. SDL pumps events and repeatedly invokes the application’s frame callback. Their responsibilities and destruction order are recorded in [project structure](project-structure.md). See the [GLAD dependency record](../external/glad/README.mini-artillery.md).
+GLAD 2.0.8 is compiled from local generated C source as a static library and linked through `GLAD::GLAD` in native builds. CMake requires both C and C++ compilers. No generator, Python package, or network access is needed during configuration. `src/app/Application.*` contains static SDL callbacks and owns `Window` and the temporary quad demo. `Window` manages SDL video initialization, the native window, its OpenGL context, GLAD loading, and presentation, with private native handles; `main.cpp` only enables SDL callback mode. SDL pumps events and repeatedly invokes the application’s frame callback. Their responsibilities and destruction order are recorded in [project structure](project-structure.md). See the [GLAD dependency record](../external/glad/README.mini-artillery.md).
 
 ## Verification record
 

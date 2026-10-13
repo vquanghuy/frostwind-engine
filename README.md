@@ -147,7 +147,7 @@ Headers live beside their `.cpp` files. Generated outputs go into ignored `build
 
 Terrain geometry and simulation logic should work without a graphics context so they can be tested independently. `platform` contains native/browser differences. If networking is explored, `networking` handles client messages and `server` contains a separate relay application.
 
-The [structure document](docs/project-structure.md) records the implemented classes, resource lifetimes, planned rendering resources, platform SDK paths, and runtime library placement. `Application` owns an `SDLWindow` and an `OpenGLContext`; SDL initialization stays inside `SDLWindow`. SDL drives the main loop through static `Application` callbacks. `QuadRenderer` is a temporary graphics demo to be replaced during terrain implementation. Fixed-step scheduling will be added when simulation requires it.
+The [structure document](docs/project-structure.md) records the implemented classes, resource lifetimes, planned rendering resources, platform SDK paths, and runtime library placement. `Application` owns a `Window`, which manages SDL initialization, the native window, its OpenGL context, and presentation. SDL drives the main loop through static `Application` callbacks. `QuadRenderer` is a temporary graphics demo to be replaced during terrain implementation. Fixed-step scheduling will be added when simulation requires it.
 
 ## Development
 

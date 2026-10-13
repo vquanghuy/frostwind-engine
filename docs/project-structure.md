@@ -11,17 +11,16 @@ src/
 │   ├── Application.h
 │   └── Application.cpp           # Initialization, events, and frame coordination
 ├── platform/
-│   ├── SDLWindow.h/.cpp          # SDL video lifetime and private native window
-│   └── OpenGLContext.h/.cpp      # OpenGL context, GLAD, VSync, and presentation
+│   └── Window.h/.cpp             # SDL video/window, OpenGL context, and presentation
 └── rendering/
     └── QuadRenderer.h/.cpp       # Temporary checkerboard demo
 ```
 
 Headers live beside their implementation files. CMake explicitly lists each compiled source. The `app/` directory currently needs only `Application.h` and `Application.cpp`; fixed-step scheduling or configuration helpers will be added when needed.
 
-`Application` owns `SDLWindow`, `OpenGLContext`, and the temporary `QuadRenderer`, in that declaration order. `SDLWindow` initializes SDL's video subsystem, configures OpenGL window attributes, and creates the window. `OpenGLContext` then creates the context and loads GLAD before the demo creates graphics resources. Constructors start empty; fallible initialization reports errors, and destructors release resources after partial initialization.
+`Application` owns `Window` and the temporary `QuadRenderer`, in that declaration order. `Window` initializes SDL's video subsystem, configures graphics attributes, creates the SDL window and OpenGL context, loads GLAD, and sets VSync. The demo then creates its graphics resources. Constructors start empty; fallible initialization reports errors, and destructors release resources after partial initialization.
 
-Destruction runs in reverse: demo resources, context, then the SDL window and video subsystem. `SDLWindow` balances its subsystem initialization with SDL_QuitSubSystem; SDL's callback framework performs the final SDL_Quit. Resource owners disable copying. `SDLWindow` exposes no public SDL_Window handle; only the platform context implementation has private access to the native handle. The context borrows the `SDLWindow`, which must outlive it. Project classes currently use no project namespace.
+Destruction runs in reverse: demo resources first, then `Window` releases its context, SDL window, and video subsystem. `Window` balances its subsystem initialization with SDL_QuitSubSystem; SDL's callback framework performs the final SDL_Quit. Resource owners disable copying. Native handles remain private to `Window`, with no public handle getter or friend access. Project classes currently use no project namespace.
 
 `main.cpp` only selects SDL callback mode and includes SDL's entry-point header. Static callbacks on `Application` own allocation, event handling, per-frame work, and deletion. SDL requires named C callback entry points; thin adapters live beside their static implementations in `Application.cpp`.
 
@@ -31,7 +30,7 @@ Destruction runs in reverse: demo resources, context, then the SDL window and vi
 
 SDL owns the loop. After initialization, it pumps events into `Application::onEvent` and repeatedly calls `Application::onIterate`. That callback executes one frame through `iterate()`: read drawable dimensions, skip minimized/zero-sized windows, draw, and present. Returning success or failure ends the loop and invokes `onQuit`. There is no application-owned `while` loop or manual event polling. Fixed simulation updates will be added within the frame iteration when physics is introduced; browser callback integration remains unverified.
 
-`SDLWindow` owns SDL video initialization and its window, while `OpenGLContext` owns the graphics context, GLAD loading, VSync, and presentation. Platform/API-specific code stays in `platform/`; drawing stays in `rendering/`.
+`Window` bundles window and context lifetime for the single-window OpenGL experiment. A separate context abstraction is unnecessary until independent context management is needed. Platform/API-specific code stays in `platform/`; drawing stays in `rendering/`.
 
 ## Planned rendering resources
 

@@ -1,17 +1,30 @@
-#include "OpenGLContext.h"
-#include "SDLWindow.h"
+#include "Window.h"
 
+#include <SDL3/SDL.h>
 #include <glad/gl.h>
 
-OpenGLContext::~OpenGLContext()
+Window::~Window()
 {
     if (context_) {
         SDL_GL_DestroyContext(context_);
     }
+    if (window_) {
+        SDL_DestroyWindow(window_);
+    }
+    if (videoInitialized_) {
+        SDL_QuitSubSystem(SDL_INIT_VIDEO);
+    }
+    // SDL's callback framework performs the final SDL_Quit.
 }
 
-bool OpenGLContext::configureWindowAttributes()
+bool Window::initialize()
 {
+    videoInitialized_ = SDL_InitSubSystem(SDL_INIT_VIDEO);
+    if (!videoInitialized_) {
+        SDL_Log("SDL initialization failed: %s", SDL_GetError());
+        return false;
+    }
+    // SDL requires graphics attributes before window creation.
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3) ||
         !SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3) ||
         !SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) ||
@@ -21,14 +34,14 @@ bool OpenGLContext::configureWindowAttributes()
         return false;
     }
 
-    return true;
-}
-
-bool OpenGLContext::initialize(const SDLWindow& window)
-{
-    window_ = &window;
-    context_ = SDL_GL_CreateContext(window_->window_);
-    if (!context_ || !SDL_GL_MakeCurrent(window_->window_, context_)) {
+    window_ = SDL_CreateWindow("Mini Artillery", 960, 540,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if (!window_) {
+        SDL_Log("Window creation failed: %s", SDL_GetError());
+        return false;
+    }
+    context_ = SDL_GL_CreateContext(window_);
+    if (!context_ || !SDL_GL_MakeCurrent(window_, context_)) {
         SDL_Log("OpenGL context creation failed: %s", SDL_GetError());
         return false;
     }
@@ -50,9 +63,19 @@ bool OpenGLContext::initialize(const SDLWindow& window)
     return true;
 }
 
-bool OpenGLContext::present() const
+bool Window::pixelSize(int& width, int& height) const
 {
-    if (!SDL_GL_SwapWindow(window_->window_)) {
+    return SDL_GetWindowSizeInPixels(window_, &width, &height);
+}
+
+bool Window::minimized() const
+{
+    return (SDL_GetWindowFlags(window_) & SDL_WINDOW_MINIMIZED) != 0;
+}
+
+bool Window::present() const
+{
+    if (!SDL_GL_SwapWindow(window_)) {
         return false;
     }
     if (!vsync_) {

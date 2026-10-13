@@ -7,8 +7,7 @@ include(cmake/SDL3.cmake)
 add_executable(mini-artillery
     src/main.cpp
     src/app/Application.cpp
-    src/platform/SDLWindow.cpp
-    src/platform/OpenGLContext.cpp
+    src/platform/Window.cpp
     src/rendering/QuadRenderer.cpp
 )
 target_compile_features(mini-artillery PRIVATE cxx_std_17)
