@@ -6,6 +6,7 @@
 #include <SDL3/SDL_main.h>
 
 #include <exception>
+#include <filesystem>
 #include <memory>
 
 SDL_AppResult SDLCALL Application::onInit(void** appstate, int, char**)
@@ -42,8 +43,15 @@ void SDLCALL Application::onQuit(void* appstate, SDL_AppResult)
 
 bool Application::initialize()
 {
-    if (!window_.initialize() ||
-        !demoRenderer_.initialize()) {
+    if (!window_.initialize()) {
+        return false;
+    }
+    const char* basePath = SDL_GetBasePath();
+    if (!basePath) {
+        SDL_Log("Could not locate executable assets: %s", SDL_GetError());
+        return false;
+    }
+    if (!demoRenderer_.initialize(std::filesystem::u8path(basePath) / "assets" / "shaders")) {
         return false;
     }
     SDL_Log("Textured quad initialized. Press Escape or close the window to quit.");

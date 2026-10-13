@@ -15,7 +15,11 @@ src/
 │   └── Window.cpp                # SDL video/window, OpenGL context, and presentation
 └── rendering/
     ├── QuadRenderer.h
-    └── QuadRenderer.cpp          # Temporary checkerboard demo
+    ├── QuadRenderer.cpp          # Temporary checkerboard demo
+    ├── ShaderProgram.h
+    ├── ShaderProgram.cpp         # Compilation, linking, binding, and uniforms
+    ├── Texture2D.h
+    └── Texture2D.cpp             # RGBA8 upload and texture-unit binding
 ```
 
 Headers live beside their implementation files. CMake explicitly lists each compiled source. The `app/` directory currently needs only `Application.h` and `Application.cpp`; fixed-step scheduling or configuration helpers will be added when needed.
@@ -26,6 +30,8 @@ Headers live beside their implementation files. CMake explicitly lists each comp
 | `Application` | Own the window and demo, handle lifecycle/events, and coordinate one frame |
 | `Window` | Own SDL video initialization, the native window and OpenGL context; load GLAD, configure VSync, query size/state, and present frames |
 | `QuadRenderer` | Own and draw the temporary demo's shader, texture, vertex array, and buffer |
+| `ShaderProgram` | Own a linked vertex/fragment program and expose binding and cached uniform operations |
+| `Texture2D` | Own a 2D texture, validate/upload RGBA8 data, and bind a texture unit |
 
 `Application` owns `Window` and the temporary `QuadRenderer`, in that declaration order. `Window` initializes SDL's video subsystem, configures graphics attributes, creates the SDL window and OpenGL context, loads GLAD, and sets VSync. The demo then creates its graphics resources. Constructors start empty; fallible initialization reports errors, and destructors release resources after partial initialization.
 
@@ -43,11 +49,11 @@ SDL owns the loop. After initialization, it pumps events into `Application::onEv
 
 The desktop renderer targets OpenGL 3.3 Core. The actual context may be newer: the development Mac supplies OpenGL 4.1. GLAD 2.0.8 was generated for the 3.3 API; its runtime version result reports the actual context, not the generated API limit. Browser rendering will need its own Emscripten integration and validation.
 
-## Planned rendering resources
+## Rendering resources
 
-`QuadRenderer` is a disposable graphics demo, not the foundation of the terrain renderer. It currently owns its raw OpenGL resources. Replace it as terrain rendering is implemented.
+`QuadRenderer` is a disposable graphics demo, not the foundation of the terrain renderer. It owns `ShaderProgram` and `Texture2D` members, with raw vertex-array/buffer handles retained locally. The support classes can be reused when the demo is replaced by terrain rendering. Their private handles are released automatically; copying is disabled and move support is deferred until needed. Initialize and destroy them with a current OpenGL context. Their detailed contracts are recorded in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes).
 
-Add `Texture`, `ShaderProgram`, `Buffer`, and `Framebuffer` resource wrappers under `src/rendering/` only when needed. Each wrapper owns its graphics handle and releases it automatically; copying is disabled, and moving can transfer ownership when required. Renderers own the resources they use, and all resources must be destroyed before the context. A future `TerrainRenderer` can own its terrain/mask textures, shader, and framebuffer. Shader and image files belong under `assets/`, separate from the C++ wrappers.
+`ShaderProgram` loads vertex/fragment files or source strings; `Texture2D` uploads in-memory RGBA8 pixels. Image-file decoding is not implemented. The demo shader files are `assets/shaders/quad.vert` and `quad.frag`, with provenance in `assets/LICENSES.md`. `Application` resolves the shader directory from SDL_GetBasePath and passes it to the demo; `ShaderProgram` receives explicit paths. Add `Buffer` and `Framebuffer` wrappers only when needed. Renderers own the resources they use, and all resources must be destroyed before the context. A future `TerrainRenderer` can own its terrain/mask textures, program, and framebuffer. Shader and image files belong under `assets/`, separate from the C++ wrappers.
 
 Gameplay, terrain geometry, and simulation remain independent of graphics resources. Browser context setup and shader variants will be added during portability work; the current implementation is native only. See [RFC 0002](rfcs/0002-graphics-integration.md) for the graphics decision.
 
@@ -101,6 +107,8 @@ Application source uses the same include on every target:
 | `linux-debug` | `build/linux/` | `lib/` beside the executable | SDK pending; unverified |
 
 Presets are visible only on their matching host OS. Windows selects Visual Studio 2022 and x64; Linux selects Unix Makefiles. macOS runtime lookup uses `@loader_path/Frameworks`, and the prepared Linux path uses `$ORIGIN/lib`. Keep the copied runtime dependency directories with the executable.
+
+The `mini-artillery-assets` target copies `assets/shaders/` to an `assets/shaders/` directory beside the executable on every build. Keep this directory with the executable and its runtime libraries. Shader-only edits need a build to refresh the runtime copy.
 
 CMake does not download SDKs or fall back to system SDL installations. Missing dependency files produce an error describing the expected paths. Browser support requires its own WASM-compatible SDL library and is not configured by these native branches.
 

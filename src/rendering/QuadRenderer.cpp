@@ -1,110 +1,24 @@
 #include "QuadRenderer.h"
 
-#include <SDL3/SDL.h>
-
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <vector>
 
-namespace {
-
-// Embedded for this first native rendering experiment; browser shader variants
-// will be introduced when the Emscripten build is configured.
-constexpr const char* vertexSource = R"glsl(#version 330 core
-layout(location = 0) in vec2 aPosition;
-layout(location = 1) in vec2 aUV;
-uniform vec2 uScale;
-out vec2 vUV;
-void main() {
-    vUV = aUV;
-    gl_Position = vec4(aPosition * uScale, 0.0, 1.0);
-}
-)glsl";
-
-constexpr const char* fragmentSource = R"glsl(#version 330 core
-in vec2 vUV;
-uniform sampler2D uTexture;
-out vec4 fragColor;
-void main() {
-    fragColor = texture(uTexture, vUV);
-}
-)glsl";
-
-GLuint compileShader(GLenum type, const char* source)
-{
-    const GLuint shader = glCreateShader(type);
-    if (!shader) {
-        SDL_Log("Could not create OpenGL shader.");
-        return 0;
-    }
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
-    GLint success = GL_FALSE;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (success != GL_TRUE) {
-        GLint length = 0;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        std::vector<char> log(static_cast<std::size_t>(std::max(length, 1)), '\0');
-        glGetShaderInfoLog(shader, length, nullptr, log.data());
-        SDL_Log("%s shader compilation failed: %s",
-            type == GL_VERTEX_SHADER ? "Vertex" : "Fragment", log.data());
-        glDeleteShader(shader);
-        return 0;
-    }
-    return shader;
-}
-
-} // namespace
+#include <SDL3/SDL.h>
 
 QuadRenderer::~QuadRenderer()
 {
-    if (texture_) {
-        glDeleteTextures(1, &texture_);
-    }
     if (vbo_) {
         glDeleteBuffers(1, &vbo_);
     }
     if (vao_) {
         glDeleteVertexArrays(1, &vao_);
     }
-    if (program_) {
-        glDeleteProgram(program_);
-    }
 }
 
-bool QuadRenderer::initialize()
+bool QuadRenderer::initialize(const std::filesystem::path& shaderDirectory)
 {
-    const GLuint vertex = compileShader(GL_VERTEX_SHADER, vertexSource);
-    if (!vertex) {
-        return false;
-    }
-    const GLuint fragment = compileShader(GL_FRAGMENT_SHADER, fragmentSource);
-    if (!fragment) {
-        glDeleteShader(vertex);
-        return false;
-    }
-
-    program_ = glCreateProgram();
-    if (!program_) {
-        SDL_Log("Could not create OpenGL program.");
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
-        return false;
-    }
-    glAttachShader(program_, vertex);
-    glAttachShader(program_, fragment);
-    glLinkProgram(program_);
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-    GLint success = GL_FALSE;
-    glGetProgramiv(program_, GL_LINK_STATUS, &success);
-    if (success != GL_TRUE) {
-        GLint length = 0;
-        glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &length);
-        std::vector<char> log(static_cast<std::size_t>(std::max(length, 1)), '\0');
-        glGetProgramInfoLog(program_, length, nullptr, log.data());
-        SDL_Log("Shader program linking failed: %s", log.data());
+    if (!program_.initializeFromFiles(shaderDirectory / "quad.vert", shaderDirectory / "quad.frag")) {
         return false;
     }
 
@@ -137,23 +51,18 @@ bool QuadRenderer::initialize()
             pixels[offset + 3] = 255;
         }
     }
-    glGenTextures(1, &texture_);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture_);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    if (!texture_.initializeRGBA8(8, 8, pixels.data(), pixels.size())) {
+        return false;
+    }
 
-    glUseProgram(program_);
-    scaleLocation_ = glGetUniformLocation(program_, "uScale");
-    const GLint textureLocation = glGetUniformLocation(program_, "uTexture");
+    program_.bind();
+    scaleLocation_ = program_.uniformLocation("uScale");
+    const GLint textureLocation = program_.uniformLocation("uTexture");
     if (scaleLocation_ < 0 || textureLocation < 0) {
         SDL_Log("Required quad shader uniform is missing.");
         return false;
     }
-    glUniform1i(textureLocation, 0);
+    program_.setInt(textureLocation, 0);
     glBindVertexArray(0);
     const GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
@@ -168,11 +77,10 @@ void QuadRenderer::draw(int width, int height) const
     glViewport(0, 0, width, height);
     glClearColor(24.0f / 255.0f, 28.0f / 255.0f, 34.0f / 255.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(program_);
+    program_.bind();
     const float side = static_cast<float>(std::min(width, height)) * 0.66f;
-    glUniform2f(scaleLocation_, side / static_cast<float>(width), side / static_cast<float>(height));
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture_);
+    program_.setVec2(scaleLocation_, side / static_cast<float>(width), side / static_cast<float>(height));
+    texture_.bind();
     glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);

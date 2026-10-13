@@ -9,6 +9,8 @@ add_executable(mini-artillery
     src/app/Application.cpp
     src/platform/Window.cpp
     src/rendering/QuadRenderer.cpp
+    src/rendering/ShaderProgram.cpp
+    src/rendering/Texture2D.cpp
 )
 target_compile_features(mini-artillery PRIVATE cxx_std_17)
 set_target_properties(mini-artillery PROPERTIES CXX_EXTENSIONS OFF)
@@ -50,6 +52,16 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         VERBATIM
     )
 endif()
+
+# Keep runtime shaders current even when only an asset changes.
+add_custom_target(mini-artillery-assets
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders"
+        "$<TARGET_FILE_DIR:mini-artillery>/assets/shaders"
+    COMMENT "Copying runtime shaders beside the executable"
+    VERBATIM
+)
+add_dependencies(mini-artillery mini-artillery-assets)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(mini-artillery PRIVATE -Wall -Wextra -Wpedantic)

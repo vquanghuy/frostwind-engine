@@ -25,6 +25,16 @@ Keep shared drawing, textures, and terrain masks in `src/rendering/`; keep conte
 
 Following the project owner's structure review, `Application` owns `Window`, followed by the temporary demo. `Window` manages SDL video initialization, the native window, its OpenGL context, GLAD loading, VSync, and presentation. This keeps the coupled window/context lifetime together without a separate context class. Declaration order ensures demo resources are destroyed before `Window` releases the context, native window, and SDL subsystem. Static callbacks in `Application` coordinate lifecycle and frame work; named SDL adapters live in the same implementation file. `main.cpp` only selects SDL callback mode, with SDL driving event delivery and repeated frame callbacks. Project classes use no project namespace. `QuadRenderer` remains a temporary demo; resource wrappers and terrain rendering will be added as needed. The maintained layout and lifetime rules live in [project structure](../project-structure.md).
 
+### Rendering support classes
+
+`ShaderProgram` owns a linked vertex/fragment program. The name distinguishes the drawable program from an individual compiled shader stage. Use `initializeFromFiles(vertexPath, fragmentPath)` for runtime shader assets, while retaining `initialize(vertexSource, fragmentSource)` for generated sources and focused checks. Read both files completely, reject missing/unreadable/empty or oversized input, report file paths on failure, and reuse the same compilation/linking pipeline. Release temporary stages after linking. Expose program binding, uniform-location lookup, and the integer/vec2 setters currently needed by the demo. Callers cache locations and bind the program before setting uniforms. Missing uniforms return `-1`; the renderer decides which uniforms are required. A separate public shader-stage class is unnecessary for now. Relative file paths resolve against the caller’s working directory; the application passes an absolute executable-relative `assets/shaders/` directory to the demo. CMake copies shaders beside the executable on every build, including asset-only changes. The caller remains responsible for asset-path resolution; `ShaderProgram` does not locate the executable or choose assets.
+
+`Texture2D` owns a 2D texture and initially accepts tightly packed RGBA8 bytes, with the first row at the bottom. Validate dimensions, byte count, and the device's maximum texture size before uploading. Use nearest filtering, clamp-to-edge, and no mipmaps for the initial checkerboard. The upload temporarily resets and restores pixel-unpack layout and buffer state so client-memory input is interpreted consistently. Binding selects a caller-supplied texture unit; initialization binds unit zero. Image-file decoding, other texture formats, subregion updates, and configurable sampling remain future work.
+
+Both classes have empty constructors, explicit fallible initialization, private handles, automatic cleanup, and disabled copying. Initialization requires a current context and loaded GLAD; destruction requires that context to remain current. Successful initialization is one-time: reject a second initialization instead of replacing a live resource. Failure cleans up temporary resources and permits retry. Add move support when a caller needs ownership transfer. These wrappers deliberately change program/texture bindings; renderers select the required bindings before drawing.
+
+`QuadRenderer` owns these support objects and retains its vertex-array/buffer setup and procedural pixel generation. It is still a temporary demo; the wrappers can be reused by future terrain rendering.
+
 ## Alternatives
 
 - **GLAD 1:** The original generator is usable, but GLAD 2 is the preferred starting point for this new integration. Its headers and initialization API differ; do not mix examples from the two versions.
@@ -39,18 +49,23 @@ The requested context and actual capabilities need validation on the development
 
 Run the native CMake configure and build presets, then launch and inspect the textured quad. Verify resize, Retina viewport sizing, presentation, and clean exit. Capture the visible milestone for the changelog. Browser rendering remains unverified until built with Emscripten and exercised in a browser.
 
+For support classes, exercise missing/empty shader files, paths with spaces, compilation and linking failures followed by successful retry, loading outside the repository working directory, cached uniform updates, invalid texture inputs, RGBA8 upload/readback with non-default unpack state, resource destruction, and a demo frame without OpenGL errors. Screenshots remain supplied manually by the project owner; extracting support classes does not create a new visual milestone.
+
 ## Implementation plan
 
 1. Import the supplied generated GLAD files and their dependency record.
 2. Add the native CMake target, SDL OpenGL context, and resource cleanup.
 3. Render a textured quad with minimal shader and texture handling.
 4. Validate the native milestone and update setup documentation and the changelog.
-5. Follow with terrain-mask rendering and circle erasure; validate browser portability later.
+5. Extract reusable shader-program and 2D-texture owners and validate their error paths and demo integration.
+6. Follow with terrain-mask rendering and circle erasure; validate browser portability later.
 
 ## Open questions
 
-The initial quad uses local coordinates with x right and y up, and a bottom-left UV origin. GLSL 330 shaders are embedded in the renderer for this small native experiment. Terrain/world coordinates and browser shader variants will be decided when those features are implemented.
+The initial quad uses local coordinates with x right and y up, and a bottom-left UV origin. The demo’s GLSL 330 sources live in `assets/shaders/quad.vert` and `quad.frag` and are loaded from the copied runtime assets. Terrain/world coordinates and browser shader variants will be decided when those features are implemented.
 
 ## Decision
 
 Accepted and implemented for the native scaffold on 2026-10-13 following the project owner’s instruction to proceed. GLAD import, the native Core context, resource cleanup, pixel viewport handling, and textured quad are implemented. Native configuration, build, launch, and visible checkerboard output were verified on Apple M1 Pro with an OpenGL 4.1 context. Interactive resize/Retina and exit checks remain manual. The project owner supplied the full-window milestone capture, embedded in the changelog. Terrain masks and browser rendering remain follow-up work.
+
+Extended on 2026-10-13 with implemented `ShaderProgram` and `Texture2D` support classes, following the project owner's request. Native build and resource checks passed, including failure recovery, uniform updates, texture upload/readback, cleanup, and matching demo pixel colors. Shader-file loading is implemented; image-file decoding and additional resource types remain deferred.

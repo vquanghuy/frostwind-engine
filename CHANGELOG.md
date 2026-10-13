@@ -4,6 +4,16 @@ All notable changes to this experiment are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `ShaderProgram` for linked vertex/fragment shaders, with file/source loading, path and compilation/link diagnostics, cached uniform operations, and automatic cleanup.
+- `Texture2D` for validated RGBA8 uploads, texture-unit binding, and automatic cleanup, preserving pixel-unpack state during uploads.
+- Runtime demo shader assets, license records, and build-time copying beside the executable; support-class contracts documented in RFC 0002.
+
+### Changed
+
+- Refactored the temporary quad demo to use the rendering support classes and external shader files, with executable-relative asset lookup that works across IDE and terminal working directories.
+
 ### Removed
 
 - Unused automatic screenshot helpers; milestone screenshots are supplied manually by the project owner.

@@ -18,7 +18,7 @@ cmake --build --preset native-debug --parallel
 ./build/native/mini-artillery
 ```
 
-The preset selects a Debug build for macOS arm64 using Unix Makefiles. Generated files and the executable stay under `build/native/`. CMake copies the official framework from `external/sdl3/macos-universal/` into `build/native/Frameworks/`. Keep the executable and that `Frameworks/` directory together when moving a build. CMake does not rebuild SDL3.
+The preset selects a Debug build for macOS arm64 using Unix Makefiles. Generated files and the executable stay under `build/native/`. CMake copies the official framework from `external/sdl3/macos-universal/` into `build/native/Frameworks/`. CMake also copies runtime shaders to `build/native/assets/shaders/`. Keep the executable, `assets/`, and `Frameworks/` together when moving a build. Shader-only edits are copied on the next build without recompiling C++. CMake does not rebuild SDL3.
 
 The application opens a resizable 960 × 540 window titled **Mini Artillery** with a centered green/teal checkerboard quad on a dark background. Close the window or press Escape to exit.
 
@@ -56,6 +56,8 @@ The executable links the imported `SDL3::SDL3` target from `cmake/SDL3.cmake`. T
 
 Terrain, physics, ImGui, and browser compilation are later milestones. No automated test suite has been added for the window scaffold.
 
+The demo owns reusable `ShaderProgram` and `Texture2D` objects for linked shaders and in-memory RGBA8 textures. Shader compilation/link diagnostics and texture upload validation live in those support classes. `ShaderProgram::initializeFromFiles` loads the demo’s `.vert` and `.frag` files. The application locates its runtime shaders relative to the executable, so CLion, VS Code, and terminal launches can use different working directories. Image-file decoding is not implemented. See [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes) for their contracts.
+
 OpenGL 3.3 Core is the desktop API baseline, not an exact runtime version requirement. macOS currently supplies a compatible 4.1 context. The `GLAD loaded 4.1` log reports the detected context version; the generated loader still contains only the requested API through 3.3. GLAD's generator version is independently pinned at 2.0.8.
 
 GLAD 2.0.8 is compiled from local generated C source as a static library and linked through `GLAD::GLAD` in native builds. CMake requires both C and C++ compilers. No generator, Python package, or network access is needed during configuration. `src/app/Application.*` contains static SDL callbacks and owns `Window` and the temporary quad demo. `Window` manages SDL video initialization, the native window, its OpenGL context, GLAD loading, and presentation, with private native handles; `main.cpp` only enables SDL callback mode. SDL pumps events and repeatedly invokes the application’s frame callback. Their responsibilities and destruction order are recorded in [project structure](project-structure.md). See the [GLAD dependency record](../external/glad/README.mini-artillery.md).
@@ -69,6 +71,10 @@ Interactive resize and exit checks below remain manual verification steps. Brows
 On 2026-10-13, native configuration and build also passed with the generated GLAD 2.0.8 source compiled as C and its static library on the executable's link command. The app launched on Apple M1 Pro and reported OpenGL 4.1 Metal, successful GLAD loading, and quad initialization. A manually supplied full-window screenshot confirms checkerboard output and is preserved in the changelog. Automated capture returned a Stage Manager thumbnail while the app was in the background. Interactive resize, minimize/restore, and Escape/close-button exit remain manual checks.
 
 After the ownership refactor on 2026-10-13, native configuration and build passed. A temporary check under `build/native/` exercised `Application` static callbacks for startup, frame presentation, synthetic Escape and quit events, and teardown, confirming that destruction released the current context and SDL video subsystem. It also verified graceful startup failure with an invalid SDL video driver. These checks do not replace interactive window checks. Future milestone screenshots are supplied manually by the project owner and copied into documentation assets when requested.
+
+On 2026-10-13, the `ShaderProgram`/`Texture2D` extraction passed native configuration and build. A temporary `build/native/rendering-resource-check` verified shader compile/link failure recovery, cached uniform values, invalid texture inputs, RGBA8 GPU readback with non-default unpack layout and a bound unpack buffer, repeated-initialization rejection, and resource destruction. It also drew the demo and read back the expected checkerboard/background colors without OpenGL errors. This check requires a native graphics session; browser support remains unverified.
+
+The same check was extended for shader files and passed when launched with `/private/tmp` as its working directory. It verified missing vertex/fragment files, empty input, file-based compile/link failures followed by successful retry, paths containing spaces, and matching demo pixels using copied executable-relative shaders. Build output confirmed runtime asset copying on subsequent builds.
 
 ## Manual verification
 
