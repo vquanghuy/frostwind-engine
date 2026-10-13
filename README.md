@@ -4,7 +4,9 @@ A C++ experiment exploring **2D destructible terrain**, inspired by **Gunbound**
 
 An artillery-style sandbox provides a setting for testing terrain destruction, projectile impacts, and objects settling on the modified ground. Development starts on native macOS, with WebAssembly as a later portability experiment.
 
-> **Status:** Planning an experimental prototype. This repository currently contains documentation and visual references; there is no runnable prototype yet. Scope and implementation may change as the experiments develop.
+> **Status:** Native window scaffold implemented. SDL3 3.4.18 is linked from the official macOS prebuilt framework, and the application opens an empty macOS window. Terrain rendering and destruction remain planned experiments.
+
+See the [changelog](CHANGELOG.md) for development progress and screenshots.
 
 ## Visual references
 
@@ -51,12 +53,14 @@ Planned sprite source: [Kenney Tanks](https://kenney.nl/assets/tanks), released 
 | Area | Choice |
 | --- | --- |
 | Language and build | C++ and CMake |
-| Native development | macOS on Apple Silicon, SDL2, desktop OpenGL, GLAD |
-| Browser target | Emscripten, WebAssembly, WebGL 2 / OpenGL ES 3.0 |
+| Native development | macOS on Apple Silicon; Windows x64 and Linux x86_64 build scaffolds prepared but unverified |
+| Planned graphics | Desktop OpenGL with GLAD; SDL3 handles windows and input |
+| SDL version | 3.4.18, official macOS universal dynamic framework |
+| Browser target | Emscripten, WebAssembly, separate SDL3 WASM library required, WebGL 2 / OpenGL ES 3.0 |
 | Physics | Box2D |
 | Terrain geometry | Clipper2 |
 | Math | GLM |
-| UI and debugging | Dear ImGui |
+| UI and debugging | Dear ImGui with SDL3 and OpenGL3 backends |
 | Sprites | Kenney Tanks, texture atlases, dynamic sprite batching |
 | Image loading and packing | stb_image and stb_rect_pack |
 | Optional networking experiment | WebSockets with a room-based relay server |
@@ -78,19 +82,21 @@ Physics runs at a fixed timestep. Cross-platform consistency, authoritative impa
 
 ## Experiment sequence
 
-1. **Terrain sandbox:** Set up CMake and the macOS toolchain; render terrain and erase explosion shapes through a debug UI.
-2. **Collision updates:** Add Clipper2 and Box2D, rebuild affected chunks, and inspect how simple bodies interact with carved terrain.
-3. **Artillery interactions:** Add basic aiming and projectiles to exercise the destruction pipeline. Expand tank behavior or effects only when useful to the experiment.
-4. **Browser portability:** Try the same prototype through Emscripten and WebGL 2, comparing behavior and performance.
-5. **Optional extensions:** Explore multiplayer synchronization or host a browser demo if useful.
+1. **Native window:** Import SDL3 3.4.18 into `external/sdl3/`, link the official prebuilt framework through CMake, and open an empty window with event handling and clean shutdown.
+2. **Terrain sandbox:** Add OpenGL rendering and debug controls; render terrain and erase explosion shapes.
+3. **Collision updates:** Add Clipper2 and Box2D, rebuild affected chunks, and inspect how simple bodies interact with carved terrain.
+4. **Artillery interactions:** Add basic aiming and projectiles to exercise the destruction pipeline. Expand tank behavior or effects only when useful to the experiment.
+5. **Browser portability:** Supply an Emscripten-compatible SDL3 library and compile the prototype, then compare behavior and performance with WebGL 2.
+6. **Optional extensions:** Explore multiplayer synchronization or host a browser demo if useful.
 
 ## Project structure
 
-The following layout is a guide for organizing the experiments. Add modules as they become useful; gameplay, networking, and server folders are optional. The tree describes the intended structure, not an existing implementation.
+The following layout is a guide for organizing the experiments. The root CMake files, `src/main.cpp`, the official SDL3 framework, and documentation are present. Remaining modules are added as needed; gameplay, networking, and server folders are optional.
 
 ```text
 mini-artillery/
 ├── README.md
+├── CHANGELOG.md                # Notable changes grouped by release
 ├── LICENSE
 ├── .gitignore
 ├── CMakeLists.txt              # Shared native and WebAssembly build
@@ -112,7 +118,8 @@ mini-artillery/
 │   ├── audio/
 │   └── LICENSES.md            # Runtime asset attribution
 ├── external/                  # Local third-party headers, source, and libraries
-│   └── README.md              # Dependency inventory and integration policy
+│   ├── README.md              # Dependency inventory and integration policy
+│   └── sdl3/                  # Platform SDKs; macOS supplied, Windows/Linux pending
 ├── tests/                     # Terrain, gameplay, and protocol verification
 ├── tools/                     # Asset preparation and development scripts
 ├── web/                       # Browser HTML shell and web resources
@@ -126,7 +133,8 @@ mini-artillery/
     │   ├── README.md          # RFC process and index
     │   └── template.md
     └── assets/                # Documentation images and references
-        └── README.md          # Reference image attribution
+        ├── milestones/        # Captures from the running experiment
+        └── README.md          # Image attribution
 ```
 
 Headers live beside their `.cpp` files. Generated outputs go into ignored `build/native/` and `build/web/` directories. Third-party dependencies use pinned local copies under `external/`; see the [dependency policy](external/README.md).
@@ -137,17 +145,33 @@ Headers live beside their `.cpp` files. Generated outputs go into ignored `build
 
 Terrain geometry and simulation logic should work without a graphics context so they can be tested independently. `platform` contains native/browser differences. If networking is explored, `networking` handles client messages and `server` contains a separate relay application.
 
+The [structure document](docs/project-structure.md) details platform SDK paths, header lookup, and runtime library placement.
+
 ## Development
 
 CMake is the selected build system for both native and browser targets. Native builds will use Apple's compiler toolchain; browser builds will use Emscripten's CMake toolchain through `emcmake`.
 
-Build configuration, dependency versions, and verified setup commands will be added with the native project scaffold.
+On an Apple Silicon Mac with Xcode or Command Line Tools and CMake 3.22 or newer:
+
+```sh
+cmake --preset native-debug
+cmake --build --preset native-debug --parallel
+./build/native/mini-artillery
+```
+
+The application opens a resizable 960 × 540 window with a plain dark background. Press Escape or close the window to exit. See [development instructions](docs/development.md) for details. Windows and Linux presets and local SDK integration are prepared but unverified; their dependency packages are not included yet. See [platform setup](docs/development.md). The browser build is not configured yet.
+
+SDL3 is linked through the imported `SDL3::SDL3` target defined in `cmake/SDL3.cmake`. CMake copies the framework into `build/native/Frameworks/`, and the executable loads that copy through a relative runtime path. Windows uses matching headers, an import library, and a DLL; Linux uses matching headers and a shared library. The native build does not compile SDL3. SDL3 main callbacks handle events and window updates. The initial window uses an SDL surface; OpenGL context creation and terrain rendering are later milestones.
 
 ### Local dependencies
 
 Third-party headers, source, and any supplied static or dynamic libraries live under `external/<library>/`. CMake links local targets without fetching dependencies or using a package manager during configuration.
 
-Static linking is the default for compiled dependencies. Header-only libraries are included directly, and libraries such as Dear ImGui and generated GLAD are compiled from local source. Supplied binaries are separated by platform and architecture; macOS libraries cannot be reused in WASM builds, which require Emscripten-compatible source or archives. Browser SDL2 uses the Emscripten port, whose first build may populate the SDK cache.
+SDL3 uses the official prebuilt dynamic framework from the [3.4.18 macOS DMG](https://github.com/libsdl-org/SDL/releases/tag/release-3.4.18). Only the macOS universal framework slice is stored under `external/sdl3/macos-universal/`; its headers are included inside the framework. No locally compiled SDL binary, upstream source tree, Git submodule, or package manager is required. The [SDL3 dependency record](external/sdl3/README.mini-artillery.md) records provenance and checksums. Static linking remains the default preference for other compiled dependencies when practical.
+
+Header-only libraries are included directly, and libraries such as Dear ImGui and generated GLAD are compiled from local source. Dear ImGui uses matching SDL3 and OpenGL3 backend source files; GLAD is included only in native builds.
+
+Supplied binaries are separated by platform and architecture. The browser build will need a separate WASM-compatible SDL3 static library, obtained or built outside the repository from the matching release. Native macOS libraries cannot be reused in WASM builds. See [SDL3's Emscripten documentation](https://wiki.libsdl.org/SDL3/README-emscripten).
 
 Each dependency must include its license, exact version or source revision, origin, and any local changes. Dynamic macOS libraries require runtime bundling and loader-path configuration when packaging the game. See [RFC 0001](docs/rfcs/0001-local-dependencies.md).
 
@@ -158,5 +182,7 @@ Project documentation lives in [`docs/`](docs/README.md). Architecture proposals
 ## License
 
 Project code is licensed under the [MIT License](LICENSE).
+
+Vendored libraries retain their upstream licenses. SDL3 uses the [zlib license](external/sdl3/LICENSE.txt).
 
 Kenney Tanks assets are CC0. Gunbound and Pocket Tanks screenshots are third-party gameplay references and are not covered by this repository's MIT license. See [reference image attribution](docs/assets/README.md).

@@ -40,6 +40,12 @@ CMakeUserPresets.json
 !/external/*/lib/**/*.dylib
 !/external/*/lib/**/*.dll
 
+# Platform SDK libraries (SDL3)
+!/external/sdl3/windows-x64/lib/SDL3.lib
+!/external/sdl3/windows-x64/bin/SDL3.dll
+!/external/sdl3/linux-x64/lib/*.so
+!/external/sdl3/linux-x64/lib/*.so.*
+
 # Generated Xcode projects and per-user settings
 *.xcodeproj/
 *.xcworkspace/

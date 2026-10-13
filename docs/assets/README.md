@@ -1,5 +1,11 @@
 # Reference images
 
+## Milestone captures
+
+`milestones/` contains screenshots of the running Mini Artillery experiment, separate from the third-party references below. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 was supplied manually from a macOS window screenshot on 2026-10-13.
+
+## Third-party references
+
 These images were copied from the original Mini Artillery planning note, `FLN-20260609 - Development - 2D Destructible Terrain Game Tech Stack.md`. They are design references, not screenshots of an implemented Mini Artillery build.
 
 | File | Description | Original note attachment |

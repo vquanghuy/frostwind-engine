@@ -18,7 +18,7 @@ Keep dependency files inspectable within the repository and use CMake to integra
 
 Store pinned headers, source, and any supplied binaries in `external/<library>/`. Prefer static linking, compile header/source-only dependencies as appropriate, and allow dynamic native libraries with explicit packaging requirements. Preserve upstream licenses and record provenance, patches, and binary reproduction details.
 
-Separate supplied binaries by platform, architecture, and configuration. Retain source for dependencies that need compilation to WASM. Use the Emscripten SDL2 port for the browser target and local SDL2 for native builds. Generated project outputs remain in `build/`.
+Separate supplied binaries by platform, architecture, and configuration. Following the SDL3 packaging revision on 2026-10-13, use the official macOS universal dynamic framework, including its packaged headers, without the full source tree. Copy the framework beside the executable and use a relative runtime loader path. Supply a separate compatible library for each additional target. Generated project outputs remain in `build/`.
 
 The detailed conventions are maintained in `external/README.md`.
 
@@ -30,7 +30,7 @@ The detailed conventions are maintained in `external/README.md`.
 
 ## Risks and limitations
 
-Maintainers own updates, patch tracking, and binary compatibility. Native binaries do not work in WASM. Dynamic libraries add runtime packaging work. Local copies do not eliminate toolchain installation or Emscripten port-cache downloads.
+Maintainers own updates, patch tracking, and binary compatibility. Native binaries do not work in WASM. Dynamic libraries add runtime packaging work. Local copies do not eliminate toolchain installation.
 
 ## Validation
 
@@ -49,4 +49,8 @@ Exact versions, supplied binary choices, and any use of dynamic linking will be 
 
 ## Decision
 
-Accepted on 2026-10-12 following the project owner's selection of local third-party libraries under `external/`. Dependency import and build validation have not started.
+Accepted on 2026-10-12 following the project owner's selection of local third-party libraries under `external/`.
+
+Updated on 2026-10-13 to use SDL3 3.4.18. Following the project owner's request for an official prebuilt binary, the final native dependency is the macOS universal dynamic framework from the release DMG. The locally compiled archive and full source tree are excluded. CMake uses an imported shared framework target and copies the framework beside the executable. Browser integration needs a separate WASM-compatible library and remains pending.
+
+Platform SDK organization is recorded in `docs/project-structure.md`. CMake now selects a shared `SDL3::SDL3` target for macOS, Windows MSVC x64, or Linux x86_64 and copies the appropriate runtime dependency. Windows and Linux SDKs are not supplied, and their branches and presets await native verification. Only macOS arm64 has been built and launched.
