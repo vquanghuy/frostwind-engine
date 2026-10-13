@@ -1,0 +1,79 @@
+# Local assistant state
+.serena/
+
+# Build directories and CMake-generated files
+/build/
+/build-*/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+install_manifest.txt
+compile_commands.json
+CMakeUserPresets.json
+/.ninja_deps
+/.ninja_log
+/build.ninja
+/rules.ninja
+
+# Compiled objects, libraries, and debug symbols
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.dSYM/
+
+# Deliberately supplied third-party libraries (generated builds stay ignored)
+!/external/*/lib/**/*.a
+!/external/*/lib/**/*.lib
+!/external/*/lib/**/*.so
+!/external/*/lib/**/*.so.*
+!/external/*/lib/**/*.dylib
+!/external/*/lib/**/*.dll
+
+# Generated Xcode projects and per-user settings
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# Editor settings and temporary files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+
+# macOS and Windows metadata
+.DS_Store
+._*
+.AppleDouble/
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Tool caches and dependencies
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+
+# Logs
+*.log
