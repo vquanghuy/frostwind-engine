@@ -2,9 +2,6 @@
 
 All notable changes to this experiment are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Changes remain under Unreleased until a version is explicitly released. Screenshots capture visible progress alongside the changes.
-
 ## [Unreleased]
 
 ### Added
@@ -27,3 +24,5 @@ Changes remain under Unreleased until a version is explicitly released. Screensh
 
 [Unreleased]: https://github.com/vquanghuy/mini-artillery/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/vquanghuy/mini-artillery/tree/v0.1.0
+
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
