@@ -2,7 +2,6 @@
 
 - **Status:** Draft
 - **Created:** YYYY-MM-DD
-- **Author:** Name
 - **Supersedes:** None
 - **Superseded by:** None
 

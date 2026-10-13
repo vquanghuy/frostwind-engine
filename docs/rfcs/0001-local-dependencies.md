@@ -2,7 +2,6 @@
 
 - **Status:** Accepted
 - **Created:** 2026-10-12
-- **Author:** Mini Artillery maintainers
 - **Supersedes:** None
 - **Superseded by:** None
 

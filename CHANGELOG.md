@@ -7,6 +7,10 @@ Changes remain under Unreleased until a version is explicitly released. Screensh
 
 ## [Unreleased]
 
+### Added
+
+- Planned audio technology noted in the README technical approach.
+
 ## [0.1.0] - 2026-10-13
 
 ### Added

@@ -63,6 +63,7 @@ Planned sprite source: [Kenney Tanks](https://kenney.nl/assets/tanks), released 
 | UI and debugging | Dear ImGui with SDL3 and OpenGL3 backends |
 | Sprites | Kenney Tanks, texture atlases, dynamic sprite batching |
 | Image loading and packing | stb_image and stb_rect_pack |
+| Audio | SDL3 built-in audio; SDL3_mixer if richer playback is needed |
 | Optional networking experiment | WebSockets with a room-based relay server |
 
 ### Destructible terrain
