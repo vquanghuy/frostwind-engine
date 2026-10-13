@@ -1,13 +1,24 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(MiniArtillery VERSION 0.1.0 LANGUAGES CXX)
+project(MiniArtillery VERSION 0.1.0 LANGUAGES C CXX)
 
 include(cmake/SDL3.cmake)
 
-add_executable(mini-artillery src/main.cpp)
+add_executable(mini-artillery
+    src/main.cpp
+    src/app/Application.cpp
+    src/platform/SDLWindow.cpp
+    src/platform/OpenGLContext.cpp
+    src/rendering/QuadRenderer.cpp
+)
 target_compile_features(mini-artillery PRIVATE cxx_std_17)
 set_target_properties(mini-artillery PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(mini-artillery PRIVATE SDL3::SDL3)
+
+if(NOT EMSCRIPTEN)
+    include(cmake/GLAD.cmake)
+    target_link_libraries(mini-artillery PRIVATE GLAD::GLAD)
+endif()
 
 # Keep the executable runnable without a system-wide SDL installation.
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")

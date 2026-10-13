@@ -20,13 +20,15 @@ cmake --build --preset native-debug --parallel
 
 The preset selects a Debug build for macOS arm64 using Unix Makefiles. Generated files and the executable stay under `build/native/`. CMake copies the official framework from `external/sdl3/macos-universal/` into `build/native/Frameworks/`. Keep the executable and that `Frameworks/` directory together when moving a build. CMake does not rebuild SDL3.
 
-The application opens a resizable 960 × 540 window titled **Mini Artillery** with a plain dark background. Close the window or press Escape to exit.
+The application opens a resizable 960 × 540 window titled **Mini Artillery** with a centered green/teal checkerboard quad on a dark background. Close the window or press Escape to exit.
 
 ## Current implementation
 
-The executable links the imported `SDL3::SDL3` target from `cmake/SDL3.cmake`. The official framework contains both arm64 and x86_64 binaries and matching headers. The native preset builds the application for arm64; no locally compiled SDL archive is used. SDL3 main callbacks handle initialization, events, drawing, and shutdown. The empty window uses an SDL window surface; there is no application OpenGL context or terrain renderer yet. Native callbacks wait for events while idle.
+The executable links the imported `SDL3::SDL3` target from `cmake/SDL3.cmake`. The official framework contains both arm64 and x86_64 binaries and matching headers. The native preset builds the application for arm64; no locally compiled SDL archive is used. SDL3 main callbacks handle initialization, events, drawing, and shutdown. The window uses a forward-compatible OpenGL Core context requesting version 3.3. GLAD loads functions through SDL_GL_GetProcAddress. A GLSL 330 program draws a procedural RGBA8 checkerboard texture on two triangles. Frames render continuously with VSync; a small delay limits rendering if VSync is unavailable or the window is minimized. Terrain rendering is not implemented.
 
 Terrain, physics, ImGui, and browser compilation are later milestones. No automated test suite has been added for the window scaffold.
+
+GLAD 2.0.8 is compiled from local generated C source as a static library and linked through `GLAD::GLAD` in native builds. CMake requires both C and C++ compilers. No generator, Python package, or network access is needed during configuration. `src/app/Application.*` contains static SDL callbacks and owns `SDLWindow`, `OpenGLContext`, and the temporary quad demo. `SDLWindow` manages SDL video initialization and hides the native window handle; `main.cpp` only enables SDL callback mode. SDL pumps events and repeatedly invokes the application’s frame callback. Their responsibilities and destruction order are recorded in [project structure](project-structure.md). See the [GLAD dependency record](../external/glad/README.mini-artillery.md).
 
 ## Verification record
 
@@ -34,13 +36,17 @@ On 2026-10-13, the native application configured and rebuilt with CMake 4.4.2, A
 
 Interactive resize and exit checks below remain manual verification steps. Browser builds have not been validated.
 
+On 2026-10-13, native configuration and build also passed with the generated GLAD 2.0.8 source compiled as C and its static library on the executable's link command. The app launched on Apple M1 Pro and reported OpenGL 4.1 Metal, successful GLAD loading, and quad initialization. A manually supplied full-window screenshot confirms checkerboard output and is preserved in the changelog. Automated capture returned a Stage Manager thumbnail while the app was in the background. Interactive resize, minimize/restore, and Escape/close-button exit remain manual checks.
+
+After the ownership refactor on 2026-10-13, native configuration and build passed. A temporary check under `build/native/` exercised `Application` static callbacks for startup, frame presentation, synthetic Escape and quit events, and teardown, confirming that destruction released the current context and SDL video subsystem. It also verified graceful startup failure with an invalid SDL video driver. These checks do not replace interactive window checks. Future milestone screenshots are supplied manually by the project owner and copied into documentation assets when requested.
+
 ## Manual verification
 
 After changes to the scaffold:
 
 1. Configure and build successfully.
-2. Launch and verify the window title and plain background.
-3. Resize, minimize, and restore the window; verify background updates and responsiveness.
+2. Launch and verify the window title, dark background, and crisp checkerboard quad. Check the log for the actual OpenGL version and renderer.
+3. Resize to wide and tall shapes; verify the quad stays square and centered. Check Retina drawable sizing, minimize, and restore; verify responsiveness.
 4. Exit with Escape, relaunch, then exit with the close button; verify clean termination.
 
 To inspect runtime linkage on macOS:

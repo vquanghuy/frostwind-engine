@@ -1,6 +1,45 @@
 # Project structure
 
-The root [README](../README.md#project-structure) describes application modules. This document defines dependency packaging and platform integration. Only the macOS SDK is supplied and validated; Windows and Linux paths describe the prepared integration for later verification.
+The root [README](../README.md#project-structure) summarizes the planned modules. This document records application responsibilities, resource ownership, and dependency packaging. Only the macOS SDK is supplied and validated; Windows and Linux paths describe the prepared integration for later verification.
+
+## Implemented application structure
+
+```text
+src/
+├── main.cpp                      # SDL callback-mode entry point
+├── app/
+│   ├── Application.h
+│   └── Application.cpp           # Initialization, events, and frame coordination
+├── platform/
+│   ├── SDLWindow.h/.cpp          # SDL video lifetime and private native window
+│   └── OpenGLContext.h/.cpp      # OpenGL context, GLAD, VSync, and presentation
+└── rendering/
+    └── QuadRenderer.h/.cpp       # Temporary checkerboard demo
+```
+
+Headers live beside their implementation files. CMake explicitly lists each compiled source. The `app/` directory currently needs only `Application.h` and `Application.cpp`; fixed-step scheduling or configuration helpers will be added when needed.
+
+`Application` owns `SDLWindow`, `OpenGLContext`, and the temporary `QuadRenderer`, in that declaration order. `SDLWindow` initializes SDL's video subsystem, configures OpenGL window attributes, and creates the window. `OpenGLContext` then creates the context and loads GLAD before the demo creates graphics resources. Constructors start empty; fallible initialization reports errors, and destructors release resources after partial initialization.
+
+Destruction runs in reverse: demo resources, context, then the SDL window and video subsystem. `SDLWindow` balances its subsystem initialization with SDL_QuitSubSystem; SDL's callback framework performs the final SDL_Quit. Resource owners disable copying. `SDLWindow` exposes no public SDL_Window handle; only the platform context implementation has private access to the native handle. The context borrows the `SDLWindow`, which must outlive it. Project classes currently use no project namespace.
+
+`main.cpp` only selects SDL callback mode and includes SDL's entry-point header. Static callbacks on `Application` own allocation, event handling, per-frame work, and deletion. SDL requires named C callback entry points; thin adapters live beside their static implementations in `Application.cpp`.
+
+`onInit` creates the application with `std::make_unique` and transfers ownership to SDL's opaque callback state only after initialization succeeds. Failed initialization cleans up automatically and leaves that state null; standard exceptions become SDL initialization failures. `onQuit` takes ownership back with `std::unique_ptr`, which releases the application and its resources on scope exit.
+
+### Main loop
+
+SDL owns the loop. After initialization, it pumps events into `Application::onEvent` and repeatedly calls `Application::onIterate`. That callback executes one frame through `iterate()`: read drawable dimensions, skip minimized/zero-sized windows, draw, and present. Returning success or failure ends the loop and invokes `onQuit`. There is no application-owned `while` loop or manual event polling. Fixed simulation updates will be added within the frame iteration when physics is introduced; browser callback integration remains unverified.
+
+`SDLWindow` owns SDL video initialization and its window, while `OpenGLContext` owns the graphics context, GLAD loading, VSync, and presentation. Platform/API-specific code stays in `platform/`; drawing stays in `rendering/`.
+
+## Planned rendering resources
+
+`QuadRenderer` is a disposable graphics demo, not the foundation of the terrain renderer. It currently owns its raw OpenGL resources. Replace it as terrain rendering is implemented.
+
+Add `Texture`, `ShaderProgram`, `Buffer`, and `Framebuffer` resource wrappers under `src/rendering/` only when needed. Each wrapper owns its graphics handle and releases it automatically; copying is disabled, and moving can transfer ownership when required. Renderers own the resources they use, and all resources must be destroyed before the context. A future `TerrainRenderer` can own its terrain/mask textures, shader, and framebuffer. Shader and image files belong under `assets/`, separate from the C++ wrappers.
+
+Gameplay, terrain geometry, and simulation remain independent of graphics resources. Browser context setup and shader variants will be added during portability work; the current implementation is native only. See [RFC 0002](rfcs/0002-graphics-integration.md) for the graphics decision.
 
 ## Platform SDK layout
 

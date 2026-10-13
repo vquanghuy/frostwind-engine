@@ -4,7 +4,7 @@ A C++ experiment exploring **2D destructible terrain**, inspired by **Gunbound**
 
 An artillery-style sandbox provides a setting for testing terrain destruction, projectile impacts, and objects settling on the modified ground. Development starts on native macOS, with WebAssembly as a later portability experiment.
 
-> **Status:** Native window scaffold implemented. SDL3 3.4.18 is linked from the official macOS prebuilt framework, and the application opens an empty macOS window. Terrain rendering and destruction remain planned experiments.
+> **Status:** Native OpenGL scaffold implemented. SDL3 3.4.18 and GLAD 2.0.8 create an OpenGL Core context and render a procedural checkerboard quad on macOS. Terrain rendering and destruction remain planned experiments.
 
 See the [changelog](CHANGELOG.md) for development progress and screenshots.
 
@@ -54,9 +54,9 @@ Planned sprite source: [Kenney Tanks](https://kenney.nl/assets/tanks), released 
 | --- | --- |
 | Language and build | C++ and CMake |
 | Native development | macOS on Apple Silicon; Windows x64 and Linux x86_64 build scaffolds prepared but unverified |
-| Planned graphics | Desktop OpenGL with GLAD; SDL3 handles windows and input |
+| Graphics | Desktop OpenGL 3.3 Core with GLAD 2.0.8; SDL3 handles windows, contexts, and input |
 | SDL version | 3.4.18, official macOS universal dynamic framework |
-| Browser target | Emscripten, WebAssembly, separate SDL3 WASM library required, WebGL 2 / OpenGL ES 3.0 |
+| Browser target | Emscripten, WebAssembly, separate SDL3 WASM library required, WebGL 2 through Emscripten’s OpenGL ES 3.0 interface |
 | Physics | Box2D |
 | Terrain geometry | Clipper2 |
 | Math | GLM |
@@ -92,7 +92,7 @@ Physics runs at a fixed timestep. Cross-platform consistency, authoritative impa
 
 ## Project structure
 
-The following layout is a guide for organizing the experiments. The root CMake files, `src/main.cpp`, the official SDL3 framework, and documentation are present. Remaining modules are added as needed; gameplay, networking, and server folders are optional.
+The following layout is a guide for organizing the experiments. The root CMake files, `src/main.cpp`, native context and quad-rendering modules, the official SDL3 framework, generated GLAD files, and documentation are present. Remaining modules are added as needed; gameplay, networking, and server folders are optional.
 
 ```text
 mini-artillery/
@@ -104,8 +104,8 @@ mini-artillery/
 ├── CMakePresets.json           # Reproducible build configurations
 ├── cmake/                     # Dependency setup and build helpers
 ├── src/
-│   ├── main.cpp               # Entry point
-│   ├── app/                   # Initialization, frame loop, fixed-step updates
+│   ├── main.cpp               # SDL callback-mode entry point
+│   ├── app/                   # Application ownership and frame coordination
 │   ├── game/                  # Simple tanks and projectile experiments
 │   ├── terrain/               # Terrain polygons, chunks, explosion carving
 │   ├── physics/               # Box2D world and collision-shape rebuilding
@@ -120,7 +120,8 @@ mini-artillery/
 │   └── LICENSES.md            # Runtime asset attribution
 ├── external/                  # Local third-party headers, source, and libraries
 │   ├── README.md              # Dependency inventory and integration policy
-│   └── sdl3/                  # Platform SDKs; macOS supplied, Windows/Linux pending
+│   ├── sdl3/                  # Platform SDKs; macOS supplied, Windows/Linux pending
+│   └── glad/                  # Generated native OpenGL loader
 ├── tests/                     # Terrain, gameplay, and protocol verification
 ├── tools/                     # Asset preparation and development scripts
 ├── web/                       # Browser HTML shell and web resources
@@ -146,7 +147,7 @@ Headers live beside their `.cpp` files. Generated outputs go into ignored `build
 
 Terrain geometry and simulation logic should work without a graphics context so they can be tested independently. `platform` contains native/browser differences. If networking is explored, `networking` handles client messages and `server` contains a separate relay application.
 
-The [structure document](docs/project-structure.md) details platform SDK paths, header lookup, and runtime library placement.
+The [structure document](docs/project-structure.md) records the implemented classes, resource lifetimes, planned rendering resources, platform SDK paths, and runtime library placement. `Application` owns an `SDLWindow` and an `OpenGLContext`; SDL initialization stays inside `SDLWindow`. SDL drives the main loop through static `Application` callbacks. `QuadRenderer` is a temporary graphics demo to be replaced during terrain implementation. Fixed-step scheduling will be added when simulation requires it.
 
 ## Development
 
@@ -160,9 +161,9 @@ cmake --build --preset native-debug --parallel
 ./build/native/mini-artillery
 ```
 
-The application opens a resizable 960 × 540 window with a plain dark background. Press Escape or close the window to exit. See [development instructions](docs/development.md) for details. Windows and Linux presets and local SDK integration are prepared but unverified; their dependency packages are not included yet. See [platform setup](docs/development.md). The browser build is not configured yet.
+The application opens a resizable 960 × 540 window with a centered checkerboard quad on a dark background. Press Escape or close the window to exit. See [development instructions](docs/development.md) for details. Windows and Linux presets and local SDK integration are prepared but unverified; their dependency packages are not included yet. See [platform setup](docs/development.md). The browser build is not configured yet.
 
-SDL3 is linked through the imported `SDL3::SDL3` target defined in `cmake/SDL3.cmake`. CMake copies the framework into `build/native/Frameworks/`, and the executable loads that copy through a relative runtime path. Windows uses matching headers, an import library, and a DLL; Linux uses matching headers and a shared library. The native build does not compile SDL3. SDL3 main callbacks handle events and window updates. The initial window uses an SDL surface; OpenGL context creation and terrain rendering are later milestones.
+SDL3 is linked through the imported `SDL3::SDL3` target defined in `cmake/SDL3.cmake`. CMake copies the framework into `build/native/Frameworks/`, and the executable loads that copy through a relative runtime path. Windows uses matching headers, an import library, and a DLL; Linux uses matching headers and a shared library. The native build does not compile SDL3. SDL3 main callbacks handle events and window updates. The window uses an OpenGL Core context with VSync when available. GLAD loads native functions, and the viewport follows drawable pixel dimensions. Terrain rendering remains planned.
 
 ### Local dependencies
 
@@ -172,6 +173,8 @@ SDL3 uses the official prebuilt dynamic framework from the [3.4.18 macOS DMG](ht
 
 Header-only libraries are included directly, and libraries such as Dear ImGui and generated GLAD are compiled from local source. Dear ImGui uses matching SDL3 and OpenGL3 backend source files; GLAD is included only in native builds.
 
+[GLAD 2.0.8](external/glad/README.mini-artillery.md) is supplied as generated OpenGL 3.3 Core source and linked through the local static `GLAD::GLAD` target. Native context creation and the textured quad implement [RFC 0002](docs/rfcs/0002-graphics-integration.md); browser rendering remains pending.
+
 Supplied binaries are separated by platform and architecture. The browser build will need a separate WASM-compatible SDL3 static library, obtained or built outside the repository from the matching release. Native macOS libraries cannot be reused in WASM builds. See [SDL3's Emscripten documentation](https://wiki.libsdl.org/SDL3/README-emscripten).
 
 Each dependency must include its license, exact version or source revision, origin, and any local changes. Dynamic macOS libraries require runtime bundling and loader-path configuration when packaging the game. See [RFC 0001](docs/rfcs/0001-local-dependencies.md).
@@ -179,6 +182,8 @@ Each dependency must include its license, exact version or source revision, orig
 ## Documentation
 
 Project documentation lives in [`docs/`](docs/README.md). Architecture proposals and decisions are recorded as numbered [RFCs](docs/rfcs/README.md). Reference images and their attribution are stored in [`docs/assets/`](docs/assets/README.md).
+
+Follow the [coding conventions](docs/coding-conventions.md) for C++ style, ownership, lifecycle, and error handling.
 
 ## License
 

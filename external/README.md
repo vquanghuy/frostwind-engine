@@ -5,6 +5,7 @@ Mini Artillery stores third-party dependencies locally in this directory.
 | Dependency | Version | Integration |
 | --- | --- | --- |
 | [SDL3](sdl3/README.mini-artillery.md) | 3.4.18 | Official macOS universal dynamic framework with packaged headers |
+| [GLAD](glad/README.mini-artillery.md) | 2.0.8 | Generated OpenGL 3.3 Core C loader; local static target for native builds |
 
 ## Layout
 

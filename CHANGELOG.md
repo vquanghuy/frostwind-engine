@@ -7,6 +7,19 @@ All notable changes to this experiment are documented in this file.
 ### Added
 
 - Planned audio technology noted in the README technical approach.
+- C++ coding conventions covering ownership, initialization, callback flow, naming, and validation, linked from project guidance.
+- RFC 0002 for native OpenGL integration, generated GLAD 2 files, and the planned WebGL 2 rendering path.
+- Generated GLAD 2.0.8 OpenGL 3.3 Core loader, license and provenance record, and local native static CMake target. Native GLAD function loading uses SDL_GL_GetProcAddress.
+- Native OpenGL Core context and procedural checkerboard quad, with shader diagnostics, drawable-pixel viewport sizing, VSync, and graphics cleanup before context destruction.
+
+![Mini Artillery OpenGL checkerboard quad](docs/assets/milestones/m002-opengl-quad.png)
+
+*Native OpenGL quad on macOS Apple M1 Pro, captured manually on 2026-10-13. Configure, build, launch, and checkerboard output verified with an OpenGL 4.1 context. Interactive resize/Retina and exit checks remain pending.*
+
+### Changed
+
+- Managed application callback ownership with `std::unique_ptr`, including automatic cleanup on initialization failure.
+- Moved lifecycle and frame coordination into static `Application` callbacks, with `SDLWindow` owning SDL video/window lifetime and `OpenGLContext` owning graphics setup. Kept native window access private, removed the project namespace, and documented the SDL-driven loop and resource lifetimes. The quad remains a temporary demo.
 
 ## [0.1.0] - 2026-10-13
 

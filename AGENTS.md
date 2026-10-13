@@ -4,12 +4,12 @@
 
 Mini Artillery is a personal C++ experiment in 2D destructible terrain, inspired by Gunbound and Pocket Tanks. Prioritize terrain rendering, carving, collision updates, and a simple native macOS Apple Silicon sandbox. Artillery mechanics support the experiments. WebAssembly is a later portability experiment; multiplayer and deployment are optional extensions. Keep the scope lightweight and add modules only as needed for the experiment.
 
-The repository contains a minimal SDL3 window scaffold, the official SDL3 macOS dynamic framework, documentation, and reference images. Terrain and gameplay are not implemented. Keep descriptions of planned behavior distinct from implemented behavior. Read `README.md` and relevant documents under `docs/` before making changes.
+The repository contains a native SDL3/OpenGL scaffold with a temporary checkerboard quad, the official SDL3 macOS dynamic framework, generated GLAD files, documentation, and reference images. Terrain and gameplay are not implemented. Keep descriptions of planned behavior distinct from implemented behavior. Read `README.md`, `docs/coding-conventions.md`, and relevant documents under `docs/` before making changes.
 
 ## Technology decisions
 
 - Use CMake for native and browser builds; keep shared build configuration in one project.
-- Use SDL3 3.4.18 from `external/sdl3/`. Desktop OpenGL with GLAD and browser OpenGL ES 3.0 / WebGL 2 are planned; the initial window uses an SDL surface.
+- Use SDL3 3.4.18 from `external/sdl3/` and GLAD 2.0.8 from `external/glad/` for the native OpenGL Core scaffold. Browser rendering through Emscripten's GLES3 interface to WebGL 2 remains planned.
 - Use Box2D 3.x for physics and Clipper2 for terrain polygon operations. Box2D 3 uses a C API callable from C++; do not mix it with Box2D 2.x examples or APIs.
 - Use GLM for graphics math, Dear ImGui for UI and debug tools, and stb_image for image loading.
 - Use pinned local dependency copies under `external/<library>/`; follow `external/README.md` and RFC 0001. Do not introduce FetchContent downloads or a package manager into the build unless the dependency policy changes.
@@ -19,7 +19,7 @@ The repository contains a minimal SDL3 window scaffold, the official SDL3 macOS 
 
 ## Code organization
 
-Follow the planned folder layout in `README.md`. Add directories when implementation needs them rather than adding empty placeholders.
+Follow `docs/coding-conventions.md` and the responsibilities in `docs/project-structure.md`, with the planned folder layout summarized in `README.md`. Add directories when implementation needs them rather than adding empty placeholders.
 
 - `src/app/`: startup, frame loop, and fixed-step scheduling.
 - `src/game/`: tanks, weapons, damage, match rules, and turn state.
@@ -61,6 +61,6 @@ Report what was checked and any checks that could not run. Update documentation 
 
 ## Repository hygiene
 
-Maintain `CHANGELOG.md` using Keep a Changelog 1.1.0: collect notable changes under `Unreleased`, use only relevant standard categories, and add dated version sections when a release is explicitly made. Do not invent release tags or treat every commit as a milestone. At each completed visible milestone, capture the running app window (or use a supplied screenshot), preserve the PNG under `docs/assets/milestones/`, and embed it directly in `CHANGELOG.md` alongside the relevant changes, with a brief date and platform caption. Keep progress tracking in the changelog; do not add a separate milestone document. If capture is blocked, record the limitation and request a manual capture rather than fabricating an image.
+Maintain `CHANGELOG.md` using Keep a Changelog 1.1.0: collect notable changes under `Unreleased`, use only relevant standard categories, and add dated version sections when a release is explicitly made. Do not invent release tags or treat every commit as a milestone. The project owner captures screenshots; do not capture automatically. When asked to retrieve a supplied milestone screenshot, preserve the PNG under `docs/assets/milestones/` and embed it directly in `CHANGELOG.md` alongside the relevant changes, with a brief date and platform caption. Keep progress tracking in the changelog; do not add a separate milestone document. If a capture is pending, record that limitation rather than fabricating an image.
 
 Do not commit generated builds, local environment files, editor state, or `.serena/`. Preserve unrelated changes. Keep project code licensing separate from third-party asset licensing, and label reference images as references rather than game screenshots.

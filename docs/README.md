@@ -4,6 +4,7 @@
 - [Changelog and progress screenshots](../CHANGELOG.md)
 - [Native build and development instructions](development.md)
 - [Project structure and platform SDK layout](project-structure.md)
+- [C++ coding conventions and resource ownership](coding-conventions.md)
 - [RFC process and index](rfcs/README.md)
 - [Reference images and attribution](assets/README.md)
 

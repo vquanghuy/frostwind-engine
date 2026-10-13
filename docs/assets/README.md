@@ -2,7 +2,7 @@
 
 ## Milestone captures
 
-`milestones/` contains screenshots of the running Mini Artillery experiment, separate from the third-party references below. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 was supplied manually from a macOS window screenshot on 2026-10-13.
+`milestones/` contains screenshots of the running Mini Artillery experiment, separate from the third-party references below. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 and M002 were supplied manually from macOS window screenshots on 2026-10-13. M002 shows the native OpenGL checkerboard quad.
 
 ## Third-party references
 
