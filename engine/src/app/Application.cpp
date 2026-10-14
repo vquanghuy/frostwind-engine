@@ -5,7 +5,7 @@
 
 #include "../rendering/Texture2D.h"
 
-namespace toybox {
+namespace frostwind {
 
 SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, const WindowConfig& config)
 {
@@ -93,4 +93,4 @@ SDL_AppResult Application::iterate()
     return SDL_APP_CONTINUE;
 }
 
-} // namespace toybox
+} // namespace frostwind

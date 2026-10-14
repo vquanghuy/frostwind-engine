@@ -14,7 +14,7 @@ bool QuadDemo::initialize()
     if (!renderer_.initialize(std::filesystem::u8path(basePath) / "assets")) {
         return false;
     }
-    SDL_Log("Toybox textured quad initialized. Press Escape or close the window to quit.");
+    SDL_Log("Frostwind textured quad initialized. Press Escape or close the window to quit.");
     return true;
 }
 

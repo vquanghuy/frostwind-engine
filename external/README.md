@@ -1,6 +1,6 @@
 # Local dependencies
 
-Toybox stores third-party dependencies locally in this directory.
+Frostwind stores third-party dependencies locally in this directory.
 
 | Dependency | Version | Integration |
 | --- | --- | --- |

@@ -1,4 +1,4 @@
-function(toybox_enable_warnings target)
+function(frostwind_enable_warnings target)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     elseif(MSVC)
@@ -6,7 +6,7 @@ function(toybox_enable_warnings target)
     endif()
 endfunction()
 
-function(toybox_configure_example target assets_directory)
+function(frostwind_configure_example target assets_directory)
     set_target_properties(${target} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${target}"
     )

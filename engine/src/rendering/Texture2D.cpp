@@ -8,7 +8,7 @@
 #include <SDL3/SDL.h>
 #include <stb_image.h>
 
-namespace toybox {
+namespace frostwind {
 
 bool Texture2D::initializeSupport()
 {
@@ -155,4 +155,4 @@ void Texture2D::bind(u32 unit) const
     glBindTexture(GL_TEXTURE_2D, texture_);
 }
 
-} // namespace toybox
+} // namespace frostwind

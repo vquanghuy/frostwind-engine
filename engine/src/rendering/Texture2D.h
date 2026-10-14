@@ -5,7 +5,7 @@
 #include <core/Types.h>
 #include <glad/gl.h>
 
-namespace toybox {
+namespace frostwind {
 
 // Owns a 2D texture. The context must outlive this object.
 class Texture2D {
@@ -33,4 +33,4 @@ private:
     GLuint texture_ = 0;
 };
 
-} // namespace toybox
+} // namespace frostwind

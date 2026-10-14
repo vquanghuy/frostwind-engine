@@ -6,7 +6,7 @@
 
 #include "../platform/Window.h"
 
-namespace toybox {
+namespace frostwind {
 
 // Derived applications supply behavior; their members die before Window.
 class Application {
@@ -33,4 +33,4 @@ private:
     Window window_;
 };
 
-} // namespace toybox
+} // namespace frostwind

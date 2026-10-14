@@ -18,8 +18,8 @@ public:
     void draw(int width, int height) const;
 
 private:
-    toybox::ShaderProgram program_;
-    toybox::Texture2D texture_;
+    frostwind::ShaderProgram program_;
+    frostwind::Texture2D texture_;
     GLuint vao_ = 0;
     GLuint vbo_ = 0;
     GLint scaleLocation_ = -1;

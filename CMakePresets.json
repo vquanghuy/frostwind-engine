@@ -55,7 +55,7 @@
       "name": "native-debug",
       "configurePreset": "native-debug",
       "targets": [
-        "toybox-textured-quad"
+        "frostwind-textured-quad"
       ]
     },
     {
@@ -63,14 +63,14 @@
       "configurePreset": "windows-debug",
       "configuration": "Debug",
       "targets": [
-        "toybox-textured-quad"
+        "frostwind-textured-quad"
       ]
     },
     {
       "name": "linux-debug",
       "configurePreset": "linux-debug",
       "targets": [
-        "toybox-textured-quad"
+        "frostwind-textured-quad"
       ]
     }
   ]

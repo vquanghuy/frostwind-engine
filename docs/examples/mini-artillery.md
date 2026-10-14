@@ -1,6 +1,6 @@
 # Mini Artillery example (planned)
 
-Mini Artillery is a proposed Toybox example inspired by Gunbound and Pocket Tanks. It will exercise 2D destructible terrain, projectile impacts, and bodies settling on modified ground. No gameplay or `examples/mini-artillery/` executable exists yet. The earlier Mini Artillery window/checkerboard scaffold is now the [textured-quad example](../../examples/textured-quad/README.md).
+Mini Artillery is a proposed Frostwind example inspired by Gunbound and Pocket Tanks. It will exercise 2D destructible terrain, projectile impacts, and bodies settling on modified ground. No gameplay or `examples/mini-artillery/` executable exists yet. The earlier Mini Artillery window/checkerboard scaffold is now the [textured-quad example](../../examples/textured-quad/README.md).
 
 ## Engine and game responsibilities
 
@@ -12,7 +12,7 @@ Terrain experiments will coordinate visible masks and collision geometry, using 
 
 ![Kenney Tanks mockup](../assets/kenney-tanks-mockup.png)
 
-*Kenney Tanks asset-pack mockup used as a reference, not a Toybox or Mini Artillery screenshot.*
+*Kenney Tanks asset-pack mockup used as a reference, not a Frostwind or Mini Artillery screenshot.*
 
 The intended tank art uses separate chassis and turret sprites, with chassis following terrain slopes and independent turret aiming.
 

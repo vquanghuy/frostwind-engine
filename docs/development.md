@@ -14,10 +14,10 @@ From the repository root:
 ```sh
 cmake --preset native-debug
 cmake --build --preset native-debug --parallel
-./build/native/bin/toybox-textured-quad/toybox-textured-quad
+./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
-The preset configures Debug for macOS arm64 using Unix Makefiles and builds the `toybox-textured-quad` target, which depends on the static `toybox` library. The example opens a resizable 800 × 600 window titled **Toybox - Textured Quad**. Press Escape or close the window to exit.
+The preset configures Debug for macOS arm64 using Unix Makefiles and builds the `frostwind-textured-quad` target, which depends on the static `frostwind` library. The example opens a resizable 800 × 600 window titled **Frostwind - Textured Quad**. Press Escape or close the window to exit.
 
 The example output directory contains `assets/` and `Frameworks/SDL3.framework`. Keep the entire directory together when relocating it. Asset copying runs on each example build, including shader-only edits. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The [example README](../examples/textured-quad/README.md) describes ownership and controls.
 
@@ -28,15 +28,15 @@ A CMake cache contains absolute checkout paths. After moving/renaming a checkout
 To build the library without any examples on this development Mac:
 
 ```sh
-cmake -S . -B build/engine-only -DTOYBOX_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES=arm64
+cmake -S . -B build/engine-only -DFROSTWIND_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES=arm64
 cmake --build build/engine-only --parallel
 ```
 
-This produces `build/engine-only/engine/libtoybox.a` and the local GLAD archive. Runtime dependencies are packaged when an executable is built; the library alone opens no window.
+This produces `build/engine-only/engine/libfrostwind.a` and the local GLAD archive. Runtime dependencies are packaged when an executable is built; the library alone opens no window.
 
 ## IDE setup
 
-CLion can open the root `CMakeLists.txt` and use the native preset. Select `toybox-textured-quad` as the executable target. CMake supplies the C++17, GLAD, and SDL framework settings; no separate include paths are needed.
+CLion can open the root `CMakeLists.txt` and use the native preset. Select `frostwind-textured-quad` as the executable target. CMake supplies the C++17, GLAD, and SDL framework settings; no separate include paths are needed.
 
 For VS Code, install Microsoft's C/C++ and CMake Tools extensions, select `native-debug` with **CMake: Select Configure Preset**, then run **CMake: Configure**. The preset exports `build/native/compile_commands.json`.
 
@@ -52,11 +52,11 @@ Suggested local `.vscode/settings.json`:
 
 Use **C/C++: Reset IntelliSense Database** and **Developer: Reload Window** if stale diagnostics remain. See Microsoft's [IntelliSense guide](https://code.visualstudio.com/docs/cpp/configure-intellisense).
 
-For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`, and program `${workspaceFolder}/build/native/bin/toybox-textured-quad/toybox-textured-quad`. A pre-launch task can run the configure/build preset commands above. The C/C++ extension supplies `lldb-mi`; do not set `miDebuggerPath` to `/usr/bin/lldb`, which does not accept MI commands. See Microsoft's [LLDB-MI guide](https://code.visualstudio.com/docs/cpp/lldb-mi). Editor files remain ignored; interactive IDE refresh/debugging requires local verification.
+For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`, and program `${workspaceFolder}/build/native/bin/frostwind-textured-quad/frostwind-textured-quad`. A pre-launch task can run the configure/build preset commands above. The C/C++ extension supplies `lldb-mi`; do not set `miDebuggerPath` to `/usr/bin/lldb`, which does not accept MI commands. See Microsoft's [LLDB-MI guide](https://code.visualstudio.com/docs/cpp/lldb-mi). Editor files remain ignored; interactive IDE refresh/debugging requires local verification.
 
 ## Current implementation
 
-The static engine library contains namespaced `Application`, `Window`, `ShaderProgram`, and `Texture2D` classes. `Application` hosts a derived example through SDL callbacks; example resources are destroyed before its base window/context. SDL video initialization and graphics presentation stay in `Window`. See [project structure](project-structure.md) and [RFC 0003](rfcs/0003-toybox-engine-and-examples.md).
+The static engine library contains namespaced `Application`, `Window`, `ShaderProgram`, and `Texture2D` classes. `Application` hosts a derived example through SDL callbacks; example resources are destroyed before its base window/context. SDL video initialization and graphics presentation stay in `Window`. See [project structure](project-structure.md) and [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md).
 
 The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. The example uses GLSL 330 and a PNG crate texture decoded to RGBA8. VSync is requested, with a short frame delay if unavailable or minimized.
 
@@ -82,6 +82,10 @@ The updated example also launched successfully from `/private/tmp` through its S
 
 Texture support setup was subsequently moved behind `Texture2D::initializeSupport()`. Native build and focused checks passed for rejecting loads before support initialization, support failure/recovery, orientation and rendering, and reusing the cached limit with no `GL_MAX_TEXTURE_SIZE` queries during texture loads.
 
+### Frostwind rename validation (2026-10-14)
+
+The renamed native preset and a fresh engine-only build with `FROSTWIND_BUILD_EXAMPLES=OFF` passed. Native texture/rendering and lifecycle checks linked against `libfrostwind.a` and passed from `/private/tmp`, including asset lookup, orientation/readback, cached texture limits, failure recovery, callback exceptions, and GPU cleanup before context teardown. The renamed `frostwind-textured-quad` executable launched successfully with the Frostwind window title. The owner supplied the M004 screenshot, now embedded in the changelog and example README. The new GitHub remote was verified over SSH. Existing Toybox validation records above describe the historical implementation.
+
 ## Manual checks
 
 1. Configure/build successfully and launch the textured-quad example.
@@ -95,7 +99,7 @@ Resize/Retina, interactive exit, and IDE behavior remain manual checks unless ex
 To inspect the macOS runtime dependency:
 
 ```sh
-otool -L build/native/bin/toybox-textured-quad/toybox-textured-quad
+otool -L build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
 The executable should reference `@rpath/SDL3.framework/Versions/A/SDL3`, with the example's copied `Frameworks/` directory available through `@loader_path/Frameworks`.
@@ -109,7 +113,7 @@ Windows needs Visual Studio 2022 with C++ desktop tools, a Windows SDK, and matc
 ```powershell
 cmake --preset windows-debug
 cmake --build --preset windows-debug --parallel
-.\build\windows\bin\toybox-textured-quad\Debug\toybox-textured-quad.exe
+.\build\windows\bin\frostwind-textured-quad\Debug\frostwind-textured-quad.exe
 ```
 
 Linux needs a compatible SDL3 3.4.18 x86_64 SDK, GCC or Clang, and Make. Distribution/libc requirements and SDK provenance must be recorded:
@@ -117,7 +121,7 @@ Linux needs a compatible SDL3 3.4.18 x86_64 SDK, GCC or Clang, and Make. Distrib
 ```sh
 cmake --preset linux-debug
 cmake --build --preset linux-debug --parallel
-./build/linux/bin/toybox-textured-quad/toybox-textured-quad
+./build/linux/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
 Windows packages the DLL beside its executable; Linux packages `lib/` and uses `$ORIGIN/lib`. Linux system dependencies are not bundled automatically. Browser compilation still requires a separate WASM-compatible SDL3 library and Emscripten integration; no working browser build command is claimed.

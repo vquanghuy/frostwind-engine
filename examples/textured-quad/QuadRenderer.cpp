@@ -24,7 +24,7 @@ bool QuadRenderer::initialize(const std::filesystem::path& assetDirectory)
     }
 
     // Local quad coordinates: x right, y up; UV origin at the bottom left.
-    struct Vertex { toybox::f32 x, y, u, v; };
+    struct Vertex { frostwind::f32 x, y, u, v; };
     constexpr Vertex vertices[] = {
         {-1, -1, 0, 0}, {1, -1, 1, 0}, {1, 1, 1, 1},
         {-1, -1, 0, 0}, {1, 1, 1, 1}, {-1, 1, 0, 1},
@@ -67,7 +67,7 @@ void QuadRenderer::draw(int width, int height) const
     glClearColor(24.0f / 255.0f, 28.0f / 255.0f, 34.0f / 255.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     program_.bind();
-    const toybox::f32 side = std::min(width, height) * 0.66f;
+    const frostwind::f32 side = std::min(width, height) * 0.66f;
     program_.setVec2(scaleLocation_, side / width, side / height);
     texture_.bind();
     glBindVertexArray(vao_);

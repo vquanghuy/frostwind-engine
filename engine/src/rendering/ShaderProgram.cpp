@@ -8,7 +8,7 @@
 
 #include <SDL3/SDL.h>
 
-namespace toybox {
+namespace frostwind {
 
 namespace {
 
@@ -175,4 +175,4 @@ void ShaderProgram::setVec2(GLint location, f32 x, f32 y) const
     glUniform2f(location, x, y);
 }
 
-} // namespace toybox
+} // namespace frostwind

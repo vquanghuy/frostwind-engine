@@ -5,10 +5,10 @@
 struct SDL_Window;
 struct SDL_GLContextState;
 
-namespace toybox {
+namespace frostwind {
 
 struct WindowConfig {
-    std::string title = "Toybox";
+    std::string title = "Frostwind";
     int width = 960;
     int height = 540;
 };
@@ -33,4 +33,4 @@ private:
     bool vsync_ = false;
 };
 
-} // namespace toybox
+} // namespace frostwind

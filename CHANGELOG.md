@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Toybox and its examples are documented in this file.
+All notable changes to Frostwind and its examples are documented in this file.
 
 ## [Unreleased]
 
@@ -22,6 +22,7 @@ All notable changes to Toybox and its examples are documented in this file.
 
 ### Changed
 
+- Renamed the engine to Frostwind: namespace/static library `frostwind`, `FROSTWIND_BUILD_EXAMPLES`, executable `frostwind-textured-quad`, CMake helpers, repository remote, and active documentation. Version and historical logos/captures remain unchanged.
 - Renamed dependency provenance records to `README.integration.md` and updated documentation links and CMake diagnostics.
 - Engine: moved decoder setup behind `Texture2D::initializeSupport()` and cached the single context’s texture-size limit for file loads and raw uploads.
 - Simplified numeric conversions in texture/shader loading and the textured-quad example, preserving size validation and required C API pointer casts.
@@ -29,6 +30,10 @@ All notable changes to Toybox and its examples are documented in this file.
 - Textured Quad: moved the demo and its assets into `examples/textured-quad/`, with its own executable/output directory and shared runtime packaging.
 - Rebranded active documentation and repository links for Toybox while preserving Mini Artillery release/screenshot history. Mini Artillery gameplay remains a planned example.
 - Refactored the temporary quad demo to use the rendering support classes and external shader files, with executable-relative asset lookup that works across IDE and terminal working directories.
+
+![Frostwind textured quad](docs/assets/milestones/m004-frostwind-textured-quad.png)
+
+*Frostwind textured-quad example on macOS Apple M1 Pro, captured manually on 2026-10-14 after the engine rename.*
 
 ### Removed
 
@@ -68,8 +73,8 @@ All notable changes to Toybox and its examples are documented in this file.
 
 *Native window on macOS Apple Silicon, captured on 2026-10-13. Native configuration, build, and launch verified; terrain rendering remains planned.*
 
-[Unreleased]: https://github.com/vquanghuy/toybox-engine/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/vquanghuy/toybox-engine/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/vquanghuy/toybox-engine/tree/v0.1.0
+[Unreleased]: https://github.com/vquanghuy/frostwind-engine/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/vquanghuy/frostwind-engine/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/vquanghuy/frostwind-engine/tree/v0.1.0
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

@@ -4,11 +4,11 @@ An experimental C++ game engine for **2D and 3D games**, developed through pract
 
 > **Status:** A native macOS OpenGL scaffold is implemented: window/context management, application lifecycle callbacks, shader programs with file loading, and RGBA8 textures with PNG/JPEG loading. The textured-quad example exercises these features. Camera, audio, physics, terrain destruction, and additional graphics backends remain planned.
 
-Toybox began as Mini Artillery, a destructible-terrain experiment. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-toybox-engine-and-examples.md).
+Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was initially named Toybox. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-frostwind-engine-and-examples.md).
 
 ## Engine and examples
 
-The static `toybox` library supplies reusable facilities. Examples depend on the engine and own their application behavior and runtime assets; the engine never depends on an example.
+The static `frostwind` library supplies reusable facilities. Examples depend on the engine and own their application behavior and runtime assets; the engine never depends on an example.
 
 | Example | Status |
 | --- | --- |
@@ -34,18 +34,19 @@ Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI
 | Additional graphics APIs | Planned; backend design deferred |
 | Browser | Planned Emscripten/WebAssembly and WebGL 2 through its GLES3 interface; not configured |
 
-OpenGL and the current 2D example are the starting point, not limits on Toybox's scope. Introduce new systems through concrete examples rather than building unused abstractions.
+OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.
 
 ## Project structure
 
 ```text
-toybox-engine/
+frostwind-engine/
 ├── CMakeLists.txt              # Shared project and local dependencies
 ├── CMakePresets.json
 ├── cmake/                      # SDK integration and example packaging
 ├── engine/
-│   ├── CMakeLists.txt          # Static toybox library
+│   ├── CMakeLists.txt          # Static frostwind library
 │   └── src/
+│       ├── core/               # Primitive type aliases
 │       ├── app/                # Application lifecycle and frame coordination
 │       ├── platform/           # Window and OpenGL context ownership
 │       └── rendering/          # ShaderProgram and Texture2D
@@ -58,7 +59,7 @@ toybox-engine/
 └── build/                      # Ignored generated outputs
 ```
 
-Engine code uses namespace `toybox`; example code stays outside it. Headers live beside their `.cpp` files. Add camera, input, audio, terrain, physics, further examples, and tests when needed. The [structure guide](docs/project-structure.md) records ownership, callbacks, runtime assets, and platform SDK layout.
+Engine code uses namespace `frostwind`; example code stays outside it. Headers live beside their `.cpp` files. Add camera, input, audio, terrain, physics, further examples, and tests when needed. The [structure guide](docs/project-structure.md) records ownership, callbacks, runtime assets, and platform SDK layout.
 
 ## Build and run
 
@@ -67,7 +68,7 @@ On an Apple Silicon Mac with Xcode or Command Line Tools and CMake 3.22 or newer
 ```sh
 cmake --preset native-debug
 cmake --build --preset native-debug --parallel
-./build/native/bin/toybox-textured-quad/toybox-textured-quad
+./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
 The example opens a resizable window with a centered quad displaying a generated crate texture. Press Escape or close the window to exit. Its assets are resolved relative to the executable, independently of the working directory.

@@ -6,10 +6,10 @@ foreach(required_file src/gl.c include/glad/gl.h include/KHR/khrplatform.h)
     endif()
 endforeach()
 
-add_library(toybox-glad STATIC "${GLAD_ROOT}/src/gl.c")
-add_library(GLAD::GLAD ALIAS toybox-glad)
-target_include_directories(toybox-glad SYSTEM PUBLIC "${GLAD_ROOT}/include")
-set_target_properties(toybox-glad PROPERTIES
+add_library(frostwind-glad STATIC "${GLAD_ROOT}/src/gl.c")
+add_library(GLAD::GLAD ALIAS frostwind-glad)
+target_include_directories(frostwind-glad SYSTEM PUBLIC "${GLAD_ROOT}/include")
+set_target_properties(frostwind-glad PROPERTIES
     C_STANDARD 99
     C_STANDARD_REQUIRED YES
     C_EXTENSIONS OFF

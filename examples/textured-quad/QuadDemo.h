@@ -4,7 +4,7 @@
 
 #include "QuadRenderer.h"
 
-class QuadDemo final : public toybox::Application {
+class QuadDemo final : public frostwind::Application {
 protected:
     bool initialize() override;
     SDL_AppResult handleEvent(const SDL_Event& event) override;

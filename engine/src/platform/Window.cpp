@@ -3,7 +3,7 @@
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
 
-namespace toybox {
+namespace frostwind {
 
 Window::~Window()
 {
@@ -86,4 +86,4 @@ bool Window::present() const
     return true;
 }
 
-} // namespace toybox
+} // namespace frostwind

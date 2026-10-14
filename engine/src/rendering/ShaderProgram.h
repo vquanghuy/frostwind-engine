@@ -6,7 +6,7 @@
 #include <core/Types.h>
 #include <glad/gl.h>
 
-namespace toybox {
+namespace frostwind {
 
 // Owns a linked vertex/fragment program. The context must outlive this object.
 class ShaderProgram {
@@ -30,4 +30,4 @@ private:
     GLuint program_ = 0;
 };
 
-} // namespace toybox
+} // namespace frostwind

@@ -1,4 +1,4 @@
-# RFC 0003: Toybox engine and examples
+# RFC 0003: Frostwind engine and examples
 
 - **Status:** Implemented
 - **Created:** 2026-10-14
@@ -13,7 +13,7 @@ The implemented code is a native OpenGL scaffold with shader and texture support
 
 ## Goals and scope
 
-Make **Toybox** the main project, with a lightweight C++17 engine library for 2D and 3D games and examples that exercise it. Mini Artillery becomes the initial main game example, driving reusable 2D and destructible-terrain features. Planned capabilities include both 2D and 3D physics integrations and multiple graphics APIs. Keep the existing technology choices and local dependency policy for the initial implementation. Add systems only when an example needs them.
+Make **Frostwind** the main project, with a lightweight C++17 engine library for 2D and 3D games and examples that exercise it. Mini Artillery becomes the initial main game example, driving reusable 2D and destructible-terrain features. Planned capabilities include both 2D and 3D physics integrations and multiple graphics APIs. Keep the existing technology choices and local dependency policy for the initial implementation. Add systems only when an example needs them.
 
 OpenGL and the 2D examples are the starting point, not limits on the engine's scope. Additional graphics APIs and 3D systems are future work; this migration does not introduce backend abstractions or select a 3D physics library in advance.
 
@@ -23,15 +23,15 @@ This decision covers repository identity, code ownership, namespace, build targe
 
 ### Repository and layout
 
-Keep one repository and rename it on GitHub to `toybox-engine` after the local migration is verified. Use **Toybox** as the project name and `toybox` as the engine CMake target.
+Keep one repository and rename it on GitHub to `frostwind-engine` after the local migration is verified. Use **Frostwind** as the project name and `frostwind` as the engine CMake target.
 
 ```text
-toybox-engine/
+frostwind-engine/
 ├── CMakeLists.txt               # Shared project and dependency setup
 ├── CMakePresets.json
 ├── cmake/
 ├── engine/
-│   ├── CMakeLists.txt           # Static toybox library
+│   ├── CMakeLists.txt           # Static frostwind library
 │   └── src/
 │       ├── app/                # Reusable lifecycle and frame coordination
 │       ├── platform/           # Window, context, native/browser integration
@@ -63,7 +63,7 @@ Refactor `Application` so the engine coordinates lifecycle and frames while a sm
 
 ### Namespace, build, and assets
 
-Put project-owned engine types and functions in namespace `toybox`. Keep example-specific behavior outside that namespace. Required SDL C callback symbols remain at global scope and delegate to engine code. Update the coding convention's current no-project-namespace rule during migration.
+Put project-owned engine types and functions in namespace `frostwind`. Keep example-specific behavior outside that namespace. Required SDL C callback symbols remain at global scope and delegate to engine code. Update the coding convention's current no-project-namespace rule during migration.
 
 Build the engine as a static library and link each example to it through CMake. Keep one root project, explicit source lists, local dependency targets, and existing native/web build-directory separation. Supply runtime frameworks/libraries and example assets beside each executable, using distinct example output directories to avoid asset collisions. Update presets and verified commands for the new executable targets.
 
@@ -94,10 +94,10 @@ Configure and build the engine and textured-quad executable with the native pres
 ## Implementation plan
 
 1. Record this direction before changing code or repository identity.
-2. Extract reusable code into the `toybox` library, apply the namespace, and move the existing demo/assets into `examples/textured-quad/`.
+2. Extract reusable code into the `frostwind` library, apply the namespace, and move the existing demo/assets into `examples/textured-quad/`.
 3. Remove the demo dependency from engine application coordination and update CMake targets, asset copying, and presets.
 4. Revise project documentation and guidance, then validate the native example and resource lifetimes.
-5. Rename GitHub to `toybox-engine`, update the remote and repository links, and preserve existing history.
+5. Rename GitHub to `frostwind-engine`, update the remote and repository links, and preserve existing history.
 6. Develop Mini Artillery under `examples/mini-artillery/`, introducing engine features as that game or focused examples need them.
 
 ## Open questions
@@ -106,8 +106,10 @@ Select the 3D physics library, additional graphics APIs, and any backend interfa
 
 ## Decision
 
-Accepted on 2026-10-14 following the project owner's selection of Toybox as an engine-focused repository with Mini Artillery and other examples, and namespace `toybox`. Implemented on 2026-10-14: the static `toybox` library contains namespaced engine code; `toybox-textured-quad` owns its demo and assets under `examples/textured-quad/`. The example derives from `toybox::Application`, supplying `initialize`, optional `handleEvent`, and `render` hooks. A factory returns an owning base pointer; a virtual destructor releases derived GPU members before the base window. Each example provides its own SDL C adapters. Its native output is `build/native/bin/toybox-textured-quad/`, with isolated assets and runtime libraries.
+Accepted and implemented on 2026-10-14 following the project owner's selection of an engine-focused repository with independent examples. Frostwind uses namespace `frostwind` and a static `frostwind` library. The `frostwind-textured-quad` example owns its demo and runtime assets under `examples/textured-quad/`, with native output under `build/native/bin/frostwind-textured-quad/`.
 
-The owner renamed GitHub and the local checkout to `toybox-engine`; `origin` points to the renamed repository. Active repository links and documentation now reflect Toybox. Version 0.2.0, prior releases/tags, and historical screenshots remain preserved.
+The example derives from `frostwind::Application`, supplying initialization, optional event handling, and rendering. A factory returns an owning base pointer; a virtual destructor releases derived GPU members before the base window. Each example supplies its own SDL C adapters. The shared CMake helper is `cmake/FrostwindExample.cmake`; `FROSTWIND_BUILD_EXAMPLES=OFF` builds the engine alone.
 
-Native example and engine-only builds passed. Checks launched from `/private/tmp` verified example initialization/rendering/assets, shader/texture errors and GPU readback, callback results and exceptions, failed startup, and derived-resource cleanup before context destruction. Interactive resize/Retina and IDE checks remain manual; other platforms remain unverified. Mini Artillery gameplay and future engine systems are follow-up work, not missing migration steps.
+The repository is `frostwind-engine`, with remote `git@github.com:vquanghuy/frostwind-engine.git`. The local checkout directory may retain its existing name. Project version 0.2.0, prior releases/tags, logos, and milestone captures remain preserved.
+
+Native example and fresh engine-only builds passed. Checks linked against the engine and launched from `/private/tmp` verified example initialization/rendering/assets, shader/texture failures and GPU readback, cached texture limits, callback results and exceptions, failed startup, and derived-resource cleanup before context destruction. The Frostwind executable launched successfully, and the owner supplied the M004 screenshot; M001–M003 remain preserved. The remote was verified over SSH. Interactive resize/Retina and IDE checks remain manual; other platforms remain unverified. Mini Artillery gameplay and future engine systems remain follow-up work.

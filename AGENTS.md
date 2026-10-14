@@ -1,14 +1,14 @@
-# Working on Toybox
+# Working on Frostwind
 
 ## Project context
 
-Toybox is an experimental C++17 engine for 2D and 3D games, developed through practical examples in one repository. Reusable engine code lives under `engine/`; examples own application behavior, game rules, and their assets. Mini Artillery is a planned destructible-terrain example, not the engine's identity or an implemented game. Keep scope lightweight and add systems only as examples need them.
+Frostwind is an experimental C++17 engine for 2D and 3D games, developed through practical examples in one repository. Reusable engine code lives under `engine/`; examples own application behavior, game rules, and their assets. Mini Artillery is a planned destructible-terrain example, not the engine's identity or an implemented game. Keep scope lightweight and add systems only as examples need them.
 
 Implemented: native SDL3/OpenGL window and application lifecycle, shader-program source/file loading, RGBA8 textures with PNG/JPEG file loading, and the textured-quad example. Camera, audio, physics, terrain destruction, 3D systems, and additional graphics APIs remain planned. Read `README.md`, `docs/coding-conventions.md`, `docs/project-structure.md`, and relevant RFCs before changes. RFC 0003 records the engine/example direction.
 
 ## Technology decisions
 
-- Use one root CMake project with a static `toybox` library and separate example executables. Retain native/web output separation.
+- Use one root CMake project with a static `frostwind` library and separate example executables. Retain native/web output separation.
 - Use pinned local dependencies under `external/`; follow its README and RFC 0001. Do not add FetchContent or a package manager without changing that policy.
 - SDL3 3.4.18 uses the official macOS universal dynamic framework and packaged headers. Preserve its layout, symlinks, license, and provenance. Copy it beside each example; do not rebuild it locally or restore its source tree. Prefer static linking for other compiled dependencies.
 - Native graphics target OpenGL 3.3 Core through GLAD 2.0.8. Newer actual contexts are allowed. GLAD is native-only; browser GLES3/WebGL 2 and a separate WASM-compatible SDL library remain pending.
@@ -19,7 +19,7 @@ Implemented: native SDL3/OpenGL window and application lifecycle, shader-program
 
 ## Code organization and ownership
 
-Follow `docs/coding-conventions.md` and `docs/project-structure.md`. Headers stay beside `.cpp` files. Use namespace `toybox` for engine code, not example behavior. Add directories when implementation needs them; avoid empty placeholders.
+Follow `docs/coding-conventions.md` and `docs/project-structure.md`. Headers stay beside `.cpp` files. Use namespace `frostwind` for engine code, not example behavior. Add directories when implementation needs them; avoid empty placeholders.
 
 Use primitive aliases from `<core/Types.h>` where appropriate: `u8`, `u32`, `i32`, `f32`, `byte`, and `usize`; qualify them in examples. Keep external API types and ordinary `int` dimensions where they fit. Prefer implicit numeric conversions for validated values, avoid redundant casts, and keep size arithmetic in `usize` to prevent integer overflow. Required pointer conversions remain explicit.
 
@@ -32,7 +32,7 @@ Use primitive aliases from `<core/Types.h>` where appropriate: `u8`, `u32`, `i32
 - `external/`: shared pinned dependencies; `cmake/`: shared build/SDK/example packaging helpers.
 - `docs/assets/`: historical milestone PNGs and attributed reference images; artillery references are associated with the planned Mini Artillery example.
 
-Dependencies flow from examples to the engine. Engine code must not include example code or choose example assets. Each example derives from `toybox::Application` to supply startup, events, and rendering; its global SDL callback adapters delegate to the engine. Example GPU members must be destroyed before the base window/context. Keep native handles private and use scoped ownership for heap/C API resources. Keep geometry and simulation independent of a graphics context where practical.
+Dependencies flow from examples to the engine. Engine code must not include example code or choose example assets. Each example derives from `frostwind::Application` to supply startup, events, and rendering; its global SDL callback adapters delegate to the engine. Example GPU members must be destroyed before the base window/context. Keep native handles private and use scoped ownership for heap/C API resources. Keep geometry and simulation independent of a graphics context where practical.
 
 ## Future terrain and simulation rules
 
@@ -50,7 +50,7 @@ On the development Mac, use:
 ```sh
 cmake --preset native-debug
 cmake --build --preset native-debug --parallel
-./build/native/bin/toybox-textured-quad/toybox-textured-quad
+./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
 See `docs/development.md` for engine-only builds, IDE setup, and verification. Windows x64 and Linux x86_64 presets remain unverified with SDKs pending. Browser builds and an automated test suite are not established. Never report checks as passing without executing them.

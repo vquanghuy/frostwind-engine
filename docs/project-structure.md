@@ -1,6 +1,6 @@
 # Project structure
 
-Toybox contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-toybox-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
+Frostwind contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
 
 ## Implemented layout
 
@@ -28,15 +28,15 @@ examples/
         └── textures/crate.png
 ```
 
-Headers stay beside implementations. CMake explicitly lists source files. `toybox` exposes `engine/src/` as its include directory, allowing includes such as `<rendering/ShaderProgram.h>`; engine types use namespace `toybox`. Examples link to `toybox`, while the engine neither includes nor links example code. No separate public-header tree or installation/export package exists yet.
+Headers stay beside implementations. CMake explicitly lists source files. `frostwind` exposes `engine/src/` as its include directory, allowing includes such as `<rendering/ShaderProgram.h>`; engine types use namespace `frostwind`. Examples link to `frostwind`, while the engine neither includes nor links example code. No separate public-header tree or installation/export package exists yet.
 
 | Component | Responsibility |
 | --- | --- |
 | `core/Types.h` | Shared primitive aliases; no runtime initialization or ownership |
-| `toybox::Application` | Own the window, create the selected application through a factory, coordinate events/frames, and translate callback exceptions into failures |
-| `toybox::Window` | Own SDL video/window/context lifetime, GLAD loading, VSync, drawable size/state, and presentation |
-| `toybox::ShaderProgram` | Own a linked vertex/fragment program, load files/source, bind, and set cached uniforms |
-| `toybox::Texture2D` | Own a texture, decode PNG/JPEG files, validate/upload RGBA8 pixels, and bind a texture unit |
+| `frostwind::Application` | Own the window, create the selected application through a factory, coordinate events/frames, and translate callback exceptions into failures |
+| `frostwind::Window` | Own SDL video/window/context lifetime, GLAD loading, VSync, drawable size/state, and presentation |
+| `frostwind::ShaderProgram` | Own a linked vertex/fragment program, load files/source, bind, and set cached uniforms |
+| `frostwind::Texture2D` | Own a texture, decode PNG/JPEG files, validate/upload RGBA8 pixels, and bind a texture unit |
 | Example `main.cpp` | Supply SDL's global callbacks, application factory, and window configuration |
 | `QuadDemo` | Select demo assets, initialize the renderer, handle Escape, and render each frame |
 | `QuadRenderer` | Own quad buffers plus engine shader/texture objects; load the example texture and draw |
@@ -45,7 +45,7 @@ Camera, audio, input systems, physics, terrain, and other examples are added onl
 
 ## Application flow and resource lifetime
 
-An example derives from `toybox::Application` and implements `initialize()` and `render(width, height)`, with optional `handleEvent(event)`. Its factory returns `std::unique_ptr<toybox::Application>`. SDL's named C callbacks remain global in the example entry point and delegate to the engine's static callbacks.
+An example derives from `frostwind::Application` and implements `initialize()` and `render(width, height)`, with optional `handleEvent(event)`. Its factory returns `std::unique_ptr<frostwind::Application>`. SDL's named C callbacks remain global in the example entry point and delegate to the engine's static callbacks.
 
 `Application::onInit` creates the derived instance, initializes its window/context, calls `Texture2D::initializeSupport()`, and then invokes example initialization. Ownership transfers to SDL's opaque state only after success; failed startup cleans up automatically and leaves null state. The factory, startup, event, and frame boundaries handle exceptions so they cannot unwind through SDL. `onQuit` takes ownership back with `unique_ptr`.
 
@@ -59,17 +59,17 @@ Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a comp
 
 `ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). The private `StbImage.cpp` compiles the local PNG/JPEG decoder once. Application startup calls `Texture2D::initializeSupport()` before example initialization. This rendering-owned setup configures bottom-left image orientation and caches the maximum texture size for the single context. Both file loads and raw uploads reuse that limit; application code does not depend on stb_image. Example code chooses texture paths; the engine does not choose assets. Buffer/framebuffer wrappers and additional formats remain deferred.
 
-Each example selects and licenses its own assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `toybox_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
+Each example selects and licenses its own assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `frostwind_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
 
 ## CMake and runtime layout
 
-The root project owns shared local dependency setup. `engine/CMakeLists.txt` defines the static `toybox` target; each example defines its executable. `TOYBOX_BUILD_EXAMPLES=OFF` builds the library alone. SDL3 and GLAD include/link requirements propagate through the library target. `cmake/ToyboxExample.cmake` handles example warnings, output directories, and runtime packaging.
+The root project owns shared local dependency setup. `engine/CMakeLists.txt` defines the static `frostwind` target; each example defines its executable. `FROSTWIND_BUILD_EXAMPLES=OFF` builds the library alone. SDL3 and GLAD include/link requirements propagate through the library target. `cmake/FrostwindExample.cmake` handles example warnings, output directories, and runtime packaging.
 
 | Preset | Executable path | Status |
 | --- | --- | --- |
-| `native-debug` | `build/native/bin/toybox-textured-quad/toybox-textured-quad` | macOS arm64 built; runtime validation recorded in development guide |
-| `windows-debug` | `build/windows/bin/toybox-textured-quad/Debug/toybox-textured-quad.exe` | SDK pending; unverified |
-| `linux-debug` | `build/linux/bin/toybox-textured-quad/toybox-textured-quad` | SDK pending; unverified |
+| `native-debug` | `build/native/bin/frostwind-textured-quad/frostwind-textured-quad` | macOS arm64 built; runtime validation recorded in development guide |
+| `windows-debug` | `build/windows/bin/frostwind-textured-quad/Debug/frostwind-textured-quad.exe` | SDK pending; unverified |
+| `linux-debug` | `build/linux/bin/frostwind-textured-quad/frostwind-textured-quad` | SDK pending; unverified |
 
 Each executable directory contains `assets/`. macOS also contains `Frameworks/SDL3.framework` and uses `@loader_path/Frameworks`; Windows copies `SDL3.dll` beside the executable; Linux copies `lib/` and uses `$ORIGIN/lib`. Keep each output directory intact when moving a build. Static library outputs are generated under `build/`, never vendored into `external/`.
 
