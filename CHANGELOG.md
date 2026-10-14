@@ -4,25 +4,25 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ## [Unreleased]
 
+## 0.3.0 - 2026-10-14 (milestone)
+
+Development milestone: reusable engine and example separation, shader/texture support, and file-loaded crate rendering. This records progress; no release or tag was created.
+
 ### Added
 
 - Engine: shared primitive aliases in `core/Types.h`, applied to texture data/sizes and graphics math, with conversion guidance for engine and examples.
 - Engine: `Texture2D::initializeFromFile` for PNG/JPEG assets using pinned stb_image 2.28, with RGBA8 conversion, bottom-left orientation, file diagnostics, and scoped decoded-pixel cleanup.
 - Textured Quad: generated crate texture with recorded provenance, replacing the procedural checkerboard in the running example; historical captures are preserved.
 - Conventional Commit guidelines with optional scopes, linked from the documentation index and required by agent instructions.
-- Toybox chest-and-toys logo in the README, with generation provenance recorded under documentation assets.
-- RFC 0003 establishing Toybox as an engine with independent examples in one repository.
+- Engine branding assets and generation provenance; the README now uses the Frostwind logo.
+- RFC 0003 establishing Frostwind as an engine with independent examples in one repository.
 - `ShaderProgram` for linked vertex/fragment shaders, with file/source loading, path and compilation/link diagnostics, cached uniform operations, and automatic cleanup.
 - `Texture2D` for validated RGBA8 uploads, texture-unit binding, and automatic cleanup, preserving pixel-unpack state during uploads.
 - Runtime demo shader assets, license records, and build-time copying beside the executable; support-class contracts documented in RFC 0002.
 
-![Toybox file-loaded crate texture](docs/assets/milestones/m003-file-texture.png)
-
-*Textured-quad example on macOS Apple M1 Pro, captured manually on 2026-10-14. The generated crate PNG is loaded from runtime assets.*
-
 ### Changed
 
-- Renamed the engine to Frostwind: namespace/static library `frostwind`, `FROSTWIND_BUILD_EXAMPLES`, executable `frostwind-textured-quad`, CMake helpers, repository remote, and active documentation. Version and historical logos/captures remain unchanged.
+- Renamed the engine to Frostwind: namespace/static library `frostwind`, `FROSTWIND_BUILD_EXAMPLES`, executable `frostwind-textured-quad`, CMake helpers, repository remote, and active documentation. The rename preserved historical logos/captures.
 - Renamed dependency provenance records to `README.integration.md` and updated documentation links and CMake diagnostics.
 - Engine: moved decoder setup behind `Texture2D::initializeSupport()` and cached the single context’s texture-size limit for file loads and raw uploads.
 - Simplified numeric conversions in texture/shader loading and the textured-quad example, preserving size validation and required C API pointer casts.
@@ -73,7 +73,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 *Native window on macOS Apple Silicon, captured on 2026-10-13. Native configuration, build, and launch verified; terrain rendering remains planned.*
 
-[Unreleased]: https://github.com/vquanghuy/frostwind-engine/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/vquanghuy/frostwind-engine/compare/97d8629...HEAD
 [0.2.0]: https://github.com/vquanghuy/frostwind-engine/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vquanghuy/frostwind-engine/tree/v0.1.0
 
