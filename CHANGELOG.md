@@ -6,6 +6,7 @@ All notable changes to Toybox and its examples are documented in this file.
 
 ### Added
 
+- Conventional Commit guidelines with optional scopes, linked from the documentation index and required by agent instructions.
 - Toybox chest-and-toys logo in the README, with generation provenance recorded under documentation assets.
 - RFC 0003 establishing Toybox as an engine with independent examples in one repository.
 - `ShaderProgram` for linked vertex/fragment shaders, with file/source loading, path and compilation/link diagnostics, cached uniform operations, and automatic cleanup.

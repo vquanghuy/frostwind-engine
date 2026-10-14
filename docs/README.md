@@ -5,6 +5,7 @@
 - [Native build and development instructions](development.md)
 - [Project structure and platform SDK layout](project-structure.md)
 - [C++ coding conventions and resource ownership](coding-conventions.md)
+- [Contributing and commit messages](contributing.md)
 - [RFC process and index](rfcs/README.md)
 - [Textured-quad example](../examples/textured-quad/README.md)
 - [Planned Mini Artillery example and references](examples/mini-artillery.md)
