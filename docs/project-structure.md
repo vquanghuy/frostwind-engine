@@ -78,7 +78,7 @@ Each executable directory contains `assets/`. macOS also contains `Frameworks/SD
 ```text
 external/sdl3/
 ├── LICENSE.txt
-├── README.mini-artillery.md       # Preserved dependency provenance record
+├── README.integration.md       # Preserved dependency provenance record
 ├── macos-universal/SDL3.framework/ # Present; official binary and packaged headers
 ├── windows-x64/                   # Pending: include/SDL3/, lib/SDL3.lib, bin/SDL3.dll
 └── linux-x64/                     # Pending: include/SDL3/, lib/libSDL3.so.0 + targets

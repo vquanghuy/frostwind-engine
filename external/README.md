@@ -4,9 +4,9 @@ Toybox stores third-party dependencies locally in this directory.
 
 | Dependency | Version | Integration |
 | --- | --- | --- |
-| [SDL3](sdl3/README.mini-artillery.md) | 3.4.18 | Official macOS universal dynamic framework with packaged headers |
-| [GLAD](glad/README.mini-artillery.md) | 2.0.8 | Generated OpenGL 3.3 Core C loader; local static target for native builds |
-| [stb_image](stb/README.mini-artillery.md) | 2.28 | Pinned local header; PNG/JPEG implementation compiled once into the engine |
+| [SDL3](sdl3/README.integration.md) | 3.4.18 | Official macOS universal dynamic framework with packaged headers |
+| [GLAD](glad/README.integration.md) | 2.0.8 | Generated OpenGL 3.3 Core C loader; local static target for native builds |
+| [stb_image](stb/README.integration.md) | 2.28 | Pinned local header; PNG/JPEG implementation compiled once into the engine |
 
 ## Layout
 
@@ -15,7 +15,7 @@ Use one directory per library, with separate SDK folders for each platform and a
 ```text
 external/sdl3/
 ├── LICENSE.txt
-├── README.mini-artillery.md
+├── README.integration.md
 ├── macos-universal/SDL3.framework/  # Supplied, including its public headers
 ├── windows-x64/                    # Pending; MSVC x64
 │   ├── include/SDL3/
@@ -43,7 +43,7 @@ Only create directories that contain a dependency's actual files. Build outputs 
 
 ## Inventory and updates
 
-For every imported dependency, add `README.mini-artillery.md` recording its upstream URL, exact release and/or commit, license, imported files, local patches, and update procedure. For supplied binaries, also record compiler/SDK versions, architecture, build flags, configuration, linkage, and reproduction commands.
+For every imported dependency, add `README.integration.md` recording its upstream URL, exact release and/or commit, license, imported files, local patches, and update procedure. For supplied binaries, also record compiler/SDK versions, architecture, build flags, configuration, linkage, and reproduction commands.
 
 Commit the intended dependency files and their licenses. `.gitignore` allows supplied library files under each dependency's `lib/` directory and the named SDL3 Windows/Linux SDK locations while ignoring ordinary generated artifacts.
 

@@ -2,7 +2,7 @@
 set(GLAD_ROOT "${CMAKE_CURRENT_LIST_DIR}/../external/glad")
 foreach(required_file src/gl.c include/glad/gl.h include/KHR/khrplatform.h)
     if(NOT EXISTS "${GLAD_ROOT}/${required_file}")
-        message(FATAL_ERROR "Missing GLAD file: ${GLAD_ROOT}/${required_file}. See external/glad/README.mini-artillery.md.")
+        message(FATAL_ERROR "Missing GLAD file: ${GLAD_ROOT}/${required_file}. See external/glad/README.integration.md.")
     endif()
 endforeach()
 

@@ -22,6 +22,7 @@ All notable changes to Toybox and its examples are documented in this file.
 
 ### Changed
 
+- Renamed dependency provenance records to `README.integration.md` and updated documentation links and CMake diagnostics.
 - Engine: moved decoder setup behind `Texture2D::initializeSupport()` and cached the single context’s texture-size limit for file loads and raw uploads.
 - Simplified numeric conversions in texture/shader loading and the textured-quad example, preserving size validation and required C API pointer casts.
 - Engine: extracted the static `toybox` library, applied namespace `toybox`, and made application startup/events/rendering extensible through example-owned behavior.

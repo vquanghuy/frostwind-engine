@@ -5,7 +5,7 @@ function(require_sdl3_file path)
     if(NOT EXISTS "${path}")
         message(FATAL_ERROR
             "Missing local SDL3 SDK file: ${path}\n"
-            "See external/sdl3/README.mini-artillery.md for the required layout. "
+            "See external/sdl3/README.integration.md for the required layout. "
             "Windows and Linux SDKs are not supplied or verified yet.")
     endif()
 endfunction()
