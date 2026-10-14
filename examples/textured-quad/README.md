@@ -2,9 +2,9 @@
 
 A small Toybox example that loads a generated wooden-crate PNG and draws it on a textured quad. This is the existing Mini Artillery rendering scaffold extracted into an engine consumer; it contains no artillery gameplay.
 
-![Native OpenGL checkerboard quad](../../docs/assets/milestones/m002-opengl-quad.png)
+![Toybox quad displaying the loaded crate texture](../../docs/assets/milestones/m003-file-texture.png)
 
-*Captured manually on macOS Apple M1 Pro on 2026-10-13, before the Toybox rename and image-file loading. This historical checkerboard capture retains its original Mini Artillery title; a capture of the crate texture is pending.*
+*Captured manually on macOS Apple M1 Pro on 2026-10-14. The generated crate PNG is loaded from the example’s runtime assets. The earlier checkerboard capture remains in the [changelog](../../CHANGELOG.md).*
 
 ## Build and run
 

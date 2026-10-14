@@ -10,6 +10,18 @@
 
 namespace toybox {
 
+bool Texture2D::initializeSupport()
+{
+    maxSize_ = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize_);
+    if (maxSize_ <= 0) {
+        SDL_Log("Could not initialize texture support: invalid maximum texture size.");
+        return false;
+    }
+    stbi_set_flip_vertically_on_load(true);
+    return true;
+}
+
 Texture2D::~Texture2D()
 {
     if (texture_) {
@@ -19,6 +31,10 @@ Texture2D::~Texture2D()
 
 bool Texture2D::initializeFromFile(const std::filesystem::path& path)
 {
+    if (maxSize_ <= 0) {
+        SDL_Log("Texture2D support must be initialized before loading textures.");
+        return false;
+    }
     if (texture_) {
         SDL_Log("Texture2D is already initialized: %s", path.u8string().c_str());
         return false;
@@ -42,10 +58,8 @@ bool Texture2D::initializeFromFile(const std::filesystem::path& path)
         SDL_Log("Could not inspect texture %s: %s", path.u8string().c_str(), stbi_failure_reason());
         return false;
     }
-    GLint maxSize = 0;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
-    if (width <= 0 || height <= 0 || width > maxSize || height > maxSize) {
-        SDL_Log("Texture dimensions are invalid or exceed the device limit of %d: %s", maxSize, path.u8string().c_str());
+    if (width <= 0 || height <= 0 || width > maxSize_ || height > maxSize_) {
+        SDL_Log("Texture dimensions are invalid or exceed the device limit of %d: %s", maxSize_, path.u8string().c_str());
         return false;
     }
     const usize w = width;
@@ -71,6 +85,10 @@ bool Texture2D::initializeFromFile(const std::filesystem::path& path)
 
 bool Texture2D::initializeRGBA8(int width, int height, const byte* pixels, usize byteCount)
 {
+    if (maxSize_ <= 0) {
+        SDL_Log("Texture2D support must be initialized before uploading textures.");
+        return false;
+    }
     if (texture_) {
         SDL_Log("Texture2D is already initialized.");
         return false;
@@ -85,10 +103,8 @@ bool Texture2D::initializeRGBA8(int width, int height, const byte* pixels, usize
         SDL_Log("Texture2D pixel byte count does not match its RGBA8 dimensions.");
         return false;
     }
-    GLint maxSize = 0;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
-    if (width > maxSize || height > maxSize) {
-        SDL_Log("Texture2D dimensions exceed the device limit of %d.", maxSize);
+    if (width > maxSize_ || height > maxSize_) {
+        SDL_Log("Texture2D dimensions exceed the device limit of %d.", maxSize_);
         return false;
     }
 

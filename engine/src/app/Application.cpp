@@ -3,7 +3,7 @@
 #include <exception>
 #include <memory>
 
-#include <stb_image.h>
+#include "../rendering/Texture2D.h"
 
 namespace toybox {
 
@@ -19,9 +19,7 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
         if (!application->window_.initialize(config)) {
             return SDL_APP_FAILURE;
         }
-        // Configure the engine-wide UV convention before example assets load.
-        stbi_set_flip_vertically_on_load(true);
-        if (!application->initialize()) {
+        if (!Texture2D::initializeSupport() || !application->initialize()) {
             return SDL_APP_FAILURE;
         }
         // SDL carries the state until onQuit takes ownership back.

@@ -16,8 +16,13 @@ All notable changes to Toybox and its examples are documented in this file.
 - `Texture2D` for validated RGBA8 uploads, texture-unit binding, and automatic cleanup, preserving pixel-unpack state during uploads.
 - Runtime demo shader assets, license records, and build-time copying beside the executable; support-class contracts documented in RFC 0002.
 
+![Toybox file-loaded crate texture](docs/assets/milestones/m003-file-texture.png)
+
+*Textured-quad example on macOS Apple M1 Pro, captured manually on 2026-10-14. The generated crate PNG is loaded from runtime assets.*
+
 ### Changed
 
+- Engine: moved decoder setup behind `Texture2D::initializeSupport()` and cached the single context’s texture-size limit for file loads and raw uploads.
 - Simplified numeric conversions in texture/shader loading and the textured-quad example, preserving size validation and required C API pointer casts.
 - Engine: extracted the static `toybox` library, applied namespace `toybox`, and made application startup/events/rendering extensible through example-owned behavior.
 - Textured Quad: moved the demo and its assets into `examples/textured-quad/`, with its own executable/output directory and shared runtime packaging.

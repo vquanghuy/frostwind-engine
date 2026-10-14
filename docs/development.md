@@ -76,9 +76,11 @@ Browser builds and Windows/Linux native behavior have not been validated. The ow
 
 ### Texture-file validation (2026-10-14)
 
-Native configuration/build and focused OpenGL checks passed on Apple M1 Pro for PNG/JPEG loading, RGBA/gray-alpha conversion, exact pixel orientation and alpha readback, Unicode filenames, missing/empty/invalid/truncated input, excessive dimensions, retry after failure, repeated initialization rejection, pixel-unpack state restoration, resource destruction, and a rendered quad pixel matching the uploaded texture. Checks loaded the packaged crate texture from `/private/tmp`; tutorial JPEG input was used only for a local check and was not imported. The generated crate replaces the running example's checkerboard; an updated owner-supplied screenshot is pending.
+Native configuration/build and focused OpenGL checks passed on Apple M1 Pro for PNG/JPEG loading, RGBA/gray-alpha conversion, exact pixel orientation and alpha readback, Unicode filenames, missing/empty/invalid/truncated input, excessive dimensions, retry after failure, repeated initialization rejection, pixel-unpack state restoration, resource destruction, and a rendered quad pixel matching the uploaded texture. Checks loaded the packaged crate texture from `/private/tmp`; tutorial JPEG input was used only for a local check and was not imported. The generated crate replaces the running example's checkerboard; the owner supplied its M003 screenshot on 2026-10-14, preserved in the changelog and example README.
 
 The updated example also launched successfully from `/private/tmp` through its SDL callbacks. Interactive resize/Retina checks remain manual.
+
+Texture support setup was subsequently moved behind `Texture2D::initializeSupport()`. Native build and focused checks passed for rejecting loads before support initialization, support failure/recovery, orientation and rendering, and reusing the cached limit with no `GL_MAX_TEXTURE_SIZE` queries during texture loads.
 
 ## Manual checks
 

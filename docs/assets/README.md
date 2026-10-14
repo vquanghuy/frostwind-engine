@@ -10,7 +10,7 @@
 
 ## Milestone captures
 
-`milestones/` preserves screenshots from the project’s original Mini Artillery identity, separate from the third-party references below. The checkerboard implementation now lives in the Toybox textured-quad example; historical images and captions are retained without relabeling. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 and M002 were supplied manually from macOS window screenshots on 2026-10-13. M002 shows the native OpenGL checkerboard quad.
+`milestones/` preserves project screenshots, including the original Mini Artillery identity, separate from the third-party references below. Historical images and captions are retained without relabeling. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 and M002 were supplied manually from macOS window screenshots on 2026-10-13. M002 shows the native OpenGL checkerboard quad. [`milestones/m003-file-texture.png`](milestones/m003-file-texture.png) shows the Toybox textured-quad example loading the generated crate PNG. M003 was supplied by the owner from `Screenshot 2026-10-14 at 14.15.24.png` on macOS Apple M1 Pro on 2026-10-14 and is also embedded in the [example README](../../examples/textured-quad/README.md).
 
 ## Third-party references
 
