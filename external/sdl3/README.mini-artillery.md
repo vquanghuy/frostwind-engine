@@ -14,7 +14,7 @@
 - **Architecture:** Universal arm64 and x86_64.
 - **Framework deployment targets:** macOS 11.0 for arm64 and 10.13 for x86_64, inspected from the supplied Mach-O binary. Application deployment settings remain separate.
 - **Linkage:** Dynamic framework; install name `@rpath/SDL3.framework/Versions/A/SDL3`.
-- **Integration:** Imported `SDL3::SDL3` target in `cmake/SDL3.cmake`. CMake copies the framework into `build/native/Frameworks/`; the executable uses `@loader_path/Frameworks` as its runtime search path.
+- **Integration:** Imported `SDL3::SDL3` target in `cmake/SDL3.cmake`. `cmake/ToyboxExample.cmake` copies the framework into each example’s output directory (currently `build/native/bin/toybox-textured-quad/Frameworks/`); the executable uses `@loader_path/Frameworks` as its runtime search path.
 
 Headers live inside `SDL3.framework/Headers` and are made available to the compiler through the framework search path. There is no separate header copy or static archive. This framework cannot be used for WASM builds.
 

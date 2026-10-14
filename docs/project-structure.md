@@ -1,115 +1,85 @@
 # Project structure
 
-The root [README](../README.md#project-structure) summarizes the planned modules. This document records application responsibilities, resource ownership, and dependency packaging. Only the macOS SDK is supplied and validated; Windows and Linux paths describe the prepared integration for later verification.
+Toybox contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-toybox-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
 
-## Implemented application structure
+## Implemented layout
 
 ```text
-src/
-├── main.cpp                      # SDL callback-mode entry point
-├── app/
-│   ├── Application.h
-│   └── Application.cpp           # Initialization, events, and frame coordination
-├── platform/
-│   ├── Window.h
-│   └── Window.cpp                # SDL video/window, OpenGL context, and presentation
-└── rendering/
-    ├── QuadRenderer.h
-    ├── QuadRenderer.cpp          # Temporary checkerboard demo
-    ├── ShaderProgram.h
-    ├── ShaderProgram.cpp         # Compilation, linking, binding, and uniforms
-    ├── Texture2D.h
-    └── Texture2D.cpp             # RGBA8 upload and texture-unit binding
+engine/
+├── CMakeLists.txt
+└── src/
+    ├── app/Application.h, Application.cpp
+    ├── platform/Window.h, Window.cpp
+    └── rendering/
+        ├── ShaderProgram.h, ShaderProgram.cpp
+        └── Texture2D.h, Texture2D.cpp
+examples/
+└── textured-quad/
+    ├── CMakeLists.txt
+    ├── README.md
+    ├── main.cpp
+    ├── QuadDemo.h, QuadDemo.cpp
+    ├── QuadRenderer.h, QuadRenderer.cpp
+    └── assets/
+        ├── LICENSES.md
+        └── shaders/quad.vert, quad.frag
 ```
 
-Headers live beside their implementation files. CMake explicitly lists each compiled source. The `app/` directory currently needs only `Application.h` and `Application.cpp`; fixed-step scheduling or configuration helpers will be added when needed.
+Headers stay beside implementations. CMake explicitly lists source files. `toybox` exposes `engine/src/` as its include directory, allowing includes such as `<rendering/ShaderProgram.h>`; engine types use namespace `toybox`. Examples link to `toybox`, while the engine neither includes nor links example code. No separate public-header tree or installation/export package exists yet.
 
 | Component | Responsibility |
 | --- | --- |
-| `main.cpp` | Enable SDL's generated entry point and callback mode |
-| `Application` | Own the window and demo, handle lifecycle/events, and coordinate one frame |
-| `Window` | Own SDL video initialization, the native window and OpenGL context; load GLAD, configure VSync, query size/state, and present frames |
-| `QuadRenderer` | Own and draw the temporary demo's shader, texture, vertex array, and buffer |
-| `ShaderProgram` | Own a linked vertex/fragment program and expose binding and cached uniform operations |
-| `Texture2D` | Own a 2D texture, validate/upload RGBA8 data, and bind a texture unit |
+| `toybox::Application` | Own the window, create the selected application through a factory, coordinate events/frames, and translate callback exceptions into failures |
+| `toybox::Window` | Own SDL video/window/context lifetime, GLAD loading, VSync, drawable size/state, and presentation |
+| `toybox::ShaderProgram` | Own a linked vertex/fragment program, load files/source, bind, and set cached uniforms |
+| `toybox::Texture2D` | Own a texture, validate/upload RGBA8 pixels, and bind a texture unit |
+| Example `main.cpp` | Supply SDL's global callbacks, application factory, and window configuration |
+| `QuadDemo` | Select demo assets, initialize the renderer, handle Escape, and render each frame |
+| `QuadRenderer` | Own quad buffers plus engine shader/texture objects; generate checkerboard pixels and draw |
 
-`Application` owns `Window` and the temporary `QuadRenderer`, in that declaration order. `Window` initializes SDL's video subsystem, configures graphics attributes, creates the SDL window and OpenGL context, loads GLAD, and sets VSync. The demo then creates its graphics resources. Constructors start empty; fallible initialization reports errors, and destructors release resources after partial initialization.
+Camera, audio, input systems, physics, terrain, and other examples are added only as implementation requires them. Mini Artillery remains a [planned example](examples/mini-artillery.md); its game rules will stay outside the engine.
 
-Destruction runs in reverse: demo resources first, then `Window` releases its context, SDL window, and video subsystem. `Window` balances its subsystem initialization with SDL_QuitSubSystem; SDL's callback framework performs the final SDL_Quit. Resource owners disable copying. Native handles remain private to `Window`, with no public handle getter or friend access. Project classes currently use no project namespace.
+## Application flow and resource lifetime
 
-`main.cpp` only selects SDL callback mode and includes SDL's entry-point header. Static callbacks on `Application` own allocation, event handling, per-frame work, and deletion. SDL requires named C callback entry points; thin adapters live beside their static implementations in `Application.cpp`.
+An example derives from `toybox::Application` and implements `initialize()` and `render(width, height)`, with optional `handleEvent(event)`. Its factory returns `std::unique_ptr<toybox::Application>`. SDL's named C callbacks remain global in the example entry point and delegate to the engine's static callbacks.
 
-`onInit` creates the application with `std::make_unique` and transfers ownership to SDL's opaque callback state only after initialization succeeds. Failed initialization cleans up automatically and leaves that state null; standard exceptions become SDL initialization failures. `onQuit` takes ownership back with `std::unique_ptr`, which releases the application and its resources on scope exit.
+`Application::onInit` creates the derived instance, initializes its window/context, and then invokes example initialization. Ownership transfers to SDL's opaque state only after success; failed startup cleans up automatically and leaves null state. The factory, startup, event, and frame boundaries handle exceptions so they cannot unwind through SDL. `onQuit` takes ownership back with `unique_ptr`.
 
-### Main loop
+SDL owns the loop, delivering events and repeatedly invoking one frame callback. The engine queries drawable pixels, skips minimized/zero-sized windows, invokes the example's renderer, and presents. Example return values can continue, finish, or fail the application. Quit/close events are handled by the engine; Escape is a demo-specific action. There is no duplicate event polling or blocking application loop. Fixed-step simulation is future work.
 
-SDL owns the loop. After initialization, it pumps events into `Application::onEvent` and repeatedly calls `Application::onIterate`. That callback executes one frame through `iterate()`: read drawable dimensions, skip minimized/zero-sized windows, draw, and present. Returning success or failure ends the loop and invokes `onQuit`. There is no application-owned `while` loop or manual event polling. Fixed simulation updates will be added within the frame iteration when physics is introduced; browser callback integration remains unverified.
+The virtual application destructor ensures derived example members are destroyed before the base `Window`. `Window` then releases the OpenGL context, SDL window, and video subsystem in that order. Native handles are private. Example constructors must not allocate GPU resources before window initialization; destructors must tolerate partial startup. SDL's callback framework performs the final SDL_Quit.
 
-`Window` bundles window and context lifetime for the single-window OpenGL experiment. A separate context abstraction is unnecessary until independent context management is needed. Platform/API-specific code stays in `platform/`; drawing stays in `rendering/`.
+## Rendering and assets
 
-The desktop renderer targets OpenGL 3.3 Core. The actual context may be newer: the development Mac supplies OpenGL 4.1. GLAD 2.0.8 was generated for the 3.3 API; its runtime version result reports the actual context, not the generated API limit. Browser rendering will need its own Emscripten integration and validation.
+Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a compatible 4.1 context. GLAD 2.0.8 is generated for API functions through 3.3. Alternate graphics APIs and 3D physics are planned, with no backend hierarchy introduced yet.
 
-## Rendering resources
+`ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). Buffer/framebuffer wrappers, image decoding, and additional formats remain deferred.
 
-`QuadRenderer` is a disposable graphics demo, not the foundation of the terrain renderer. It owns `ShaderProgram` and `Texture2D` members, with raw vertex-array/buffer handles retained locally. The support classes can be reused when the demo is replaced by terrain rendering. Their private handles are released automatically; copying is disabled and move support is deferred until needed. Initialize and destroy them with a current OpenGL context. Their detailed contracts are recorded in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes).
+Each example selects and licenses its own assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `toybox_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
 
-`ShaderProgram` loads vertex/fragment files or source strings; `Texture2D` uploads in-memory RGBA8 pixels. Image-file decoding is not implemented. The demo shader files are `assets/shaders/quad.vert` and `quad.frag`, with provenance in `assets/LICENSES.md`. `Application` resolves the shader directory from SDL_GetBasePath and passes it to the demo; `ShaderProgram` receives explicit paths. Add `Buffer` and `Framebuffer` wrappers only when needed. Renderers own the resources they use, and all resources must be destroyed before the context. A future `TerrainRenderer` can own its terrain/mask textures, program, and framebuffer. Shader and image files belong under `assets/`, separate from the C++ wrappers.
+## CMake and runtime layout
 
-Gameplay, terrain geometry, and simulation remain independent of graphics resources. Browser context setup and shader variants will be added during portability work; the current implementation is native only. See [RFC 0002](rfcs/0002-graphics-integration.md) for the graphics decision.
+The root project owns shared local dependency setup. `engine/CMakeLists.txt` defines the static `toybox` target; each example defines its executable. `TOYBOX_BUILD_EXAMPLES=OFF` builds the library alone. SDL3 and GLAD include/link requirements propagate through the library target. `cmake/ToyboxExample.cmake` handles example warnings, output directories, and runtime packaging.
 
-## Platform SDK layout
+| Preset | Executable path | Status |
+| --- | --- | --- |
+| `native-debug` | `build/native/bin/toybox-textured-quad/toybox-textured-quad` | macOS arm64 built; runtime validation recorded in development guide |
+| `windows-debug` | `build/windows/bin/toybox-textured-quad/Debug/toybox-textured-quad.exe` | SDK pending; unverified |
+| `linux-debug` | `build/linux/bin/toybox-textured-quad/toybox-textured-quad` | SDK pending; unverified |
+
+Each executable directory contains `assets/`. macOS also contains `Frameworks/SDL3.framework` and uses `@loader_path/Frameworks`; Windows copies `SDL3.dll` beside the executable; Linux copies `lib/` and uses `$ORIGIN/lib`. Keep each output directory intact when moving a build. Static library outputs are generated under `build/`, never vendored into `external/`.
+
+## Platform SDKs and header lookup
 
 ```text
 external/sdl3/
 ├── LICENSE.txt
-├── README.mini-artillery.md
-├── macos-universal/                 # Present: official upstream framework
-│   └── SDL3.framework/
-│       ├── Headers -> Versions/Current/Headers
-│       ├── Resources -> Versions/Current/Resources
-│       ├── SDL3 -> Versions/Current/SDL3
-│       └── Versions/
-├── windows-x64/                     # SDK pending; MSVC x64 only
-│   ├── include/SDL3/               # Matching public headers
-│   ├── lib/SDL3.lib                # DLL import library, not a static library
-│   └── bin/SDL3.dll                # Runtime library
-└── linux-x64/                       # SDK pending; distribution to be selected
-    ├── include/SDL3/               # Matching public headers
-    └── lib/
-        ├── libSDL3.so.0            # Runtime SONAME; may be a symlink
-        └── <versioned binary>      # Required if the SONAME path is a symlink
+├── README.mini-artillery.md       # Preserved dependency provenance record
+├── macos-universal/SDL3.framework/ # Present; official binary and packaged headers
+├── windows-x64/                   # Pending: include/SDL3/, lib/SDL3.lib, bin/SDL3.dll
+└── linux-x64/                     # Pending: include/SDL3/, lib/libSDL3.so.0 + targets
 ```
 
-Windows and Linux SDK directories will be created when actual dependency files are imported. Use SDL3 3.4.18 consistently and preserve licenses. Record each package's source, checksum, architecture, ABI requirements, and any local modifications in the dependency record. No upstream source tree is required for normal application builds.
+The framework's headers are supplied through its framework search path; Windows/Linux use matching SDK include directories. Consumers include `<SDL3/SDL.h>` consistently. `cmake/SDL3.cmake` defines `SDL3::SDL3` and refuses missing SDK files instead of fetching or falling back to system packages. `cmake/GLAD.cmake` defines the native static loader target.
 
-## Header lookup
-
-Application source uses the same include on every target:
-
-```cpp
-#include <SDL3/SDL.h>
-```
-
-| Platform | Compiler search configuration | Header location |
-| --- | --- | --- |
-| macOS | Framework search path supplied by the imported framework target | `SDL3.framework/Headers/SDL.h` |
-| Windows | Include directory `windows-x64/include` | `include/SDL3/SDL.h` |
-| Linux | Include directory `linux-x64/include` | `include/SDL3/SDL.h` |
-
-`cmake/SDL3.cmake` selects the platform SDK and exposes `SDL3::SDL3`. Linking that target supplies the platform's header and library settings. CMake-aware editor tools can use those same settings for code completion.
-
-## Build and runtime layout
-
-| Preset | Build directory | Runtime dependency placement | Status |
-| --- | --- | --- | --- |
-| `native-debug` | `build/native/` | `Frameworks/SDL3.framework` beside the executable | macOS arm64 validated |
-| `windows-debug` | `build/windows/` | `SDL3.dll` beside `Debug/mini-artillery.exe` | SDK pending; unverified |
-| `linux-debug` | `build/linux/` | `lib/` beside the executable | SDK pending; unverified |
-
-Presets are visible only on their matching host OS. Windows selects Visual Studio 2022 and x64; Linux selects Unix Makefiles. macOS runtime lookup uses `@loader_path/Frameworks`, and the prepared Linux path uses `$ORIGIN/lib`. Keep the copied runtime dependency directories with the executable.
-
-The `mini-artillery-assets` target copies `assets/shaders/` to an `assets/shaders/` directory beside the executable on every build. Keep this directory with the executable and its runtime libraries. Shader-only edits need a build to refresh the runtime copy.
-
-CMake does not download SDKs or fall back to system SDL installations. Missing dependency files produce an error describing the expected paths. Browser support requires its own WASM-compatible SDL library and is not configured by these native branches.
-
-See [development instructions](development.md) for build commands and deferred platform checks.
+Preserve exact versions, licenses, provenance, framework symlinks, and header/binary matching. The official macOS universal SDL3 framework is the explicit dynamic-linking exception. Browser builds will need a separate WASM-compatible SDL3 library and GLES3 integration. See [dependency policy](../external/README.md) and [development](development.md).

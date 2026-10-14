@@ -2,10 +2,10 @@
 
 #include <filesystem>
 
-#include "ShaderProgram.h"
-#include "Texture2D.h"
+#include <rendering/ShaderProgram.h>
+#include <rendering/Texture2D.h>
 
-// Temporary graphics demo; replace when terrain rendering is implemented.
+// Geometry and rendering behavior for the textured-quad example.
 // Resources must be destroyed while their OpenGL context is still current.
 class QuadRenderer {
 public:
@@ -18,8 +18,8 @@ public:
     void draw(int width, int height) const;
 
 private:
-    ShaderProgram program_;
-    Texture2D texture_;
+    toybox::ShaderProgram program_;
+    toybox::Texture2D texture_;
     GLuint vao_ = 0;
     GLuint vbo_ = 0;
     GLint scaleLocation_ = -1;

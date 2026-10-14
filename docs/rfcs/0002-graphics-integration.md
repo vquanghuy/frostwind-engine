@@ -21,9 +21,9 @@ Generate GLAD 2 using the [online generator](https://gen.glad.sh/): C/C++, `gl` 
 
 Store only generated headers and source under `external/glad/include/` and `external/glad/src/`, alongside license information and `README.mini-artillery.md`. Record the exact generator version, settings, provenance, and local changes. Compile the generated C source as a local static CMake target for native builds, following [RFC 0001](0001-local-dependencies.md). Do not vendor the full generator or generate/download files during configuration.
 
-Keep shared drawing, textures, and terrain masks in `src/rendering/`; keep context and native/browser integration differences in `src/platform/`. Add modules only as needed. Native builds use GLAD headers; browser builds will use Emscripten's GLES3 interface, which translates compatible calls to WebGL 2. WebGL 2 is based on OpenGL ES 3.0 with additional restrictions, so shared rendering must use features directly supported by WebGL 2. Keep shader logic shared where practical, with desktop GLSL and GLSL ES headers and precision declarations selected per target.
+Keep shared drawing, textures, and terrain masks in `engine/src/rendering/`; keep context and native/browser integration differences in `engine/src/platform/`. Add modules only as needed. Native builds use GLAD headers; browser builds will use Emscripten's GLES3 interface, which translates compatible calls to WebGL 2. WebGL 2 is based on OpenGL ES 3.0 with additional restrictions, so shared rendering must use features directly supported by WebGL 2. Keep shader logic shared where practical, with desktop GLSL and GLSL ES headers and precision declarations selected per target.
 
-Following the project owner's structure review, `Application` owns `Window`, followed by the temporary demo. `Window` manages SDL video initialization, the native window, its OpenGL context, GLAD loading, VSync, and presentation. This keeps the coupled window/context lifetime together without a separate context class. Declaration order ensures demo resources are destroyed before `Window` releases the context, native window, and SDL subsystem. Static callbacks in `Application` coordinate lifecycle and frame work; named SDL adapters live in the same implementation file. `main.cpp` only selects SDL callback mode, with SDL driving event delivery and repeated frame callbacks. Project classes use no project namespace. `QuadRenderer` remains a temporary demo; resource wrappers and terrain rendering will be added as needed. The maintained layout and lifetime rules live in [project structure](../project-structure.md).
+Under [RFC 0003](0003-toybox-engine-and-examples.md), engine graphics/resource classes now live in namespace `toybox` and the static engine library. `Window` retains SDL video/window/context, GLAD, VSync, and presentation ownership. The reusable application lifecycle hosts example-provided initialization, events, and rendering without selecting demo assets. `QuadDemo`/`QuadRenderer` live in the textured-quad example, whose derived resources are destroyed before the base application’s window/context. Global SDL adapters belong to the example entry point. The maintained layout and lifetime rules live in [project structure](../project-structure.md).
 
 ### Rendering support classes
 
@@ -47,7 +47,7 @@ The requested context and actual capabilities need validation on the development
 
 ## Validation
 
-Run the native CMake configure and build presets, then launch and inspect the textured quad. Verify resize, Retina viewport sizing, presentation, and clean exit. Capture the visible milestone for the changelog. Browser rendering remains unverified until built with Emscripten and exercised in a browser.
+Run the native CMake configure and build presets, then launch and inspect the textured quad. Verify resize, Retina viewport sizing, presentation, and clean exit. Use owner-supplied captures for visible milestones in the changelog; do not capture automatically. Browser rendering remains unverified until built with Emscripten and exercised in a browser.
 
 For support classes, exercise missing/empty shader files, paths with spaces, compilation and linking failures followed by successful retry, loading outside the repository working directory, cached uniform updates, invalid texture inputs, RGBA8 upload/readback with non-default unpack state, resource destruction, and a demo frame without OpenGL errors. Screenshots remain supplied manually by the project owner; extracting support classes does not create a new visual milestone.
 
@@ -62,7 +62,7 @@ For support classes, exercise missing/empty shader files, paths with spaces, com
 
 ## Open questions
 
-The initial quad uses local coordinates with x right and y up, and a bottom-left UV origin. The demo’s GLSL 330 sources live in `assets/shaders/quad.vert` and `quad.frag` and are loaded from the copied runtime assets. Terrain/world coordinates and browser shader variants will be decided when those features are implemented.
+The initial quad uses local coordinates with x right and y up, and a bottom-left UV origin. The demo’s GLSL 330 sources live in `examples/textured-quad/assets/shaders/quad.vert` and `quad.frag` and are loaded from the copied runtime assets. Terrain/world coordinates and browser shader variants will be decided when those features are implemented.
 
 ## Decision
 

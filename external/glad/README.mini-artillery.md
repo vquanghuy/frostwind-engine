@@ -9,13 +9,13 @@
 
 ## Integration
 
-`cmake/GLAD.cmake` compiles `src/gl.c` as C99 into the native static target `GLAD::GLAD`, supplying its public include directory. The executable links this target. No downloads or generation occur during CMake configuration. Browser builds exclude GLAD and will use Emscripten's GLES3 headers. Native context creation and function loading are implemented in [RFC 0002](../../docs/rfcs/0002-graphics-integration.md).
+`cmake/GLAD.cmake` compiles `src/gl.c` as C99 into the native static target `GLAD::GLAD`, supplying its public include directory. The static `toybox` engine target links this target and propagates its requirements to example executables. No downloads or generation occur during CMake configuration. Browser builds exclude GLAD and will use Emscripten's GLES3 headers. Native context creation and function loading are implemented in [RFC 0002](../../docs/rfcs/0002-graphics-integration.md).
 
 ## Updates
 
 Use the [saved generator settings](https://gen.glad.sh/#generator=c&api=gl%3D3.3&profile=gl%3Dcore%2Cgles1%3Dcommon) with no extensions or options selected. The inactive `gles1` profile does not request a GLES1 API. Replace only the generated include and source files, preserve licenses, and update this record with the version, timestamp, settings, and checksums. Online specifications may change; retain the checked-in output as the pinned copy rather than assuming regeneration will be byte-identical.
 
-Run `cmake --preset native-debug` and `cmake --build --preset native-debug --parallel` after updates. Launch the application and verify the reported OpenGL version, GLAD loading, and textured quad.
+Run `cmake --preset native-debug` and `cmake --build --preset native-debug --parallel` after updates. Launch `build/native/bin/toybox-textured-quad/toybox-textured-quad` and verify the reported OpenGL version, GLAD loading, and textured quad.
 
 ## SHA-256 of imported files
 

@@ -1,12 +1,16 @@
-# Reference images
+# Documentation images
+
+## Toybox logo
+
+[`toybox-logo.png`](toybox-logo.png) is the project logo used in the root [README](../../README.md). It was generated with OpenAI imagegen on 2026-10-14 and selected by the project owner. The design shows an open wooden toy chest containing a sword, toy tank, and ball beside a colorful Toybox wordmark. It is a branding asset, not a gameplay screenshot.
 
 ## Milestone captures
 
-`milestones/` contains screenshots of the running Mini Artillery experiment, separate from the third-party references below. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 and M002 were supplied manually from macOS window screenshots on 2026-10-13. M002 shows the native OpenGL checkerboard quad.
+`milestones/` preserves screenshots from the project’s original Mini Artillery identity, separate from the third-party references below. The checkerboard implementation now lives in the Toybox textured-quad example; historical images and captions are retained without relabeling. Screenshots appear directly in the [changelog](../../CHANGELOG.md). M001 and M002 were supplied manually from macOS window screenshots on 2026-10-13. M002 shows the native OpenGL checkerboard quad.
 
 ## Third-party references
 
-These images were copied from the original Mini Artillery planning note, `FLN-20260609 - Development - 2D Destructible Terrain Game Tech Stack.md`. They are design references, not screenshots of an implemented Mini Artillery build.
+These images belong to the [planned Mini Artillery example](../examples/mini-artillery.md). They were copied from the original Mini Artillery planning note, `FLN-20260609 - Development - 2D Destructible Terrain Game Tech Stack.md`. They are design references, not screenshots of an implemented Mini Artillery build.
 
 | File | Description | Original note attachment |
 | --- | --- | --- |

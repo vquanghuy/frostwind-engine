@@ -55,7 +55,7 @@
       "name": "native-debug",
       "configurePreset": "native-debug",
       "targets": [
-        "mini-artillery"
+        "toybox-textured-quad"
       ]
     },
     {
@@ -63,14 +63,14 @@
       "configurePreset": "windows-debug",
       "configuration": "Debug",
       "targets": [
-        "mini-artillery"
+        "toybox-textured-quad"
       ]
     },
     {
       "name": "linux-debug",
       "configurePreset": "linux-debug",
       "targets": [
-        "mini-artillery"
+        "toybox-textured-quad"
       ]
     }
   ]

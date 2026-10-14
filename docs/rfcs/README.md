@@ -16,4 +16,4 @@ Use RFCs to propose significant architecture changes and record the reasoning be
 | --- | --- |
 | [0001: Local third-party dependencies](0001-local-dependencies.md) | Accepted |
 | [0002: Graphics integration](0002-graphics-integration.md) | Implemented |
-| [0003: Toybox engine and examples](0003-toybox-engine-and-examples.md) | Accepted |
+| [0003: Toybox engine and examples](0003-toybox-engine-and-examples.md) | Implemented |

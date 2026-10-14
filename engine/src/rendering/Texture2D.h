@@ -4,6 +4,8 @@
 
 #include <glad/gl.h>
 
+namespace toybox {
+
 // Owns a 2D texture. The context must outlive this object.
 class Texture2D {
 public:
@@ -20,3 +22,5 @@ public:
 private:
     GLuint texture_ = 0;
 };
+
+} // namespace toybox

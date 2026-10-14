@@ -1,7 +1,17 @@
 #pragma once
 
+#include <string>
+
 struct SDL_Window;
 struct SDL_GLContextState;
+
+namespace toybox {
+
+struct WindowConfig {
+    std::string title = "Toybox";
+    int width = 960;
+    int height = 540;
+};
 
 // Owns the native window and its OpenGL context as one lifetime.
 class Window {
@@ -11,7 +21,7 @@ public:
     Window(const Window&) = delete;
     Window& operator=(const Window&) = delete;
 
-    bool initialize();
+    bool initialize(const WindowConfig& config = {});
     bool pixelSize(int& width, int& height) const;
     bool minimized() const;
     bool present() const;
@@ -22,3 +32,5 @@ private:
     bool videoInitialized_ = false;
     bool vsync_ = false;
 };
+
+} // namespace toybox

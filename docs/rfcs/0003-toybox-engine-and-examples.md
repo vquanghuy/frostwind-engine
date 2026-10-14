@@ -1,6 +1,6 @@
 # RFC 0003: Toybox engine and examples
 
-- **Status:** Accepted
+- **Status:** Implemented
 - **Created:** 2026-10-14
 - **Supersedes:** None
 - **Superseded by:** None
@@ -102,8 +102,12 @@ Configure and build the engine and textured-quad executable with the native pres
 
 ## Open questions
 
-Choose the smallest example/application interface and exact executable target/output names during implementation. Select the 3D physics library, additional graphics APIs, and any backend interfaces when those features are pursued. Shared installation/export packaging can wait until an external consumer needs it.
+Select the 3D physics library, additional graphics APIs, and any backend interfaces when those features are pursued. Shared installation/export packaging can wait until an external consumer needs it.
 
 ## Decision
 
-Accepted on 2026-10-14 following the project owner's selection of Toybox as an engine-focused repository with Mini Artillery and other examples, and namespace `toybox`. This RFC records the agreed direction only. Source layout, namespace, CMake targets, documentation branding, and the GitHub repository name have not yet been migrated.
+Accepted on 2026-10-14 following the project owner's selection of Toybox as an engine-focused repository with Mini Artillery and other examples, and namespace `toybox`. Implemented on 2026-10-14: the static `toybox` library contains namespaced engine code; `toybox-textured-quad` owns its demo and assets under `examples/textured-quad/`. The example derives from `toybox::Application`, supplying `initialize`, optional `handleEvent`, and `render` hooks. A factory returns an owning base pointer; a virtual destructor releases derived GPU members before the base window. Each example provides its own SDL C adapters. Its native output is `build/native/bin/toybox-textured-quad/`, with isolated assets and runtime libraries.
+
+The owner renamed GitHub and the local checkout to `toybox-engine`; `origin` points to the renamed repository. Active repository links and documentation now reflect Toybox. Version 0.2.0, prior releases/tags, and historical screenshots remain preserved.
+
+Native example and engine-only builds passed. Checks launched from `/private/tmp` verified example initialization/rendering/assets, shader/texture errors and GPU readback, callback results and exceptions, failed startup, and derived-resource cleanup before context destruction. Interactive resize/Retina and IDE checks remain manual; other platforms remain unverified. Mini Artillery gameplay and future engine systems are follow-up work, not missing migration steps.

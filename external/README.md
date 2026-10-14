@@ -1,6 +1,6 @@
 # Local dependencies
 
-Mini Artillery stores third-party dependencies locally in this directory.
+Toybox stores third-party dependencies locally in this directory.
 
 | Dependency | Version | Integration |
 | --- | --- | --- |

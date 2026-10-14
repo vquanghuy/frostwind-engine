@@ -9,6 +9,8 @@
 
 #include <SDL3/SDL.h>
 
+namespace toybox {
+
 namespace {
 
 bool readShaderFile(const std::filesystem::path& path, std::string& source)
@@ -173,3 +175,5 @@ void ShaderProgram::setVec2(GLint location, float x, float y) const
 {
     glUniform2f(location, x, y);
 }
+
+} // namespace toybox

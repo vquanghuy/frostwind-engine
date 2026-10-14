@@ -1,18 +1,22 @@
 # Changelog
 
-All notable changes to this experiment are documented in this file.
+All notable changes to Toybox and its examples are documented in this file.
 
 ## [Unreleased]
 
 ### Added
 
-- RFC 0003 recording the accepted Toybox engine direction, namespace, engine/example boundary, and planned repository migration. Implementation remains pending.
+- Toybox chest-and-toys logo in the README, with generation provenance recorded under documentation assets.
+- RFC 0003 establishing Toybox as an engine with independent examples in one repository.
 - `ShaderProgram` for linked vertex/fragment shaders, with file/source loading, path and compilation/link diagnostics, cached uniform operations, and automatic cleanup.
 - `Texture2D` for validated RGBA8 uploads, texture-unit binding, and automatic cleanup, preserving pixel-unpack state during uploads.
 - Runtime demo shader assets, license records, and build-time copying beside the executable; support-class contracts documented in RFC 0002.
 
 ### Changed
 
+- Engine: extracted the static `toybox` library, applied namespace `toybox`, and made application startup/events/rendering extensible through example-owned behavior.
+- Textured Quad: moved the demo and its assets into `examples/textured-quad/`, with its own executable/output directory and shared runtime packaging.
+- Rebranded active documentation and repository links for Toybox while preserving Mini Artillery release/screenshot history. Mini Artillery gameplay remains a planned example.
 - Refactored the temporary quad demo to use the rendering support classes and external shader files, with executable-relative asset lookup that works across IDE and terminal working directories.
 
 ### Removed
@@ -53,8 +57,8 @@ All notable changes to this experiment are documented in this file.
 
 *Native window on macOS Apple Silicon, captured on 2026-10-13. Native configuration, build, and launch verified; terrain rendering remains planned.*
 
-[Unreleased]: https://github.com/vquanghuy/mini-artillery/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/vquanghuy/mini-artillery/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/vquanghuy/mini-artillery/tree/v0.1.0
+[Unreleased]: https://github.com/vquanghuy/toybox-engine/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/vquanghuy/toybox-engine/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/vquanghuy/toybox-engine/tree/v0.1.0
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

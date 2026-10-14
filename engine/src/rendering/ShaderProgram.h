@@ -5,6 +5,8 @@
 
 #include <glad/gl.h>
 
+namespace toybox {
+
 // Owns a linked vertex/fragment program. The context must outlive this object.
 class ShaderProgram {
 public:
@@ -26,3 +28,5 @@ public:
 private:
     GLuint program_ = 0;
 };
+
+} // namespace toybox

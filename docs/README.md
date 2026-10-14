@@ -6,6 +6,8 @@
 - [Project structure and platform SDK layout](project-structure.md)
 - [C++ coding conventions and resource ownership](coding-conventions.md)
 - [RFC process and index](rfcs/README.md)
-- [Reference images and attribution](assets/README.md)
+- [Textured-quad example](../examples/textured-quad/README.md)
+- [Planned Mini Artillery example and references](examples/mini-artillery.md)
+- [Reference images and historical milestone attribution](assets/README.md)
 
-RFCs describe proposed designs and record decisions. As terrain implementation begins, `architecture.md` will document the system. A separate `roadmap.md` can expand the root README's milestones when more detail is needed.
+RFCs record decisions and proposals. The structure guide describes the implemented engine/example boundary; the README distinguishes working capabilities from future systems. Development progress remains in the changelog.

@@ -3,6 +3,8 @@
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
 
+namespace toybox {
+
 Window::~Window()
 {
     if (context_) {
@@ -17,7 +19,7 @@ Window::~Window()
     // SDL's callback framework performs the final SDL_Quit.
 }
 
-bool Window::initialize()
+bool Window::initialize(const WindowConfig& config)
 {
     videoInitialized_ = SDL_InitSubSystem(SDL_INIT_VIDEO);
     if (!videoInitialized_) {
@@ -34,7 +36,7 @@ bool Window::initialize()
         return false;
     }
 
-    window_ = SDL_CreateWindow("Mini Artillery", 960, 540,
+    window_ = SDL_CreateWindow(config.title.c_str(), config.width, config.height,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (!window_) {
         SDL_Log("Window creation failed: %s", SDL_GetError());
@@ -51,7 +53,7 @@ bool Window::initialize()
         SDL_Log("GLAD could not load the required OpenGL 3.3 Core functions.");
         return false;
     }
-    SDL_Log("OpenGL %s; renderer: %s; GLAD loaded %d.%d",
+    SDL_Log("OpenGL target 3.3 Core; actual context %s; renderer: %s; detected %d.%d",
         reinterpret_cast<const char*>(glGetString(GL_VERSION)),
         reinterpret_cast<const char*>(glGetString(GL_RENDERER)),
         GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
@@ -83,3 +85,5 @@ bool Window::present() const
     }
     return true;
 }
+
+} // namespace toybox

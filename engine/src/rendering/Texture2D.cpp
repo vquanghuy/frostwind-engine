@@ -4,6 +4,8 @@
 
 #include <SDL3/SDL.h>
 
+namespace toybox {
+
 Texture2D::~Texture2D()
 {
     if (texture_) {
@@ -80,3 +82,5 @@ void Texture2D::bind(unsigned int unit) const
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, texture_);
 }
+
+} // namespace toybox
