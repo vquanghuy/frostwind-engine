@@ -2,7 +2,11 @@
 
 ## Toybox logo
 
-[`toybox-logo.png`](toybox-logo.png) is the project logo used in the root [README](../../README.md). It was generated with OpenAI imagegen on 2026-10-14 and selected by the project owner. The design shows an open wooden toy chest containing a sword, toy tank, and ball beside a colorful Toybox wordmark. It is a branding asset, not a gameplay screenshot.
+[`toybox-logo.png`](toybox-logo.png) is the original Toybox logo, previously used in the root [README](../../README.md). It was generated with OpenAI imagegen on 2026-10-14 and selected by the project owner. The design shows an open wooden toy chest containing a sword, toy tank, and ball beside a colorful Toybox wordmark. It is a branding asset, not a gameplay screenshot.
+
+## Frostwind logo preview
+
+[`frostwind-logo.png`](frostwind-logo.png) is a proposed Frostwind logo being previewed in the root README at the owner's request. It was generated with OpenAI imagegen on 2026-10-14 using the direction “wind-carved ice crystal, glacier-blue facets, restrained silver Frostwind wordmark, transparent background.” The original Toybox logo is preserved; the project naming elsewhere has not been changed.
 
 ## Milestone captures
 

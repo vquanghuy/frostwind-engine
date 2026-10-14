@@ -1,4 +1,4 @@
-![Toybox](docs/assets/toybox-logo.png)
+![Frostwind](docs/assets/frostwind-logo.png)
 
 An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Planned capabilities include 2D/3D physics integrations and multiple graphics APIs.
 
