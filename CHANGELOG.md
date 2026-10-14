@@ -4,6 +4,15 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Engine: `u64` primitive alias for unsigned 64-bit values, used for application frame timing.
+- Engine: configurable application FPS cap (60 by default, 0 disables software pacing) using monotonic nanosecond timing and precise waits for the remaining frame budget; independently configurable VSync.
+
+### Changed
+
+- Engine: replaced the fixed post-swap fallback delay with application-owned pacing that includes rendering and swap time and avoids catch-up frames after stalls. Application startup now takes `ApplicationConfig` containing window settings and the FPS cap.
+
 ## 0.3.0 - 2026-10-14 (milestone)
 
 Development milestone: reusable engine and example separation, shader/texture support, and file-loaded crate rendering. This records progress; no release or tag was created.

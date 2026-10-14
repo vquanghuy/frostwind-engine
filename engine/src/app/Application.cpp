@@ -7,7 +7,7 @@
 
 namespace frostwind {
 
-SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, const WindowConfig& config)
+SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, const ApplicationConfig& config)
 {
     *appstate = nullptr;
     try {
@@ -16,12 +16,15 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
             SDL_Log("Application factory did not create an application.");
             return SDL_APP_FAILURE;
         }
-        if (!application->window_.initialize(config)) {
+        if (!application->window_.initialize(config.window)) {
             return SDL_APP_FAILURE;
         }
         if (!Texture2D::initializeSupport() || !application->initialize()) {
             return SDL_APP_FAILURE;
         }
+        // Round up so integer division never raises the requested FPS ceiling.
+        application->frameIntervalNs_ = config.maxFps == 0 ? 0 :
+            (SDL_NS_PER_SECOND + u64{config.maxFps} - 1) / config.maxFps;
         // SDL carries the state until onQuit takes ownership back.
         *appstate = application.release();
         return SDL_APP_CONTINUE;
@@ -72,6 +75,7 @@ SDL_AppResult Application::handleEvent(const SDL_Event&)
 
 SDL_AppResult Application::iterate()
 {
+    const u64 frameStart = SDL_GetTicksNS();
     int width = 0;
     int height = 0;
     if (!window_.pixelSize(width, height)) {
@@ -89,6 +93,12 @@ SDL_AppResult Application::iterate()
     if (!window_.present()) {
         SDL_Log("OpenGL presentation failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
+    }
+    // Rendering and swap blocking consume the budget. Late frames start fresh
+    // next time instead of building up a debt of catch-up frames.
+    const u64 elapsed = SDL_GetTicksNS() - frameStart;
+    if (elapsed < frameIntervalNs_) {
+        SDL_DelayPrecise(frameIntervalNs_ - elapsed);
     }
     return SDL_APP_CONTINUE;
 }

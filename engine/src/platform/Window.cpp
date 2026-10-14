@@ -58,9 +58,8 @@ bool Window::initialize(const WindowConfig& config)
         reinterpret_cast<const char*>(glGetString(GL_RENDERER)),
         GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
-    vsync_ = SDL_GL_SetSwapInterval(1);
-    if (!vsync_) {
-        SDL_Log("VSync unavailable: %s. Using a small frame delay.", SDL_GetError());
+    if (!SDL_GL_SetSwapInterval(config.vsync ? 1 : 0)) {
+        SDL_Log("Could not set the requested swap interval: %s. Using application-configured frame pacing.", SDL_GetError());
     }
     return true;
 }
@@ -79,9 +78,6 @@ bool Window::present() const
 {
     if (!SDL_GL_SwapWindow(window_)) {
         return false;
-    }
-    if (!vsync_) {
-        SDL_Delay(16);
     }
     return true;
 }

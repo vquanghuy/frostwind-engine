@@ -33,7 +33,7 @@ Headers stay beside implementations. CMake explicitly lists source files. `frost
 | Component | Responsibility |
 | --- | --- |
 | `core/Types.h` | Shared primitive aliases; no runtime initialization or ownership |
-| `frostwind::Application` | Own the window, create the selected application through a factory, coordinate events/frames, and translate callback exceptions into failures |
+| `frostwind::Application` | Own the window, create the selected application through a factory, coordinate events/frames and FPS pacing, and translate callback exceptions into failures |
 | `frostwind::Window` | Own SDL video/window/context lifetime, GLAD loading, VSync, drawable size/state, and presentation |
 | `frostwind::ShaderProgram` | Own a linked vertex/fragment program, load files/source, bind, and set cached uniforms |
 | `frostwind::Texture2D` | Own a texture, decode PNG/JPEG files, validate/upload RGBA8 pixels, and bind a texture unit |
@@ -49,7 +49,7 @@ An example derives from `frostwind::Application` and implements `initialize()` a
 
 `Application::onInit` creates the derived instance, initializes its window/context, calls `Texture2D::initializeSupport()`, and then invokes example initialization. Ownership transfers to SDL's opaque state only after success; failed startup cleans up automatically and leaves null state. The factory, startup, event, and frame boundaries handle exceptions so they cannot unwind through SDL. `onQuit` takes ownership back with `unique_ptr`.
 
-SDL owns the loop, delivering events and repeatedly invoking one frame callback. The engine queries drawable pixels, skips minimized/zero-sized windows, invokes the example's renderer, and presents. Example return values can continue, finish, or fail the application. Quit/close events are handled by the engine; Escape is a demo-specific action. There is no duplicate event polling or blocking application loop. Fixed-step simulation is future work.
+SDL owns the loop, delivering events and repeatedly invoking one frame callback. The engine queries drawable pixels, skips minimized/zero-sized windows, invokes the example's renderer, and presents. Example return values can continue, finish, or fail the application. Quit/close events are handled by the engine; Escape is a demo-specific action. There is no duplicate event polling or blocking application loop. Application-owned frame pacing measures each callback with SDL’s monotonic nanosecond clock and waits only for the unused frame budget after presentation. `ApplicationConfig` contains `window` settings and `maxFps` (60 by default, 0 disables software pacing). `WindowConfig::vsync` defaults to true; VSync may lower the achieved rate below the cap. Minimized/zero-sized windows retain a separate 16 ms idle delay. Slow frames do not accumulate catch-up work. This is a rendering limit; fixed-step simulation is future work. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
 The virtual application destructor ensures derived example members are destroyed before the base `Window`. `Window` then releases the OpenGL context, SDL window, and video subsystem in that order. Native handles are private. Example constructors must not allocate GPU resources before window initialization; destructors must tolerate partial startup. SDL's callback framework performs the final SDL_Quit.
 

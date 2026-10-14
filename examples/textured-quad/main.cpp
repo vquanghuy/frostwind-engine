@@ -14,7 +14,10 @@ std::unique_ptr<frostwind::Application> createApplication()
 
 SDL_AppResult SDLCALL SDL_AppInit(void** appstate, int, char**)
 {
-    return frostwind::Application::onInit(appstate, createApplication, {"Frostwind - Textured Quad", 800, 600});
+    frostwind::ApplicationConfig config;
+    config.window = {"Frostwind - Textured Quad", 800, 600};
+    config.maxFps = 60;
+    return frostwind::Application::onInit(appstate, createApplication, config);
 }
 
 SDL_AppResult SDLCALL SDL_AppEvent(void* appstate, SDL_Event* event)

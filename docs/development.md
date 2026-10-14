@@ -58,7 +58,7 @@ For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`
 
 The static engine library contains namespaced `Application`, `Window`, `ShaderProgram`, and `Texture2D` classes. `Application` hosts a derived example through SDL callbacks; example resources are destroyed before its base window/context. SDL video initialization and graphics presentation stay in `Window`. See [project structure](project-structure.md) and [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md).
 
-The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. The example uses GLSL 330 and a PNG crate texture decoded to RGBA8. VSync is requested, with a short frame delay if unavailable or minimized.
+The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. The example uses GLSL 330 and a PNG crate texture decoded to RGBA8. The example defaults to a 60 FPS software cap with VSync requested. `ApplicationConfig::maxFps` selects another cap; 0 disables software pacing. Set `config.window.vsync = false` as well to request uncapped rendering. Rendering and swap time count toward the frame budget; SDL precise delays wait only for the remainder. VSync, rendering load, and OS scheduling can lower achieved FPS. Minimized windows use a separate idle delay. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
 Shader source/file loading, compilation/link diagnostics, uniform updates, and RGBA8 upload validation are implemented. Camera, audio, physics, terrain destruction, and other graphics backends remain planned. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
 
@@ -85,6 +85,12 @@ Texture support setup was subsequently moved behind `Texture2D::initializeSuppor
 ### Frostwind rename validation (2026-10-14)
 
 The renamed native preset and a fresh engine-only build with `FROSTWIND_BUILD_EXAMPLES=OFF` passed. Native texture/rendering and lifecycle checks linked against `libfrostwind.a` and passed from `/private/tmp`, including asset lookup, orientation/readback, cached texture limits, failure recovery, callback exceptions, and GPU cleanup before context teardown. The renamed `frostwind-textured-quad` executable launched successfully with the Frostwind window title. The owner supplied the M004 screenshot, now embedded in the changelog and example README. The new GitHub remote was verified over SSH. Existing Toybox validation records above describe the historical implementation.
+
+### Frame pacing validation (2026-10-14)
+
+Native configuration/build passed. Temporary controlled-clock checks under `build/frame-pacing-check/` verified remaining-budget waits including render/swap time, 60/120 FPS caps, uncapped mode, slow frames and stalls without catch-up, minimized/zero-size handling and restore, callback results/exceptions, presentation/drawable failures, and startup cleanup. Real SDL timer checks with simulated 2 ms rendering and 1 ms swap work measured 29.43, 58.95, and 111.21 callbacks/sec for 30, 60, and 120 FPS caps respectively; OS scheduling may reduce the achieved rate.
+
+The actual textured-quad example loaded its packaged assets from `/private/tmp`, presented 120 frames per run on Apple M1 Pro, and handled synthetic Escape/teardown with a 60 FPS cap. Measured callback throughput was 56.98/sec with VSync disabled and 59.15/sec with VSync requested. The initial sandboxed launch could not access macOS displays; the successful run used approved display access outside the sandbox. No screenshots were captured. Interactive smoothness, resize/minimize/restore, and other platforms remain manual checks.
 
 ## Manual checks
 

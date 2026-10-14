@@ -11,6 +11,7 @@ struct WindowConfig {
     std::string title = "Frostwind";
     int width = 960;
     int height = 540;
+    bool vsync = true;
 };
 
 // Owns the native window and its OpenGL context as one lifetime.
@@ -30,7 +31,6 @@ private:
     SDL_Window* window_ = nullptr;
     SDL_GLContextState* context_ = nullptr;
     bool videoInitialized_ = false;
-    bool vsync_ = false;
 };
 
 } // namespace frostwind

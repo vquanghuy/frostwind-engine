@@ -3,10 +3,17 @@
 #include <memory>
 
 #include <SDL3/SDL.h>
+#include <core/Types.h>
 
 #include "../platform/Window.h"
 
 namespace frostwind {
+
+struct ApplicationConfig {
+    WindowConfig window;
+    // Zero disables software pacing; VSync is configured separately.
+    u32 maxFps = 60;
+};
 
 // Derived applications supply behavior; their members die before Window.
 class Application {
@@ -18,7 +25,7 @@ public:
     Application(const Application&) = delete;
     Application& operator=(const Application&) = delete;
 
-    static SDL_AppResult SDLCALL onInit(void** appstate, Factory factory, const WindowConfig& config = {});
+    static SDL_AppResult SDLCALL onInit(void** appstate, Factory factory, const ApplicationConfig& config = {});
     static SDL_AppResult SDLCALL onEvent(void* appstate, SDL_Event* event);
     static SDL_AppResult SDLCALL onIterate(void* appstate);
     static void SDLCALL onQuit(void* appstate, SDL_AppResult result);
@@ -31,6 +38,7 @@ protected:
 private:
     SDL_AppResult iterate();
     Window window_;
+    u64 frameIntervalNs_ = 0;
 };
 
 } // namespace frostwind

@@ -21,6 +21,7 @@ Include `<core/Types.h>` for the engine's primitive aliases. Inside namespace `f
 | --- | --- | --- |
 | `u8` | `std::uint8_t` | Unsigned 8-bit values |
 | `u32` | `std::uint32_t` | Unsigned 32-bit values |
+| `u64` | `std::uint64_t` | Unsigned 64-bit values, including nanosecond timing |
 | `i32` | `std::int32_t` | Signed 32-bit values |
 | `f32` | `float` (required to be 32 bits) | Graphics calculations and vertex data |
 | `byte` | `unsigned char` | Raw file/pixel bytes |
