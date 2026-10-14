@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string_view>
 
+#include <core/Types.h>
 #include <glad/gl.h>
 
 namespace toybox {
@@ -23,7 +24,7 @@ public:
 
     // Bind this program before setting its cached uniform locations.
     void setInt(GLint location, int value) const;
-    void setVec2(GLint location, float x, float y) const;
+    void setVec2(GLint location, f32 x, f32 y) const;
 
 private:
     GLuint program_ = 0;

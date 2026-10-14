@@ -13,6 +13,23 @@ These conventions apply to project-owned C++ code. Preserve generated and vendor
 - Include the header that declares each library facility used; do not rely on transitive includes. Ordinary `new`/`delete` expressions and `= delete` declarations are language features. Use `<memory>` for smart pointers and `<exception>` for `std::exception`.
 - Comments explain intent, lifetime constraints, units, or temporary behavior. Avoid narrating obvious statements.
 
+## Numeric types and conversions
+
+Include `<core/Types.h>` for the engine's primitive aliases. Inside namespace `toybox`, use the short names; examples qualify them with `toybox::`.
+
+| Alias | Underlying type | Use |
+| --- | --- | --- |
+| `u8` | `std::uint8_t` | Unsigned 8-bit values |
+| `u32` | `std::uint32_t` | Unsigned 32-bit values |
+| `i32` | `std::int32_t` | Signed 32-bit values |
+| `f32` | `float` (required to be 32 bits) | Graphics calculations and vertex data |
+| `byte` | `unsigned char` | Raw file/pixel bytes |
+| `usize` | `std::size_t` | Memory sizes, byte counts, and container indices |
+
+Use fixed-width aliases when width matters. Retain ordinary `int` for dimensions and lengths matching SDL/stb APIs, `char` for text, and external types such as `GLint`, `GLuint`, and `SDL_AppResult` at their API boundaries. Do not change generated or vendored types.
+
+Prefer implicit numeric conversions when they preserve the intended value, including narrowing after an explicit range check. Avoid casts that only repeat the destination type. Validate positive dimensions before converting them to `usize`, and perform size arithmetic in `usize` from the first multiplication to avoid integer overflow. Aliases do not change conversion rules. Keep explicit pointer conversions where C APIs require them; do not substitute C-style casts.
+
 ## Ownership and resource lifetime
 
 - Prefer values and direct members. Allocate dynamically when lifetime or another concrete requirement calls for it.

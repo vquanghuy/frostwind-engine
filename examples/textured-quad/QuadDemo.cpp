@@ -11,7 +11,7 @@ bool QuadDemo::initialize()
         SDL_Log("Could not locate example assets: %s", SDL_GetError());
         return false;
     }
-    if (!renderer_.initialize(std::filesystem::u8path(basePath) / "assets" / "shaders")) {
+    if (!renderer_.initialize(std::filesystem::u8path(basePath) / "assets")) {
         return false;
     }
     SDL_Log("Toybox textured quad initialized. Press Escape or close the window to quit.");

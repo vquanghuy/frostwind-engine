@@ -1,10 +1,11 @@
 #include "QuadRenderer.h"
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 
 #include <SDL3/SDL.h>
+
+#include <core/Types.h>
 
 QuadRenderer::~QuadRenderer()
 {
@@ -16,14 +17,14 @@ QuadRenderer::~QuadRenderer()
     }
 }
 
-bool QuadRenderer::initialize(const std::filesystem::path& shaderDirectory)
+bool QuadRenderer::initialize(const std::filesystem::path& assetDirectory)
 {
-    if (!program_.initializeFromFiles(shaderDirectory / "quad.vert", shaderDirectory / "quad.frag")) {
+    if (!program_.initializeFromFiles(assetDirectory / "shaders" / "quad.vert", assetDirectory / "shaders" / "quad.frag")) {
         return false;
     }
 
     // Local quad coordinates: x right, y up; UV origin at the bottom left.
-    struct Vertex { float x, y, u, v; };
+    struct Vertex { toybox::f32 x, y, u, v; };
     constexpr Vertex vertices[] = {
         {-1, -1, 0, 0}, {1, -1, 1, 0}, {1, 1, 1, 1},
         {-1, -1, 0, 0}, {1, 1, 1, 1}, {-1, 1, 0, 1},
@@ -39,19 +40,7 @@ bool QuadRenderer::initialize(const std::filesystem::path& shaderDirectory)
         reinterpret_cast<const void*>(offsetof(Vertex, u)));
     glEnableVertexAttribArray(1);
 
-    // Procedural RGBA8 checker: no external asset or decoder required yet.
-    std::array<unsigned char, 8 * 8 * 4> pixels{};
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            const bool light = (x + y) % 2 == 0;
-            const auto offset = static_cast<std::size_t>((y * 8 + x) * 4);
-            pixels[offset] = light ? 103 : 39;
-            pixels[offset + 1] = light ? 212 : 112;
-            pixels[offset + 2] = light ? 180 : 137;
-            pixels[offset + 3] = 255;
-        }
-    }
-    if (!texture_.initializeRGBA8(8, 8, pixels.data(), pixels.size())) {
+    if (!texture_.initializeFromFile(assetDirectory / "textures" / "crate.png")) {
         return false;
     }
 
@@ -78,8 +67,8 @@ void QuadRenderer::draw(int width, int height) const
     glClearColor(24.0f / 255.0f, 28.0f / 255.0f, 34.0f / 255.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     program_.bind();
-    const float side = static_cast<float>(std::min(width, height)) * 0.66f;
-    program_.setVec2(scaleLocation_, side / static_cast<float>(width), side / static_cast<float>(height));
+    const toybox::f32 side = std::min(width, height) * 0.66f;
+    program_.setVec2(scaleLocation_, side / width, side / height);
     texture_.bind();
     glBindVertexArray(vao_);
     glDrawArrays(GL_TRIANGLES, 0, 6);

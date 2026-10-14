@@ -6,6 +6,9 @@ All notable changes to Toybox and its examples are documented in this file.
 
 ### Added
 
+- Engine: shared primitive aliases in `core/Types.h`, applied to texture data/sizes and graphics math, with conversion guidance for engine and examples.
+- Engine: `Texture2D::initializeFromFile` for PNG/JPEG assets using pinned stb_image 2.28, with RGBA8 conversion, bottom-left orientation, file diagnostics, and scoped decoded-pixel cleanup.
+- Textured Quad: generated crate texture with recorded provenance, replacing the procedural checkerboard in the running example; historical captures are preserved.
 - Conventional Commit guidelines with optional scopes, linked from the documentation index and required by agent instructions.
 - Toybox chest-and-toys logo in the README, with generation provenance recorded under documentation assets.
 - RFC 0003 establishing Toybox as an engine with independent examples in one repository.
@@ -15,6 +18,7 @@ All notable changes to Toybox and its examples are documented in this file.
 
 ### Changed
 
+- Simplified numeric conversions in texture/shader loading and the textured-quad example, preserving size validation and required C API pointer casts.
 - Engine: extracted the static `toybox` library, applied namespace `toybox`, and made application startup/events/rendering extensible through example-owned behavior.
 - Textured Quad: moved the demo and its assets into `examples/textured-quad/`, with its own executable/output directory and shared runtime packaging.
 - Rebranded active documentation and repository links for Toybox while preserving Mini Artillery release/screenshot history. Mini Artillery gameplay remains a planned example.

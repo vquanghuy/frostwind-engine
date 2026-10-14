@@ -14,7 +14,7 @@ public:
     QuadRenderer(const QuadRenderer&) = delete;
     QuadRenderer& operator=(const QuadRenderer&) = delete;
 
-    bool initialize(const std::filesystem::path& shaderDirectory);
+    bool initialize(const std::filesystem::path& assetDirectory);
     void draw(int width, int height) const;
 
 private:

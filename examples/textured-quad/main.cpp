@@ -14,7 +14,7 @@ std::unique_ptr<toybox::Application> createApplication()
 
 SDL_AppResult SDLCALL SDL_AppInit(void** appstate, int, char**)
 {
-    return toybox::Application::onInit(appstate, createApplication, {"Toybox - Textured Quad"});
+    return toybox::Application::onInit(appstate, createApplication, {"Toybox - Textured Quad", 800, 600});
 }
 
 SDL_AppResult SDLCALL SDL_AppEvent(void* appstate, SDL_Event* event)

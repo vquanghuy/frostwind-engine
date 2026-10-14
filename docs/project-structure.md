@@ -8,11 +8,13 @@ Toybox contains a reusable engine library and independent example executables in
 engine/
 ├── CMakeLists.txt
 └── src/
+    ├── core/Types.h
     ├── app/Application.h, Application.cpp
     ├── platform/Window.h, Window.cpp
     └── rendering/
         ├── ShaderProgram.h, ShaderProgram.cpp
-        └── Texture2D.h, Texture2D.cpp
+        ├── Texture2D.h, Texture2D.cpp
+        └── StbImage.cpp
 examples/
 └── textured-quad/
     ├── CMakeLists.txt
@@ -22,20 +24,22 @@ examples/
     ├── QuadRenderer.h, QuadRenderer.cpp
     └── assets/
         ├── LICENSES.md
-        └── shaders/quad.vert, quad.frag
+        ├── shaders/quad.vert, quad.frag
+        └── textures/crate.png
 ```
 
 Headers stay beside implementations. CMake explicitly lists source files. `toybox` exposes `engine/src/` as its include directory, allowing includes such as `<rendering/ShaderProgram.h>`; engine types use namespace `toybox`. Examples link to `toybox`, while the engine neither includes nor links example code. No separate public-header tree or installation/export package exists yet.
 
 | Component | Responsibility |
 | --- | --- |
+| `core/Types.h` | Shared primitive aliases; no runtime initialization or ownership |
 | `toybox::Application` | Own the window, create the selected application through a factory, coordinate events/frames, and translate callback exceptions into failures |
 | `toybox::Window` | Own SDL video/window/context lifetime, GLAD loading, VSync, drawable size/state, and presentation |
 | `toybox::ShaderProgram` | Own a linked vertex/fragment program, load files/source, bind, and set cached uniforms |
-| `toybox::Texture2D` | Own a texture, validate/upload RGBA8 pixels, and bind a texture unit |
+| `toybox::Texture2D` | Own a texture, decode PNG/JPEG files, validate/upload RGBA8 pixels, and bind a texture unit |
 | Example `main.cpp` | Supply SDL's global callbacks, application factory, and window configuration |
 | `QuadDemo` | Select demo assets, initialize the renderer, handle Escape, and render each frame |
-| `QuadRenderer` | Own quad buffers plus engine shader/texture objects; generate checkerboard pixels and draw |
+| `QuadRenderer` | Own quad buffers plus engine shader/texture objects; load the example texture and draw |
 
 Camera, audio, input systems, physics, terrain, and other examples are added only as implementation requires them. Mini Artillery remains a [planned example](examples/mini-artillery.md); its game rules will stay outside the engine.
 
@@ -53,7 +57,7 @@ The virtual application destructor ensures derived example members are destroyed
 
 Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a compatible 4.1 context. GLAD 2.0.8 is generated for API functions through 3.3. Alternate graphics APIs and 3D physics are planned, with no backend hierarchy introduced yet.
 
-`ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). Buffer/framebuffer wrappers, image decoding, and additional formats remain deferred.
+`ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). The private `StbImage.cpp` compiles the local PNG/JPEG decoder once. Application startup configures its bottom-left image orientation before example initialization; texture loads reuse that setting. Example code chooses texture paths; the engine does not choose assets. Buffer/framebuffer wrappers and additional formats remain deferred.
 
 Each example selects and licenses its own assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `toybox_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
 

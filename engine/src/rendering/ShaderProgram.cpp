@@ -1,7 +1,6 @@
 #include "ShaderProgram.h"
 
 #include <algorithm>
-#include <cstddef>
 #include <fstream>
 #include <limits>
 #include <string>
@@ -20,14 +19,14 @@ bool readShaderFile(const std::filesystem::path& path, std::string& source)
         SDL_Log("Could not open shader file: %s", path.u8string().c_str());
         return false;
     }
-    const auto size = file.tellg();
+    const std::streamoff size = file.tellg();
     if (size <= 0 || size > std::numeric_limits<GLint>::max()) {
         SDL_Log("Shader file is empty, unreadable, or too large: %s", path.u8string().c_str());
         return false;
     }
-    source.resize(static_cast<std::size_t>(size));
+    source.resize(size);
     file.seekg(0);
-    if (!file.read(source.data(), static_cast<std::streamsize>(size))) {
+    if (!file.read(source.data(), size)) {
         SDL_Log("Could not read shader file: %s", path.u8string().c_str());
         return false;
     }
@@ -55,7 +54,7 @@ public:
             return false;
         }
         const char* data = source.data();
-        const GLint length = static_cast<GLint>(source.size());
+        const GLint length = source.size();
         glShaderSource(shader_, 1, &data, &length);
         glCompileShader(shader_);
         GLint success = GL_FALSE;
@@ -63,7 +62,7 @@ public:
         if (success != GL_TRUE) {
             GLint logLength = 0;
             glGetShaderiv(shader_, GL_INFO_LOG_LENGTH, &logLength);
-            std::vector<char> log(static_cast<std::size_t>(std::max(logLength, 1)), '\0');
+            std::vector<char> log(std::max(logLength, 1), '\0');
             glGetShaderInfoLog(shader_, logLength, nullptr, log.data());
             SDL_Log("%s shader compilation failed: %s", label, log.data());
             return false;
@@ -93,7 +92,7 @@ bool ShaderProgram::initialize(std::string_view vertexSource, std::string_view f
         SDL_Log("ShaderProgram is already initialized.");
         return false;
     }
-    const auto maxLength = static_cast<std::size_t>(std::numeric_limits<GLint>::max());
+    const usize maxLength = std::numeric_limits<GLint>::max();
     if (vertexSource.empty() || fragmentSource.empty() ||
         vertexSource.size() > maxLength || fragmentSource.size() > maxLength) {
         SDL_Log("Shader source must be nonempty and fit OpenGL's source length.");
@@ -126,7 +125,7 @@ bool ShaderProgram::initialize(std::string_view vertexSource, std::string_view f
     if (success != GL_TRUE) {
         GLint length = 0;
         glGetProgramiv(candidate.program_, GL_INFO_LOG_LENGTH, &length);
-        std::vector<char> log(static_cast<std::size_t>(std::max(length, 1)), '\0');
+        std::vector<char> log(std::max(length, 1), '\0');
         glGetProgramInfoLog(candidate.program_, length, nullptr, log.data());
         SDL_Log("Shader program linking failed: %s", log.data());
         return false;
@@ -171,7 +170,7 @@ void ShaderProgram::setInt(GLint location, int value) const
     glUniform1i(location, value);
 }
 
-void ShaderProgram::setVec2(GLint location, float x, float y) const
+void ShaderProgram::setVec2(GLint location, f32 x, f32 y) const
 {
     glUniform2f(location, x, y);
 }

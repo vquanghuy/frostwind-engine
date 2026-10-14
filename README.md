@@ -2,7 +2,7 @@
 
 An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Planned capabilities include 2D/3D physics integrations and multiple graphics APIs.
 
-> **Status:** A native macOS OpenGL scaffold is implemented: window/context management, application lifecycle callbacks, shader programs with file loading, and RGBA8 textures. The textured-quad example exercises these features. Camera, audio, physics, terrain destruction, and additional graphics backends remain planned.
+> **Status:** A native macOS OpenGL scaffold is implemented: window/context management, application lifecycle callbacks, shader programs with file loading, and RGBA8 textures with PNG/JPEG loading. The textured-quad example exercises these features. Camera, audio, physics, terrain destruction, and additional graphics backends remain planned.
 
 Toybox began as Mini Artillery, a destructible-terrain experiment. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-toybox-engine-and-examples.md).
 
@@ -12,7 +12,7 @@ The static `toybox` library supplies reusable facilities. Examples depend on the
 
 | Example | Status |
 | --- | --- |
-| [Textured Quad](examples/textured-quad/README.md) | Implemented: shader-file loading, procedural texture upload, and quad rendering |
+| [Textured Quad](examples/textured-quad/README.md) | Implemented: shader/image-file loading and quad rendering |
 | [Mini Artillery](docs/examples/mini-artillery.md) | Planned: tanks and projectiles exercising destructible terrain |
 
 Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
@@ -25,9 +25,9 @@ Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI
 | Native development | macOS on Apple Silicon; Windows x64 and Linux x86_64 scaffolds remain unverified |
 | Graphics | OpenGL 3.3 Core baseline, GLAD 2.0.8; SDL3 window/context integration |
 | SDL | 3.4.18 official macOS universal dynamic framework |
-| Rendering resources | ShaderProgram with source/file loading; Texture2D with in-memory RGBA8 upload |
+| Rendering resources | ShaderProgram with source/file loading; Texture2D with in-memory RGBA8 upload and PNG/JPEG loading |
 | Math and debug UI | GLM and Dear ImGui planned |
-| Image loading | stb_image planned |
+| Image loading | stb_image 2.28; PNG/JPEG decoding |
 | Audio | SDL3 built-in audio planned; SDL3_mixer if richer playback is needed |
 | 2D physics and terrain | Box2D 3.x and Clipper2 planned |
 | 3D physics | Planned; library selection deferred |
@@ -70,7 +70,7 @@ cmake --build --preset native-debug --parallel
 ./build/native/bin/toybox-textured-quad/toybox-textured-quad
 ```
 
-The example opens a resizable window with a centered checkerboard quad. Press Escape or close the window to exit. Its assets are resolved relative to the executable, independently of the working directory.
+The example opens a resizable window with a centered quad displaying a generated crate texture. Press Escape or close the window to exit. Its assets are resolved relative to the executable, independently of the working directory.
 
 Each example's output directory contains its runtime assets and SDL framework. Keep them together when moving a build. CMake compiles the engine and GLAD from local source and copies the official SDL3 framework; it does not rebuild SDL3 or download dependencies. See [development instructions](docs/development.md) for engine-only builds, IDE setup, and remaining platform checks.
 

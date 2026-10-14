@@ -1,8 +1,12 @@
 #include "Texture2D.h"
 
+#include <fstream>
 #include <limits>
+#include <memory>
+#include <vector>
 
 #include <SDL3/SDL.h>
+#include <stb_image.h>
 
 namespace toybox {
 
@@ -13,7 +17,59 @@ Texture2D::~Texture2D()
     }
 }
 
-bool Texture2D::initializeRGBA8(int width, int height, const unsigned char* pixels, std::size_t byteCount)
+bool Texture2D::initializeFromFile(const std::filesystem::path& path)
+{
+    if (texture_) {
+        SDL_Log("Texture2D is already initialized: %s", path.u8string().c_str());
+        return false;
+    }
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    const std::streamoff size = file ? file.tellg() : std::streampos(-1);
+    if (size <= 0 || size > std::numeric_limits<int>::max()) {
+        SDL_Log("Could not read texture (missing, empty, or oversized): %s", path.u8string().c_str());
+        return false;
+    }
+    const int length = size;
+    std::vector<byte> encoded(length);
+    file.seekg(0);
+    if (!file.read(reinterpret_cast<char*>(encoded.data()), length)) {
+        SDL_Log("Could not read complete texture file: %s", path.u8string().c_str());
+        return false;
+    }
+
+    int width = 0, height = 0, channels = 0;
+    if (!stbi_info_from_memory(encoded.data(), length, &width, &height, &channels)) {
+        SDL_Log("Could not inspect texture %s: %s", path.u8string().c_str(), stbi_failure_reason());
+        return false;
+    }
+    GLint maxSize = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
+    if (width <= 0 || height <= 0 || width > maxSize || height > maxSize) {
+        SDL_Log("Texture dimensions are invalid or exceed the device limit of %d: %s", maxSize, path.u8string().c_str());
+        return false;
+    }
+    const usize w = width;
+    const usize h = height;
+    if (w > std::numeric_limits<usize>::max() / 4 / h) {
+        SDL_Log("Texture byte count exceeds addressable memory: %s", path.u8string().c_str());
+        return false;
+    }
+    using ImagePixels = std::unique_ptr<stbi_uc, decltype(&stbi_image_free)>;
+    ImagePixels pixels(stbi_load_from_memory(encoded.data(), length, &width, &height, &channels, STBI_rgb_alpha), stbi_image_free);
+    if (!pixels) {
+        SDL_Log("Could not decode texture %s: %s", path.u8string().c_str(), stbi_failure_reason());
+        return false;
+    }
+
+    const auto byteCount = w * h * 4;
+    if (!initializeRGBA8(width, height, pixels.get(), byteCount)) {
+        SDL_Log("Could not upload texture: %s", path.u8string().c_str());
+        return false;
+    }
+    return true;
+}
+
+bool Texture2D::initializeRGBA8(int width, int height, const byte* pixels, usize byteCount)
 {
     if (texture_) {
         SDL_Log("Texture2D is already initialized.");
@@ -23,9 +79,9 @@ bool Texture2D::initializeRGBA8(int width, int height, const unsigned char* pixe
         SDL_Log("Texture2D requires positive dimensions and RGBA8 pixels.");
         return false;
     }
-    const auto w = static_cast<std::size_t>(width);
-    const auto h = static_cast<std::size_t>(height);
-    if (w > std::numeric_limits<std::size_t>::max() / 4 / h || byteCount != w * h * 4) {
+    const usize w = width;
+    const usize h = height;
+    if (w > std::numeric_limits<usize>::max() / 4 / h || byteCount != w * h * 4) {
         SDL_Log("Texture2D pixel byte count does not match its RGBA8 dimensions.");
         return false;
     }
@@ -65,7 +121,7 @@ bool Texture2D::initializeRGBA8(int width, int height, const unsigned char* pixe
     glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLength);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, skipPixels);
     glPixelStorei(GL_UNPACK_SKIP_ROWS, skipRows);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, static_cast<GLuint>(unpackBuffer));
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, unpackBuffer);
 
     const GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
@@ -77,7 +133,7 @@ bool Texture2D::initializeRGBA8(int width, int height, const unsigned char* pixe
     return true;
 }
 
-void Texture2D::bind(unsigned int unit) const
+void Texture2D::bind(u32 unit) const
 {
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, texture_);

@@ -17,7 +17,7 @@ cmake --build --preset native-debug --parallel
 ./build/native/bin/toybox-textured-quad/toybox-textured-quad
 ```
 
-The preset configures Debug for macOS arm64 using Unix Makefiles and builds the `toybox-textured-quad` target, which depends on the static `toybox` library. The example opens a resizable 960 × 540 window titled **Toybox - Textured Quad**. Press Escape or close the window to exit.
+The preset configures Debug for macOS arm64 using Unix Makefiles and builds the `toybox-textured-quad` target, which depends on the static `toybox` library. The example opens a resizable 800 × 600 window titled **Toybox - Textured Quad**. Press Escape or close the window to exit.
 
 The example output directory contains `assets/` and `Frameworks/SDL3.framework`. Keep the entire directory together when relocating it. Asset copying runs on each example build, including shader-only edits. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The [example README](../examples/textured-quad/README.md) describes ownership and controls.
 
@@ -58,9 +58,9 @@ For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`
 
 The static engine library contains namespaced `Application`, `Window`, `ShaderProgram`, and `Texture2D` classes. `Application` hosts a derived example through SDL callbacks; example resources are destroyed before its base window/context. SDL video initialization and graphics presentation stay in `Window`. See [project structure](project-structure.md) and [RFC 0003](rfcs/0003-toybox-engine-and-examples.md).
 
-The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. The example uses GLSL 330 and a procedural RGBA8 texture. VSync is requested, with a short frame delay if unavailable or minimized.
+The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. The example uses GLSL 330 and a PNG crate texture decoded to RGBA8. VSync is requested, with a short frame delay if unavailable or minimized.
 
-Shader source/file loading, compilation/link diagnostics, uniform updates, and RGBA8 upload validation are implemented. Image decoding, camera, audio, physics, terrain destruction, and other graphics backends remain planned. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
+Shader source/file loading, compilation/link diagnostics, uniform updates, and RGBA8 upload validation are implemented. Camera, audio, physics, terrain destruction, and other graphics backends remain planned. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
 
 ## Verification record
 
@@ -74,10 +74,16 @@ The built `toybox-textured-quad` executable also launched through its SDL entry 
 
 Browser builds and Windows/Linux native behavior have not been validated. The owner supplies screenshots manually; do not capture them automatically.
 
+### Texture-file validation (2026-10-14)
+
+Native configuration/build and focused OpenGL checks passed on Apple M1 Pro for PNG/JPEG loading, RGBA/gray-alpha conversion, exact pixel orientation and alpha readback, Unicode filenames, missing/empty/invalid/truncated input, excessive dimensions, retry after failure, repeated initialization rejection, pixel-unpack state restoration, resource destruction, and a rendered quad pixel matching the uploaded texture. Checks loaded the packaged crate texture from `/private/tmp`; tutorial JPEG input was used only for a local check and was not imported. The generated crate replaces the running example's checkerboard; an updated owner-supplied screenshot is pending.
+
+The updated example also launched successfully from `/private/tmp` through its SDL callbacks. Interactive resize/Retina checks remain manual.
+
 ## Manual checks
 
 1. Configure/build successfully and launch the textured-quad example.
-2. Verify title, dark background, and crisp centered checkerboard; check the reported OpenGL context/renderer.
+2. Verify title, dark background, and centered crate image with the arrow pointing up; check the reported OpenGL context/renderer.
 3. Resize wide/tall, check Retina drawable sizing, minimize and restore; the quad should stay square and centered.
 4. Exit with Escape; relaunch and exit with the close button.
 5. Launch from outside the repository to check asset lookup; move an intact example output directory when testing relocation.

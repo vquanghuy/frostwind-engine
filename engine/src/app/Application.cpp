@@ -3,6 +3,8 @@
 #include <exception>
 #include <memory>
 
+#include <stb_image.h>
+
 namespace toybox {
 
 SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, const WindowConfig& config)
@@ -14,7 +16,12 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
             SDL_Log("Application factory did not create an application.");
             return SDL_APP_FAILURE;
         }
-        if (!application->window_.initialize(config) || !application->initialize()) {
+        if (!application->window_.initialize(config)) {
+            return SDL_APP_FAILURE;
+        }
+        // Configure the engine-wide UV convention before example assets load.
+        stbi_set_flip_vertically_on_load(true);
+        if (!application->initialize()) {
             return SDL_APP_FAILURE;
         }
         // SDL carries the state until onQuit takes ownership back.

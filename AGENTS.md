@@ -4,7 +4,7 @@
 
 Toybox is an experimental C++17 engine for 2D and 3D games, developed through practical examples in one repository. Reusable engine code lives under `engine/`; examples own application behavior, game rules, and their assets. Mini Artillery is a planned destructible-terrain example, not the engine's identity or an implemented game. Keep scope lightweight and add systems only as examples need them.
 
-Implemented: native SDL3/OpenGL window and application lifecycle, shader-program source/file loading, RGBA8 textures, and the textured-quad example. Camera, audio, physics, terrain destruction, 3D systems, and additional graphics APIs remain planned. Read `README.md`, `docs/coding-conventions.md`, `docs/project-structure.md`, and relevant RFCs before changes. RFC 0003 records the engine/example direction.
+Implemented: native SDL3/OpenGL window and application lifecycle, shader-program source/file loading, RGBA8 textures with PNG/JPEG file loading, and the textured-quad example. Camera, audio, physics, terrain destruction, 3D systems, and additional graphics APIs remain planned. Read `README.md`, `docs/coding-conventions.md`, `docs/project-structure.md`, and relevant RFCs before changes. RFC 0003 records the engine/example direction.
 
 ## Technology decisions
 
@@ -12,13 +12,16 @@ Implemented: native SDL3/OpenGL window and application lifecycle, shader-program
 - Use pinned local dependencies under `external/`; follow its README and RFC 0001. Do not add FetchContent or a package manager without changing that policy.
 - SDL3 3.4.18 uses the official macOS universal dynamic framework and packaged headers. Preserve its layout, symlinks, license, and provenance. Copy it beside each example; do not rebuild it locally or restore its source tree. Prefer static linking for other compiled dependencies.
 - Native graphics target OpenGL 3.3 Core through GLAD 2.0.8. Newer actual contexts are allowed. GLAD is native-only; browser GLES3/WebGL 2 and a separate WASM-compatible SDL library remain pending.
-- GLM, Dear ImGui, stb_image, Box2D 3.x, and Clipper2 remain planned. Box2D 3 uses a C API callable from C++; never mix in 2.x APIs. Select a 3D physics library and other graphics backends when their work begins; do not introduce unused backend hierarchies.
+- Use the pinned stb_image 2.28 header for PNG/JPEG decoding; compile its implementation once and keep decoder configuration private to the engine.
+- GLM, Dear ImGui, Box2D 3.x, and Clipper2 remain planned. Box2D 3 uses a C API callable from C++; never mix in 2.x APIs. Select a 3D physics library and other graphics backends when their work begins; do not introduce unused backend hierarchies.
 - Preserve exact dependency versions, origins, local patches, and supplied binary toolchain/configuration records. Generated artifacts belong under `build/`, not `external/`.
 - Record significant architectural decisions in numbered RFCs, without author metadata.
 
 ## Code organization and ownership
 
 Follow `docs/coding-conventions.md` and `docs/project-structure.md`. Headers stay beside `.cpp` files. Use namespace `toybox` for engine code, not example behavior. Add directories when implementation needs them; avoid empty placeholders.
+
+Use primitive aliases from `<core/Types.h>` where appropriate: `u8`, `u32`, `i32`, `f32`, `byte`, and `usize`; qualify them in examples. Keep external API types and ordinary `int` dimensions where they fit. Prefer implicit numeric conversions for validated values, avoid redundant casts, and keep size arithmetic in `usize` to prevent integer overflow. Required pointer conversions remain explicit.
 
 - `engine/src/app/`: reusable application lifecycle, callback coordination, and future simulation scheduling.
 - `engine/src/platform/`: native/browser integration; `Window` owns SDL video/window/OpenGL context and presentation.

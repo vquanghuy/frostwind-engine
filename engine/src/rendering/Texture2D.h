@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstddef>
+#include <filesystem>
 
+#include <core/Types.h>
 #include <glad/gl.h>
 
 namespace toybox {
@@ -16,8 +17,12 @@ public:
 
     // Tightly packed RGBA8, first row at the bottom; copies pixels to the GPU.
     // Uses nearest filtering and clamp-to-edge without mipmaps.
-    bool initializeRGBA8(int width, int height, const unsigned char* pixels, std::size_t byteCount);
-    void bind(unsigned int unit = 0) const;
+    bool initializeRGBA8(int width, int height, const byte* pixels, usize byteCount);
+    // PNG/JPEG decoded to RGBA8 and flipped to the bottom-left UV convention.
+    // Application startup configures the decoder before file textures are loaded.
+    // Relative paths resolve against the caller's working directory.
+    bool initializeFromFile(const std::filesystem::path& path);
+    void bind(u32 unit = 0) const;
 
 private:
     GLuint texture_ = 0;
