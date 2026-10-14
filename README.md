@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/assets/toybox-logo.png" alt="Toybox — an open toy chest with a sword, tank, and ball beside a colorful wordmark" width="720">
-</p>
+![Toybox](docs/assets/toybox-logo.png)
 
 An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Planned capabilities include 2D/3D physics integrations and multiple graphics APIs.
 

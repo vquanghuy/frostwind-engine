@@ -2,6 +2,10 @@
 
 A small Toybox example that draws a procedural green/teal checkerboard on a textured quad. This is the existing Mini Artillery rendering scaffold extracted into an engine consumer; it contains no artillery gameplay.
 
+![Native OpenGL checkerboard quad](../../docs/assets/milestones/m002-opengl-quad.png)
+
+*Captured manually on macOS Apple M1 Pro on 2026-10-13, before the Toybox rename. The window retains its original Mini Artillery title.*
+
 ## Build and run
 
 From the repository root on macOS Apple Silicon:
