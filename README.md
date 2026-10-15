@@ -13,9 +13,10 @@ The static `frostwind` library supplies reusable facilities. Examples depend on 
 | Example | Status |
 | --- | --- |
 | [Textured Quad](examples/textured-quad/README.md) | Implemented: shader/image-file loading and quad rendering |
-| [Mini Artillery](docs/examples/mini-artillery.md) | Planned: tanks and projectiles exercising destructible terrain |
+| [Asteroids](examples/asteroids/README.md) | Planned: 2D camera/input/sprites, normal-map lighting experiment, and later space-arena gameplay |
+| [Mini Artillery](examples/mini-artillery/README.md) | Planned: tanks and projectiles exercising destructible terrain |
 
-Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
+Asteroids and Mini Artillery currently contain planning READMEs and concept/reference artwork only; neither has an executable. Their READMEs embed the preferred concepts and link older versions and provenance. Asteroids will own ship/arena rules, bullets, asteroid behavior, and scoring. Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
 
 ## Technical approach
 
@@ -51,7 +52,9 @@ frostwind-engine/
 │       ├── platform/           # Window and OpenGL context ownership
 │       └── rendering/          # ShaderProgram and Texture2D
 ├── examples/
-│   └── textured-quad/          # Example code, CMake target, and assets
+│   ├── textured-quad/          # Implemented code, CMake target, and runtime assets
+│   ├── asteroids/              # Planned game: README and docs/assets/
+│   └── mini-artillery/         # Planned game: README and docs/assets/
 ├── external/                   # Pinned dependencies and license records
 ├── docs/                       # Structure, development, conventions, and RFCs
 ├── CHANGELOG.md
@@ -81,4 +84,4 @@ Third-party files remain pinned under `external/`, shared by the engine and exam
 
 Start with the [documentation index](docs/README.md). Follow the [coding conventions](docs/coding-conventions.md), and record significant decisions in [RFCs](docs/rfcs/README.md).
 
-Project code is licensed under the [MIT License](LICENSE). Third-party libraries and assets retain their own licenses. Examples keep asset attribution with their assets; the [textured-quad record](examples/textured-quad/assets/LICENSES.md) covers its original shaders. Historical reference images are documented [separately](docs/assets/README.md).
+Project code is licensed under the [MIT License](LICENSE). Third-party libraries and assets retain their own licenses. Examples keep asset attribution with their assets; the [textured-quad record](examples/textured-quad/assets/LICENSES.md) covers its original shaders. Each planned example records concept/reference provenance under its `docs/assets/`; [shared branding and historical milestone captures](docs/assets/README.md) stay in central documentation.

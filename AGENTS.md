@@ -28,9 +28,11 @@ Use primitive aliases from `<core/Types.h>` where appropriate: `u8`, `u32`, `i32
 - `engine/src/rendering/`: shader programs, textures, and future rendering facilities.
 - Future engine camera, input, audio, terrain, and physics modules belong in the engine when needed.
 - `examples/textured-quad/`: current demo, executable entry point, and its assets/license record.
-- `examples/mini-artillery/`: added with gameplay implementation; tanks, weapons, aiming, damage, wind, turns, match state, UI, and game assets stay here.
+- `examples/asteroids/`: currently a planning README and `docs/assets/` concepts/prototypes; future ship, asteroid, arena, weapon, collision, scoring, and game rules stay here.
+- `examples/mini-artillery/`: currently a planning README and `docs/assets/` references; future tanks, weapons, aiming, damage, wind, turns, match state, UI, and game assets stay here.
+- Each example README embeds its preferred concept and states implementation status. Example planning artwork/provenance belongs in its `docs/assets/`, separate from future runtime `assets/` and `assets/LICENSES.md`. Preserve older concepts and reference attribution.
 - `external/`: shared pinned dependencies; `cmake/`: shared build/SDK/example packaging helpers.
-- `docs/assets/`: historical milestone PNGs and attributed reference images; artillery references are associated with the planned Mini Artillery example.
+- `docs/assets/`: shared branding and historical milestone PNGs/captions; game-specific concept and reference images belong with their owning examples.
 
 Dependencies flow from examples to the engine. Engine code must not include example code or choose example assets. Each example derives from `frostwind::Application` to supply startup, events, and rendering; its global SDL callback adapters delegate to the engine. Example GPU members must be destroyed before the base window/context. Keep native handles private and use scoped ownership for heap/C API resources. Keep geometry and simulation independent of a graphics context where practical.
 

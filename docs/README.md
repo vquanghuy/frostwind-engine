@@ -8,7 +8,8 @@
 - [Contributing and commit messages](contributing.md)
 - [RFC process and index](rfcs/README.md)
 - [Textured-quad example](../examples/textured-quad/README.md)
-- [Planned Mini Artillery example and references](examples/mini-artillery.md)
-- [Reference images and historical milestone attribution](assets/README.md)
+- [Planned Asteroids example, concepts, and sprite prototypes](../examples/asteroids/README.md)
+- [Planned Mini Artillery example and references](../examples/mini-artillery/README.md)
+- [Shared branding, historical milestones, and example image inventories](assets/README.md)
 
 RFCs record decisions and proposals. The structure guide describes the implemented engine/example boundary; the README distinguishes working capabilities from future systems. Development progress remains in the changelog.

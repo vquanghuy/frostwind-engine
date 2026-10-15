@@ -14,17 +14,11 @@
 
 [`milestones/m004-frostwind-textured-quad.png`](milestones/m004-frostwind-textured-quad.png) shows the same example after the Frostwind rename. The owner supplied it from `Screenshot 2026-10-14 at 14.56.04.png` on macOS Apple M1 Pro on 2026-10-14. It is embedded in the changelog and [example README](../../examples/textured-quad/README.md); M001–M003 remain unchanged.
 
-## Third-party references
+## Example concepts and references
 
-These images belong to the [planned Mini Artillery example](../examples/mini-artillery.md). They were copied from the original Mini Artillery planning note, `FLN-20260609 - Development - 2D Destructible Terrain Game Tech Stack.md`. They are design references, not screenshots of an implemented Mini Artillery build.
+Planning artwork, generated sprite prototypes, and attribution live with the example that owns them:
 
-| File | Description | Original note attachment |
-| --- | --- | --- |
-| `gunbound-reference.png` | Gunbound gameplay screenshot | `Pasted image 20260610101529.png` |
-| `pocket-tanks-reference.png` | Pocket Tanks gameplay screenshot | `Pasted image 20260610103113.png` |
-| `kenney-tanks-preview.png` | Kenney Tanks asset overview | `Pasted image 20260610104413.png` |
-| `kenney-tanks-mockup.png` | Kenney Tanks example scene | `Pasted image 20260610104431.png` |
+- [Asteroids concept and reference inventory](../../examples/asteroids/docs/assets/README.md)
+- [Mini Artillery concept and reference inventory](../../examples/mini-artillery/docs/assets/README.md)
 
-The [Kenney Tanks pack](https://kenney.nl/assets/tanks) is released under CC0, as indicated on the supplied previews. The mockup notes that its terrain and background are not included in the pack.
-
-Gunbound and Pocket Tanks screenshots remain the property of their respective rights holders. Their original screenshot URLs were not recorded in the planning note. They are included here as gameplay references and are excluded from the project's MIT license.
+Each example README embeds its preferred concept and links older versions. Concept images are labeled as design references and are separate from runtime textures and their future `assets/LICENSES.md` records. Historical milestone PNGs, captions, and branding remain here unchanged.

@@ -2,7 +2,7 @@
 
 Frostwind contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
 
-## Implemented layout
+## Repository layout
 
 ```text
 engine/
@@ -16,16 +16,22 @@ engine/
         ├── Texture2D.h, Texture2D.cpp
         └── StbImage.cpp
 examples/
-└── textured-quad/
-    ├── CMakeLists.txt
+├── textured-quad/
+│   ├── CMakeLists.txt
+│   ├── README.md
+│   ├── main.cpp
+│   ├── QuadDemo.h, QuadDemo.cpp
+│   ├── QuadRenderer.h, QuadRenderer.cpp
+│   └── assets/
+│       ├── LICENSES.md
+│       ├── shaders/quad.vert, quad.frag
+│       └── textures/crate.png
+├── asteroids/                  # Planning only; no executable yet
+│   ├── README.md
+│   └── docs/assets/            # Concepts, references, prototypes, provenance
+└── mini-artillery/             # Planning only; no executable yet
     ├── README.md
-    ├── main.cpp
-    ├── QuadDemo.h, QuadDemo.cpp
-    ├── QuadRenderer.h, QuadRenderer.cpp
-    └── assets/
-        ├── LICENSES.md
-        ├── shaders/quad.vert, quad.frag
-        └── textures/crate.png
+    └── docs/assets/            # Concept/reference images and provenance
 ```
 
 Headers stay beside implementations. CMake explicitly lists source files. `frostwind` exposes `engine/src/` as its include directory, allowing includes such as `<rendering/ShaderProgram.h>`; engine types use namespace `frostwind`. Examples link to `frostwind`, while the engine neither includes nor links example code. No separate public-header tree or installation/export package exists yet.
@@ -41,7 +47,7 @@ Headers stay beside implementations. CMake explicitly lists source files. `frost
 | `QuadDemo` | Select demo assets, initialize the renderer, handle Escape, and render each frame |
 | `QuadRenderer` | Own quad buffers plus engine shader/texture objects; load the example texture and draw |
 
-Camera, audio, input systems, physics, terrain, and other examples are added only as implementation requires them. Mini Artillery remains a [planned example](examples/mini-artillery.md); its game rules will stay outside the engine.
+Camera, audio, input systems, physics, terrain, and example code are added only as implementation requires them. [Asteroids](../examples/asteroids/README.md) and [Mini Artillery](../examples/mini-artillery/README.md) contain planning documentation/artwork only; their game rules will stay outside the engine. The planning directories do not imply implemented CMake targets or games.
 
 ## Application flow and resource lifetime
 
@@ -59,7 +65,9 @@ Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a comp
 
 `ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). The private `StbImage.cpp` compiles the local PNG/JPEG decoder once. Application startup calls `Texture2D::initializeSupport()` before example initialization. This rendering-owned setup configures bottom-left image orientation and caches the maximum texture size for the single context. Both file loads and raw uploads reuse that limit; application code does not depend on stb_image. Example code chooses texture paths; the engine does not choose assets. Buffer/framebuffer wrappers and additional formats remain deferred.
 
-Each example selects and licenses its own assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `frostwind_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
+Each example README introduces its current status and embeds its preferred concept or implemented capture. Planning artwork, older concept versions, sprite prototypes, prompts, and third-party reference attribution live in that example’s `docs/assets/`. They are separate from runtime `assets/` and are not copied beside executables. Shared branding and historical milestone images remain under `docs/assets/`; preserve their captions and bytes. Add runtime asset folders and `assets/LICENSES.md` when assets are actually imported.
+
+Each implemented example selects and licenses its own runtime assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `frostwind_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
 
 ## CMake and runtime layout
 

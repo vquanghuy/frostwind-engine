@@ -18,3 +18,4 @@ Use RFCs to propose significant architecture changes and record the reasoning be
 | [0002: Graphics integration](0002-graphics-integration.md) | Implemented |
 | [0003: Frostwind engine and examples](0003-frostwind-engine-and-examples.md) | Implemented |
 | [0004: Frame pacing](0004-frame-pacing.md) | Implemented |
+| [0005: 2D camera, keyboard/mouse input, and sprites for Asteroids](0005-camera-keyboard-and-sprites.md) | Draft |
