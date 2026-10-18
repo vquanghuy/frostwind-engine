@@ -10,13 +10,15 @@ Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was
 
 The static `frostwind` library supplies reusable facilities. Examples depend on the engine and own their application behavior and runtime assets; the engine never depends on an example.
 
+Example directories use two-digit prefixes for a suggested learning order: Textured Quad, Asteroids, then Mini Artillery. Each example builds independently; CMake targets and executable names omit the prefixes.
+
 | Example | Status |
 | --- | --- |
-| [Textured Quad](examples/textured-quad/README.md) | Implemented: shader/image-file loading and quad rendering |
-| [Asteroids](examples/asteroids/README.md) | Planned: 2D camera/input/sprites, normal-map lighting experiment, and later space-arena gameplay |
-| [Mini Artillery](examples/mini-artillery/README.md) | Planned: tanks and projectiles exercising destructible terrain |
+| [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and quad rendering |
+| [Asteroids](examples/02-asteroids/README.md) | Runnable window scaffold; 2D camera/input/sprites, lighting, and gameplay planned |
+| [Mini Artillery](examples/03-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
 
-Asteroids and Mini Artillery currently contain planning READMEs and concept/reference artwork only; neither has an executable. Their READMEs embed the preferred concepts and link older versions and provenance. Asteroids will own ship/arena rules, bullets, asteroid behavior, and scoring. Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
+Asteroids and Mini Artillery each have a minimal executable that opens a plain OpenGL window, plus planning READMEs and concept/reference artwork. Their READMEs embed the preferred concepts and link older versions and provenance. Asteroids will own ship/arena rules, bullets, asteroid behavior, and scoring. Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
 
 ## Technical approach
 
@@ -52,9 +54,9 @@ frostwind-engine/
 │       ├── platform/           # Window and OpenGL context ownership
 │       └── rendering/          # ShaderProgram and Texture2D
 ├── examples/
-│   ├── textured-quad/          # Implemented code, CMake target, and runtime assets
-│   ├── asteroids/              # Planned game: README and docs/assets/
-│   └── mini-artillery/         # Planned game: README and docs/assets/
+│   ├── 01-textured-quad/       # Implemented code, CMake target, and runtime assets
+│   ├── 02-asteroids/           # Window scaffold, CMake target, and planning artwork
+│   └── 03-mini-artillery/      # Window scaffold, CMake target, and planning artwork
 ├── external/                   # Pinned dependencies and license records
 ├── docs/                       # Structure, development, conventions, and RFCs
 ├── CHANGELOG.md
@@ -74,14 +76,34 @@ cmake --build --preset native-debug --parallel
 ./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
-The example opens a resizable window with a centered quad displaying a generated crate texture. Press Escape or close the window to exit. Its assets are resolved relative to the executable, independently of the working directory.
+The preset builds all three examples. Textured Quad opens a resizable window with a centered quad displaying a generated crate texture. Its assets are resolved relative to the executable, independently of the working directory.
 
-Each example's output directory contains its runtime assets and SDL framework. Keep them together when moving a build. CMake compiles the engine and GLAD from local source and copies the official SDL3 framework; it does not rebuild SDL3 or download dependencies. See [development instructions](docs/development.md) for engine-only builds, IDE setup, and remaining platform checks.
+Run either window scaffold separately:
+
+```sh
+./build/native/bin/frostwind-asteroids/frostwind-asteroids
+./build/native/bin/frostwind-mini-artillery/frostwind-mini-artillery
+```
+
+Asteroids and Mini Artillery currently display plain backgrounds. Press Escape or close any example window to exit.
+
+Each example's output directory contains its SDL framework and any runtime assets it uses. The two new scaffolds have no runtime assets; planning artwork is not packaged. Keep each output directory together when moving a build. CMake compiles the engine and GLAD from local source and copies the official SDL3 framework; it does not rebuild SDL3 or download dependencies. See [development instructions](docs/development.md) for individual targets, engine-only builds, IDE setup, and remaining platform checks.
 
 Third-party files remain pinned under `external/`, shared by the engine and examples. Preserve licenses and provenance; see the [dependency policy](external/README.md) and [RFC 0001](docs/rfcs/0001-local-dependencies.md).
+
+## Asset creation tools
+
+Useful tools for preparing example artwork:
+
+| Tool | Use |
+| --- | --- |
+| [Agent Sprite Forge](https://github.com/0x0funky/agent-sprite-forge) | AI-assisted generation and processing of 2D sprites, sprite sheets, transparent PNG frames, and animations |
+| [NormalMap-Online](https://cpetry.github.io/NormalMap-Online/) | Browser-based normal-map generation from height maps, with adjustable settings and a live 3D preview |
+
+These are optional asset-authoring tools. Record runtime asset sources, tools, modifications, and licenses in the owning example's `assets/LICENSES.md`. For normal maps, prefer authored height maps over color-image brightness, which also contains paint colors and baked lighting. Asteroids' normal-map lighting experiment remains planned; see the [prototype workflow in RFC 0005](docs/rfcs/0005-camera-keyboard-and-sprites.md#normal-mapped-sprite-lighting-prototype).
 
 ## Documentation and license
 
 Start with the [documentation index](docs/README.md). Follow the [coding conventions](docs/coding-conventions.md), and record significant decisions in [RFCs](docs/rfcs/README.md).
 
-Project code is licensed under the [MIT License](LICENSE). Third-party libraries and assets retain their own licenses. Examples keep asset attribution with their assets; the [textured-quad record](examples/textured-quad/assets/LICENSES.md) covers its original shaders. Each planned example records concept/reference provenance under its `docs/assets/`; [shared branding and historical milestone captures](docs/assets/README.md) stay in central documentation.
+Project code is licensed under the [MIT License](LICENSE). Third-party libraries and assets retain their own licenses. Examples keep asset attribution with their assets; the [textured-quad record](examples/01-textured-quad/assets/LICENSES.md) covers its original shaders. Each planned example records concept/reference provenance under its `docs/assets/`; [shared branding and historical milestone captures](docs/assets/README.md) stay in central documentation.

@@ -1,8 +1,8 @@
-# Asteroids example (planned)
+# Asteroids example
 
 A planned Asteroids-themed 2D technical example for Frostwind. A spacecraft and asteroid scene provides a practical setting for developing and validating reusable engine features.
 
-**Status:** planning and art exploration only. This directory contains documentation and reference artwork; there is no Asteroids implementation, CMake target, executable, or imported runtime asset set yet. The working engine demo remains [Textured Quad](../textured-quad/README.md).
+**Status:** runnable window scaffold with a separate `frostwind-asteroids` CMake target. It opens a plain dark-blue OpenGL window; camera, ship movement, sprites, lighting, gameplay, and imported runtime assets remain planned. [Textured Quad](../01-textured-quad/README.md) remains the working texture-rendering demo.
 
 ## Concept progression and art lineage
 
@@ -43,7 +43,7 @@ Runtime geometry and simulation remain independent of a graphics context. The va
 
 ## Proposed controls
 
-These are the only planned controls for Asteroids; implementation remains pending.
+Mouse aiming and WASD movement remain planned. Escape and window-close exit work in the current scaffold.
 
 | Controls | Action |
 | --- | --- |
@@ -55,6 +55,14 @@ Movement uses direct translation scaled by delta seconds (no inertia simulation)
 
 ## Build and assets
 
-There is no Asteroids build/run command yet. See [development instructions](../../docs/development.md) for building and running the implemented Textured Quad demo.
+On the development Apple Silicon Mac, from the repository root:
+
+```sh
+cmake --preset native-debug
+cmake --build --preset native-debug --target frostwind-asteroids --parallel
+./build/native/bin/frostwind-asteroids/frostwind-asteroids
+```
+
+The scaffold opens a resizable 960 × 540 window titled **Frostwind - Asteroids**, with a 60 FPS cap and VSync requested. Press Escape or close the window to quit. See [development instructions](../../docs/development.md) for building all examples and remaining platform checks.
 
 `docs/assets/` holds planning artwork only and is not packaged with an executable. Future runtime textures and shaders belong in this example’s `assets/`, with their sources/licenses in `assets/LICENSES.md` when imported.

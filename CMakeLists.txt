@@ -12,5 +12,7 @@ add_subdirectory(engine)
 
 option(FROSTWIND_BUILD_EXAMPLES "Build Frostwind examples" ON)
 if(FROSTWIND_BUILD_EXAMPLES)
-    add_subdirectory(examples/textured-quad)
+    add_subdirectory(examples/01-textured-quad)
+    add_subdirectory(examples/02-asteroids)
+    add_subdirectory(examples/03-mini-artillery)
 endif()

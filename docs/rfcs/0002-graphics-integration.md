@@ -63,7 +63,7 @@ For support classes, exercise missing/empty shader files, paths with spaces, com
 
 ## Open questions
 
-The initial quad uses local coordinates with x right and y up, and a bottom-left UV origin. The demo’s GLSL 330 sources live in `examples/textured-quad/assets/shaders/quad.vert` and `quad.frag` and are loaded from the copied runtime assets. Terrain/world coordinates and browser shader variants will be decided when those features are implemented.
+The initial quad uses local coordinates with x right and y up, and a bottom-left UV origin. The demo’s GLSL 330 sources live in `examples/01-textured-quad/assets/shaders/quad.vert` and `quad.frag` and are loaded from the copied runtime assets. Terrain/world coordinates and browser shader variants will be decided when those features are implemented.
 
 ## Decision
 

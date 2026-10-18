@@ -4,6 +4,8 @@ Frostwind contains a reusable engine library and independent example executables
 
 ## Repository layout
 
+Example directories use two-digit prefixes to sort by suggested learning progression. The prefixes apply to source directories; CMake targets, executable names, and runtime output paths retain names such as `frostwind-asteroids`.
+
 ```text
 engine/
 ├── CMakeLists.txt
@@ -16,7 +18,7 @@ engine/
         ├── Texture2D.h, Texture2D.cpp
         └── StbImage.cpp
 examples/
-├── textured-quad/
+├── 01-textured-quad/
 │   ├── CMakeLists.txt
 │   ├── README.md
 │   ├── main.cpp
@@ -26,10 +28,14 @@ examples/
 │       ├── LICENSES.md
 │       ├── shaders/quad.vert, quad.frag
 │       └── textures/crate.png
-├── asteroids/                  # Planning only; no executable yet
+├── 02-asteroids/               # Minimal window scaffold; scene/gameplay planned
+│   ├── CMakeLists.txt
+│   ├── main.cpp
 │   ├── README.md
 │   └── docs/assets/            # Concepts, references, prototypes, provenance
-└── mini-artillery/             # Planning only; no executable yet
+└── 03-mini-artillery/          # Minimal window scaffold; terrain/gameplay planned
+    ├── CMakeLists.txt
+    ├── main.cpp
     ├── README.md
     └── docs/assets/            # Concept/reference images and provenance
 ```
@@ -46,8 +52,9 @@ Headers stay beside implementations. CMake explicitly lists source files. `frost
 | Example `main.cpp` | Supply SDL's global callbacks, application factory, and window configuration |
 | `QuadDemo` | Select demo assets, initialize the renderer, handle Escape, and render each frame |
 | `QuadRenderer` | Own quad buffers plus engine shader/texture objects; load the example texture and draw |
+| `AsteroidsApp`, `MiniArtilleryApp` | Clear the scaffold window and handle Escape; scene/gameplay implementation remains planned |
 
-Camera, audio, input systems, physics, terrain, and example code are added only as implementation requires them. [Asteroids](../examples/asteroids/README.md) and [Mini Artillery](../examples/mini-artillery/README.md) contain planning documentation/artwork only; their game rules will stay outside the engine. The planning directories do not imply implemented CMake targets or games.
+Camera, audio, input systems, physics, terrain, and further example code are added only as implementation requires them. [Asteroids](../examples/02-asteroids/README.md) and [Mini Artillery](../examples/03-mini-artillery/README.md) each have a separate CMake target and a minimal OpenGL window scaffold alongside their planning documentation/artwork. Scene rendering and gameplay remain planned; their game rules will stay outside the engine.
 
 ## Application flow and resource lifetime
 
@@ -67,19 +74,19 @@ Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a comp
 
 Each example README introduces its current status and embeds its preferred concept or implemented capture. Planning artwork, older concept versions, sprite prototypes, prompts, and third-party reference attribution live in that example’s `docs/assets/`. They are separate from runtime `assets/` and are not copied beside executables. Shared branding and historical milestone images remain under `docs/assets/`; preserve their captions and bytes. Add runtime asset folders and `assets/LICENSES.md` when assets are actually imported.
 
-Each implemented example selects and licenses its own runtime assets. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. `frostwind_configure_example` copies each example's assets beside its executable on every build, including asset-only changes. Separate output directories prevent examples' files from colliding.
+Examples select and license their own runtime assets when imported. `QuadDemo` resolves the executable-relative shader directory and passes explicit paths to its renderer. The engine never selects a demo asset. When passed an asset directory, `frostwind_configure_example` copies those assets beside the executable on every build, including asset-only changes. The Asteroids and Mini Artillery scaffolds omit that argument and have no runtime assets. Separate output directories prevent examples' files from colliding.
 
 ## CMake and runtime layout
 
-The root project owns shared local dependency setup. `engine/CMakeLists.txt` defines the static `frostwind` target; each example defines its executable. `FROSTWIND_BUILD_EXAMPLES=OFF` builds the library alone. SDL3 and GLAD include/link requirements propagate through the library target. `cmake/FrostwindExample.cmake` handles example warnings, output directories, and runtime packaging.
+The root project owns shared local dependency setup. `engine/CMakeLists.txt` defines the static `frostwind` target; each example defines its executable. All three build presets select `frostwind-textured-quad`, `frostwind-asteroids`, and `frostwind-mini-artillery`. A build can select one with `--target <target>`. `FROSTWIND_BUILD_EXAMPLES=OFF` builds the library alone. SDL3 and GLAD include/link requirements propagate through the library target. `cmake/FrostwindExample.cmake` handles example warnings, output directories, and runtime packaging.
 
 | Preset | Executable path | Status |
 | --- | --- | --- |
-| `native-debug` | `build/native/bin/frostwind-textured-quad/frostwind-textured-quad` | macOS arm64 built; runtime validation recorded in development guide |
-| `windows-debug` | `build/windows/bin/frostwind-textured-quad/Debug/frostwind-textured-quad.exe` | SDK pending; unverified |
-| `linux-debug` | `build/linux/bin/frostwind-textured-quad/frostwind-textured-quad` | SDK pending; unverified |
+| `native-debug` | `build/native/bin/<target>/<target>` | macOS arm64 built; runtime validation recorded in development guide |
+| `windows-debug` | `build/windows/bin/<target>/Debug/<target>.exe` | SDK pending; unverified |
+| `linux-debug` | `build/linux/bin/<target>/<target>` | SDK pending; unverified |
 
-Each executable directory contains `assets/`. macOS also contains `Frameworks/SDL3.framework` and uses `@loader_path/Frameworks`; Windows copies `SDL3.dll` beside the executable; Linux copies `lib/` and uses `$ORIGIN/lib`. Keep each output directory intact when moving a build. Static library outputs are generated under `build/`, never vendored into `external/`.
+Each executable directory contains `assets/` only when that example uses runtime assets. macOS contains `Frameworks/SDL3.framework` and uses `@loader_path/Frameworks`; Windows copies `SDL3.dll` beside the executable; Linux copies `lib/` and uses `$ORIGIN/lib`. Keep each output directory intact when moving a build. Static library outputs are generated under `build/`, never vendored into `external/`.
 
 ## Platform SDKs and header lookup
 

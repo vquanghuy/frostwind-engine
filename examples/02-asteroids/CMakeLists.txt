@@ -1,0 +1,5 @@
+add_executable(frostwind-asteroids main.cpp)
+target_link_libraries(frostwind-asteroids PRIVATE frostwind)
+set_target_properties(frostwind-asteroids PROPERTIES CXX_EXTENSIONS OFF)
+frostwind_enable_warnings(frostwind-asteroids)
+frostwind_configure_example(frostwind-asteroids)

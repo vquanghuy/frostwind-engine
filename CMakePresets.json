@@ -55,7 +55,9 @@
       "name": "native-debug",
       "configurePreset": "native-debug",
       "targets": [
-        "frostwind-textured-quad"
+        "frostwind-textured-quad",
+        "frostwind-asteroids",
+        "frostwind-mini-artillery"
       ]
     },
     {
@@ -63,14 +65,18 @@
       "configurePreset": "windows-debug",
       "configuration": "Debug",
       "targets": [
-        "frostwind-textured-quad"
+        "frostwind-textured-quad",
+        "frostwind-asteroids",
+        "frostwind-mini-artillery"
       ]
     },
     {
       "name": "linux-debug",
       "configurePreset": "linux-debug",
       "targets": [
-        "frostwind-textured-quad"
+        "frostwind-textured-quad",
+        "frostwind-asteroids",
+        "frostwind-mini-artillery"
       ]
     }
   ]

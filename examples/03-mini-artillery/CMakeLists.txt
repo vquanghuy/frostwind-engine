@@ -1,0 +1,5 @@
+add_executable(frostwind-mini-artillery main.cpp)
+target_link_libraries(frostwind-mini-artillery PRIVATE frostwind)
+set_target_properties(frostwind-mini-artillery PROPERTIES CXX_EXTENSIONS OFF)
+frostwind_enable_warnings(frostwind-mini-artillery)
+frostwind_configure_example(frostwind-mini-artillery)

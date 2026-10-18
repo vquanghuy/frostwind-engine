@@ -2,7 +2,7 @@
 
 Date: 2026-10-14. Tool: built-in OpenAI image generation. Output: [mini-artillery-realistic-concept-v1.png](mini-artillery-realistic-concept-v1.png). Background: opaque.
 
-Reference 1: owner-supplied Kenney tank scene, used for side-view composition and gameplay subjects. Reference 2: [Asteroids realistic concept v1](../../../asteroids/docs/assets/asteroids-realistic-concept-v1.png), used for material detail and art style. This generated image is a concept, not an implemented example screenshot or an individual asset set.
+Reference 1: owner-supplied Kenney tank scene, used for side-view composition and gameplay subjects. Reference 2: [Asteroids realistic concept v1](../../../02-asteroids/docs/assets/asteroids-realistic-concept-v1.png), used for material detail and art style. This generated image is a concept, not an implemented example screenshot or an individual asset set.
 
 ## Submitted prompt
 

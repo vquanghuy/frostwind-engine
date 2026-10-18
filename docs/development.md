@@ -17,9 +17,29 @@ cmake --build --preset native-debug --parallel
 ./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
-The preset configures Debug for macOS arm64 using Unix Makefiles and builds the `frostwind-textured-quad` target, which depends on the static `frostwind` library. The example opens a resizable 800 × 600 window titled **Frostwind - Textured Quad**. Press Escape or close the window to exit.
+The preset configures Debug for macOS arm64 using Unix Makefiles and builds all three example targets, each linked to the static `frostwind` library:
 
-The example output directory contains `assets/` and `Frameworks/SDL3.framework`. Keep the entire directory together when relocating it. Asset copying runs on each example build, including shader-only edits. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The [example README](../examples/textured-quad/README.md) describes ownership and controls.
+| Target | Window title | Current behavior |
+| --- | --- | --- |
+| `frostwind-textured-quad` | Frostwind - Textured Quad | 800 × 600 window with a centered crate texture |
+| `frostwind-asteroids` | Frostwind - Asteroids | 960 × 540 window with a plain dark-blue background |
+| `frostwind-mini-artillery` | Frostwind - Mini Artillery | 960 × 540 window with a plain dark-green background |
+
+Run the scaffolds separately:
+
+```sh
+./build/native/bin/frostwind-asteroids/frostwind-asteroids
+./build/native/bin/frostwind-mini-artillery/frostwind-mini-artillery
+```
+
+All windows are resizable; press Escape or close the window to exit. Asteroids scene features and Mini Artillery terrain/gameplay remain planned. To build only one example after configuring:
+
+```sh
+cmake --build --preset native-debug --target frostwind-asteroids --parallel
+cmake --build --preset native-debug --target frostwind-mini-artillery --parallel
+```
+
+Each example output directory contains `Frameworks/SDL3.framework`. Textured Quad also contains `assets/`; its asset copying runs on each example build, including shader-only edits. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The new scaffolds use no runtime assets and do not package planning artwork. Keep each entire output directory together when relocating it. Each example README describes ownership and controls.
 
 A CMake cache contains absolute checkout paths. After moving/renaming a checkout, configure a fresh output directory; preserve or remove old generated output deliberately rather than reusing its stale cache.
 
@@ -36,7 +56,7 @@ This produces `build/engine-only/engine/libfrostwind.a` and the local GLAD archi
 
 ## IDE setup
 
-CLion can open the root `CMakeLists.txt` and use the native preset. Select `frostwind-textured-quad` as the executable target. CMake supplies the C++17, GLAD, and SDL framework settings; no separate include paths are needed.
+CLion can open the root `CMakeLists.txt` and use the native preset. Select `frostwind-textured-quad`, `frostwind-asteroids`, or `frostwind-mini-artillery` as the executable target. CMake supplies the C++17, GLAD, and SDL framework settings; no separate include paths are needed.
 
 For VS Code, install Microsoft's C/C++ and CMake Tools extensions, select `native-debug` with **CMake: Select Configure Preset**, then run **CMake: Configure**. The preset exports `build/native/compile_commands.json`.
 
@@ -58,7 +78,7 @@ For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`
 
 The static engine library contains namespaced `Application`, `Window`, `ShaderProgram`, and `Texture2D` classes. `Application` hosts a derived example through SDL callbacks; example resources are destroyed before its base window/context. SDL video initialization and graphics presentation stay in `Window`. See [project structure](project-structure.md) and [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md).
 
-The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. The example uses GLSL 330 and a PNG crate texture decoded to RGBA8. The example defaults to a 60 FPS software cap with VSync requested. `ApplicationConfig::maxFps` selects another cap; 0 disables software pacing. Set `config.window.vsync = false` as well to request uncapped rendering. Rendering and swap time count toward the frame budget; SDL precise delays wait only for the remainder. VSync, rendering load, and OS scheduling can lower achieved FPS. Minimized windows use a separate idle delay. See [RFC 0004](rfcs/0004-frame-pacing.md).
+The OpenGL API baseline is 3.3 Core, not an exact runtime context version requirement. The development Mac supplies a compatible 4.1 context. GLAD's generated API is through 3.3, independently of generator version 2.0.8. Textured Quad uses GLSL 330 and a PNG crate texture decoded to RGBA8. All three examples default to a 60 FPS software cap with VSync requested. `ApplicationConfig::maxFps` selects another cap; 0 disables software pacing. Set `config.window.vsync = false` as well to request uncapped rendering. Rendering and swap time count toward the frame budget; SDL precise delays wait only for the remainder. VSync, rendering load, and OS scheduling can lower achieved FPS. Minimized windows use a separate idle delay. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
 Shader source/file loading, compilation/link diagnostics, uniform updates, and RGBA8 upload validation are implemented. Camera, audio, physics, terrain destruction, and other graphics backends remain planned. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
 
@@ -92,13 +112,24 @@ Native configuration/build passed. Temporary controlled-clock checks under `buil
 
 The actual textured-quad example loaded its packaged assets from `/private/tmp`, presented 120 frames per run on Apple M1 Pro, and handled synthetic Escape/teardown with a 60 FPS cap. Measured callback throughput was 56.98/sec with VSync disabled and 59.15/sec with VSync requested. The initial sandboxed launch could not access macOS displays; the successful run used approved display access outside the sandbox. No screenshots were captured. Interactive smoothness, resize/minimize/restore, and other platforms remain manual checks.
 
+### Example scaffold verification (2026-10-17)
+
+The native preset configured and built all three examples on Apple M1 Pro. A fresh `build/example-scaffolds-engine-only/` configuration with `FROSTWIND_BUILD_EXAMPLES=OFF` also built successfully. Packaging checks verified separate executable directories, copied SDL framework symlinks, Textured Quad's retained runtime assets, and no runtime assets or planning artwork in either new scaffold. All build preset target lists and local links/images in the updated documentation were checked.
+
+Temporary checks under `build/example-scaffolds-check/` compiled the actual Asteroids and Mini Artillery entry points and called their SDL adapters from `/private/tmp`. Both initialized an OpenGL 4.1 context, presented frames without GL errors, returned success for synthetic Escape and window-close events, and released the context during teardown. The sandboxed attempt could not access macOS displays; the successful checks used approved display access outside the sandbox. No screenshots were captured. Interactive titles/backgrounds, resize/Retina, minimize/restore, IDE behavior, and other platforms remain manual checks.
+
+### Numbered example directory verification (2026-10-18)
+
+After renaming source directories to `01-textured-quad`, `02-asteroids`, and `03-mini-artillery`, the native preset reconfigured and rebuilt all three examples successfully. Target names and executable output paths remain unchanged. Checks validated 134 local documentation links/images and confirmed that the moved C++, CMake files, shaders, and image assets were byte-for-byte unchanged. Historical changelog sections were preserved. This directory-only change did not repeat the runtime checks recorded above.
+
 ## Manual checks
 
-1. Configure/build successfully and launch the textured-quad example.
+1. Configure/build successfully and launch each example.
 2. Verify title, dark background, and centered crate image with the arrow pointing up; check the reported OpenGL context/renderer.
 3. Resize wide/tall, check Retina drawable sizing, minimize and restore; the quad should stay square and centered.
 4. Exit with Escape; relaunch and exit with the close button.
 5. Launch from outside the repository to check asset lookup; move an intact example output directory when testing relocation.
+6. Check the Asteroids and Mini Artillery scaffold titles/backgrounds, resize/minimize/restore, and Escape/close exit; no scene or gameplay should be present yet.
 
 Resize/Retina, interactive exit, and IDE behavior remain manual checks unless explicitly recorded as verified.
 
@@ -112,7 +143,7 @@ The executable should reference `@rpath/SDL3.framework/Versions/A/SDL3`, with th
 
 ## Other platforms (prepared, unverified)
 
-Windows MSVC x64 and Linux x86_64 presets select the new example target, but their SDKs are not supplied. The expected SDL3 layouts are recorded in [project structure](project-structure.md#platform-sdks-and-header-lookup). Each platform must validate compilation, dynamic loading, rendering, input, and cleanup before being described as supported.
+Windows MSVC x64 and Linux x86_64 presets select all three example targets, but their SDKs are not supplied. The expected SDL3 layouts are recorded in [project structure](project-structure.md#platform-sdks-and-header-lookup). Each platform must validate compilation, dynamic loading, rendering, input, and cleanup before being described as supported.
 
 Windows needs Visual Studio 2022 with C++ desktop tools, a Windows SDK, and matching SDL3 3.4.18 MSVC headers/import library/DLL:
 

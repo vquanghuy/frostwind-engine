@@ -37,8 +37,8 @@ frostwind-engine/
 │       ├── platform/           # Window, context, native/browser integration
 │       └── rendering/          # ShaderProgram, Texture2D, future rendering tools
 ├── examples/
-│   ├── textured-quad/           # Existing demo and its shader assets
-│   └── mini-artillery/          # Game example, added when implementation starts
+│   ├── 01-textured-quad/        # Existing demo and its shader assets
+│   └── 03-mini-artillery/       # Game example, added when implementation starts
 ├── external/                   # Shared pinned dependencies and licenses
 ├── docs/
 ├── CHANGELOG.md
@@ -94,11 +94,11 @@ Configure and build the engine and textured-quad executable with the native pres
 ## Implementation plan
 
 1. Record this direction before changing code or repository identity.
-2. Extract reusable code into the `frostwind` library, apply the namespace, and move the existing demo/assets into `examples/textured-quad/`.
+2. Extract reusable code into the `frostwind` library, apply the namespace, and move the existing demo/assets into `examples/01-textured-quad/`.
 3. Remove the demo dependency from engine application coordination and update CMake targets, asset copying, and presets.
 4. Revise project documentation and guidance, then validate the native example and resource lifetimes.
 5. Rename GitHub to `frostwind-engine`, update the remote and repository links, and preserve existing history.
-6. Develop Mini Artillery under `examples/mini-artillery/`, introducing engine features as that game or focused examples need them.
+6. Develop Mini Artillery under `examples/03-mini-artillery/`, introducing engine features as that game or focused examples need them.
 
 ## Open questions
 
@@ -106,7 +106,7 @@ Select the 3D physics library, additional graphics APIs, and any backend interfa
 
 ## Decision
 
-Accepted and implemented on 2026-10-14 following the project owner's selection of an engine-focused repository with independent examples. Frostwind uses namespace `frostwind` and a static `frostwind` library. The `frostwind-textured-quad` example owns its demo and runtime assets under `examples/textured-quad/`, with native output under `build/native/bin/frostwind-textured-quad/`.
+Accepted and implemented on 2026-10-14 following the project owner's selection of an engine-focused repository with independent examples. Frostwind uses namespace `frostwind` and a static `frostwind` library. The `frostwind-textured-quad` example owns its demo and runtime assets under `examples/01-textured-quad/`, with native output under `build/native/bin/frostwind-textured-quad/`.
 
 The example derives from `frostwind::Application`, supplying initialization, optional event handling, and rendering. A factory returns an owning base pointer; a virtual destructor releases derived GPU members before the base window. Each example supplies its own SDL C adapters. The shared CMake helper is `cmake/FrostwindExample.cmake`; `FROSTWIND_BUILD_EXAMPLES=OFF` builds the engine alone.
 

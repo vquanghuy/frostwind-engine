@@ -6,7 +6,8 @@ function(frostwind_enable_warnings target)
     endif()
 endfunction()
 
-function(frostwind_configure_example target assets_directory)
+# An optional second argument selects the example's runtime asset directory.
+function(frostwind_configure_example target)
     set_target_properties(${target} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${target}"
     )
@@ -43,12 +44,14 @@ function(frostwind_configure_example target assets_directory)
         )
     endif()
 
-    # Runs on every example build, including asset-only changes.
-    add_custom_target(${target}-assets
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${assets_directory}" "$<TARGET_FILE_DIR:${target}>/assets"
-        COMMENT "Copying runtime assets for ${target}"
-        VERBATIM
-    )
-    add_dependencies(${target} ${target}-assets)
+    if(ARGC GREATER 1)
+        # Runs on every example build, including asset-only changes.
+        add_custom_target(${target}-assets
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory
+                "${ARGV1}" "$<TARGET_FILE_DIR:${target}>/assets"
+            COMMENT "Copying runtime assets for ${target}"
+            VERBATIM
+        )
+        add_dependencies(${target} ${target}-assets)
+    endif()
 endfunction()

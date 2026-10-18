@@ -1,6 +1,6 @@
-# Mini Artillery example (planned)
+# Mini Artillery example
 
-Mini Artillery is a proposed Frostwind example inspired by Gunbound and Pocket Tanks. It will exercise 2D destructible terrain, projectile impacts, and bodies settling on modified ground. **Status:** planning and art exploration only. This directory contains documentation and references; there is no gameplay implementation, CMake target, executable, or imported runtime asset set yet. The earlier Mini Artillery window/checkerboard scaffold is now the [textured-quad example](../textured-quad/README.md).
+Mini Artillery is a Frostwind example inspired by Gunbound and Pocket Tanks. It will exercise 2D destructible terrain, projectile impacts, and bodies settling on modified ground. **Status:** runnable window scaffold with a separate `frostwind-mini-artillery` CMake target. It opens a plain dark-green OpenGL window; terrain, tanks, gameplay, and imported runtime assets remain planned. The earlier Mini Artillery window/checkerboard scaffold is now the [textured-quad example](../01-textured-quad/README.md).
 
 ## Concept art
 
@@ -8,7 +8,7 @@ Mini Artillery is a proposed Frostwind example inspired by Gunbound and Pocket T
 
 *Generated visual concept, 2026-10-14. This is a proposed side-view art direction, not a Frostwind screenshot or implemented terrain/gameplay.*
 
-Match the [Asteroids material direction](../asteroids/README.md) with detailed weathered metal, readable vehicle silhouettes, restrained identification colors, and convincing rocky surfaces. Tanks use green/tan/charcoal hulls with orange or teal accents. The terrain is a grassy rim over a soil-and-rock cutaway, with distant hills and trees on separate background layers for future parallax.
+Match the [Asteroids material direction](../02-asteroids/README.md) with detailed weathered metal, readable vehicle silhouettes, restrained identification colors, and convincing rocky surfaces. Tanks use green/tan/charcoal hulls with orange or teal accents. The terrain is a grassy rim over a soil-and-rock cutaway, with distant hills and trees on separate background layers for future parallax.
 
 Prepare separate chassis and turret sprites for slope alignment and independent aiming. Matching color/normal textures may provide runtime lighting after the Asteroids prototype validates that workflow; individual sprites, terrain materials, and normal maps have not been created for this example. The concept image is not a source of finished collision geometry or relightable terrain.
 
@@ -50,6 +50,16 @@ Original baseline sprite candidate: [Kenney Tanks](https://kenney.nl/assets/tank
 - [RFC 0003](../../docs/rfcs/0003-frostwind-engine-and-examples.md) establishes engine/example ownership.
 - [RFC 0005](../../docs/rfcs/0005-camera-keyboard-and-sprites.md) proposes reusable camera/input/sprite foundations through Asteroids; it does not implement artillery gameplay or terrain destruction.
 - [Concept generation prompt](docs/assets/mini-artillery-concept-prompts.md) records the supplied composition and shared art style.
-- [Development instructions](../../docs/development.md) cover the implemented Textured Quad demo. Mini Artillery has no build/run command or defined controls yet; add verified commands and bindings with its implementation.
+- [Development instructions](../../docs/development.md) cover all example targets and remaining platform checks.
+
+On the development Apple Silicon Mac, from the repository root:
+
+```sh
+cmake --preset native-debug
+cmake --build --preset native-debug --target frostwind-mini-artillery --parallel
+./build/native/bin/frostwind-mini-artillery/frostwind-mini-artillery
+```
+
+The scaffold opens a resizable 960 × 540 window titled **Frostwind - Mini Artillery**, with a 60 FPS cap and VSync requested. Press Escape or close the window to quit. Gameplay controls remain undefined.
 
 `docs/assets/` contains planning images and provenance only. Future runtime textures, shaders, and their `assets/LICENSES.md` belong in this example’s separate `assets/` directory when imported. Preserve third-party reference licensing independently of project code licensing.
