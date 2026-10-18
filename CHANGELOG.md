@@ -6,6 +6,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Added
 
+- Documentation: root `ROADMAP.md`, organized into themed phases using Dovyski's roadmap template, and draft RFC 0006 for extracting the existing OpenGL backend, migrating all three examples, and later exploring Metal, Vulkan, mesh shading, and ray tracing; implementation remains planned.
+- Documentation: roadmap ideas for grass/vegetation, water/fluid simulation, and a physics sandbox, with initial scopes, prerequisites, and guidance for turning ideas into example experiments.
 - Asteroids and Mini Artillery: separate runnable OpenGL window scaffolds, CMake executable targets, and runtime SDL packaging; all build presets now select all three examples. Gameplay and runtime art remain planned.
 - Documentation: README links to Agent Sprite Forge for sprite creation and NormalMap-Online for height-to-normal conversion, with example asset provenance guidance.
 - Mini Artillery: generated side-view concept matching the detailed Asteroids material direction; retained as design reference, with gameplay and runtime assets still planned.

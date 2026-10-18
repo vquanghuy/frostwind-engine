@@ -39,6 +39,8 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 
 OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.
 
+The [engine roadmap](ROADMAP.md) records the intended learning sequence: extract the existing OpenGL backend, develop 2D/3D fundamentals, then explore Metal, Vulkan, and optional advanced rendering. [Draft RFC 0006](docs/rfcs/0006-rendering-backend-boundary.md) proposes the first rendering boundary and migration of the existing examples; those changes remain unimplemented.
+
 ## Project structure
 
 ```text
