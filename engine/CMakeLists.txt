@@ -1,6 +1,10 @@
 add_library(frostwind STATIC
     src/app/Application.cpp
     src/platform/Window.cpp
+    src/platform/internal/WindowSurface.cpp
+    src/platform/opengl/OpenGLWindowSurface.cpp
+    src/rendering/GraphicsDevice.cpp
+    src/rendering/backends/opengl/OpenGLBackend.cpp
     src/rendering/ShaderProgram.cpp
     src/rendering/Texture2D.cpp
     src/rendering/StbImage.cpp

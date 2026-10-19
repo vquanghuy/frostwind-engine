@@ -20,7 +20,7 @@ Press Escape or close the window to exit. Resize to check that the quad remains 
 
 ## Ownership
 
-`main.cpp` supplies SDL's required global callback adapters and creates `QuadDemo`. The engine's `frostwind::Application` owns the window and coordinates events/frames. `QuadDemo` owns `QuadRenderer`, chooses the shader and texture assets, handles Escape, and supplies rendering behavior. Example graphics resources are destroyed before the base application's window/context.
+`main.cpp` supplies SDL's required global callback adapters and creates `QuadDemo`. The engine's `frostwind::Application` owns the window and graphics device and coordinates events/frames. The private OpenGL backend owns context initialization and presentation. `QuadDemo` owns `QuadRenderer`, chooses the shader and texture assets, handles Escape, and supplies rendering behavior. Example graphics resources are destroyed before the base application's graphics device/context, then its window. The example still uses direct OpenGL drawing until the later shared frame/resource migration in RFC 0006.
 
 `assets/shaders/quad.vert`, `quad.frag`, and `assets/textures/crate.png` are copied beside the executable on each build. Asset-only edits need a build to refresh those copies. Asset lookup uses SDL_GetBasePath, so the working directory can differ from the repository. Preserve the entire output directory when relocating the executable. Shader and texture attribution is in [assets/LICENSES.md](assets/LICENSES.md).
 

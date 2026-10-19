@@ -1,13 +1,15 @@
 # RFC 0006: Rendering backend boundary
 
-- **Status:** Draft
+- **Status:** Accepted
 - **Created:** 2026-10-18
 - **Supersedes:** None
 - **Superseded by:** None
 
+**Implementation status (2026-10-19):** The initial window/device/backend ownership split and private surface abstraction are implemented. The device/backend contract currently covers initialization and presentation. Shared frame/resource operations, CPU image extraction, Metal, and Vulkan remain planned; the current examples still use their existing OpenGL rendering APIs.
+
 ## Problem
 
-Frostwind currently has a working OpenGL 3.3 Core implementation, rather than an API-independent renderer. `Window` owns the SDL window, OpenGL context, GLAD loading, VSync, and presentation. `Application` initializes OpenGL texture support and presents through the window. `ShaderProgram` exposes OpenGL uniform locations, while `QuadRenderer` and both window scaffolds issue OpenGL calls directly.
+Before this extraction, Frostwind had a working OpenGL 3.3 Core implementation without an API-independent rendering boundary. `Window` owned the SDL window, OpenGL context, GLAD loading, VSync, and presentation. `Application` initialized OpenGL texture support and presented through the window. `ShaderProgram` exposes OpenGL uniform locations, while `QuadRenderer` and both window scaffolds still issue OpenGL calls directly during the migration.
 
 The learning direction is to start with this implementation, establish a small rendering boundary, and later explore Metal on macOS and Vulkan on Windows/Linux. Building a complete abstraction for those APIs before using them would require speculative interfaces. Leaving OpenGL details throughout the examples would make later migrations larger.
 
@@ -37,6 +39,7 @@ The first extraction chooses composition for window/device ownership and one pri
 | `GraphicsDevice` | Concrete facade | Public | Owns one selected backend and validates access to rendering operations |
 | `GraphicsBackend` | Abstract, with a virtual destructor | Private | Defines the native graphics implementation contract |
 | `OpenGLBackend` | Concrete, final implementation of `GraphicsBackend` | Private | Owns OpenGL graphics state and implements that contract |
+| `WindowSurface` | Abstract, with a virtual destructor and initialization contract | Private | Provides the single privileged window-access boundary for concrete surface implementations |
 | `RenderFrame` | Concrete, scoped facade | Public | Borrows the device for one active frame; examples use it to draw |
 | `Buffer`, `Texture2D`, `Shader`, `GraphicsPipeline` | Concrete resource owners | Public | Own opaque resource identities associated with one device |
 | `OpenGLWindowSurface` | Concrete integration helper | Private | Owns the SDL OpenGL context and handles make-current/swap operations |
@@ -53,7 +56,7 @@ Example application : Application
     └── GraphicsDevice                 concrete public facade
         └── unique_ptr<GraphicsBackend>
             └── OpenGLBackend          implemented first
-                ├── OpenGLWindowSurface
+                ├── OpenGLWindowSurface : WindowSurface
                 └── private GPU resources and frame state
 
 Calls: GraphicsDevice → GraphicsBackend contract → selected implementation
@@ -63,6 +66,11 @@ GraphicsBackend (abstract)
 ├── OpenGLBackend                       first implementation
 ├── MetalBackend                        later, no stub now
 └── VulkanBackend                       later, no stub now
+
+WindowSurface (abstract)
+├── OpenGLWindowSurface                 first implementation
+├── MetalWindowSurface                  later, no stub now
+└── VulkanWindowSurface                 later, no stub now
 ```
 
 The inheritance hierarchy provides implementation dispatch. The ownership tree above it provides lifetime. `GraphicsDevice` owns a backend through the abstract base; it does not inherit from that base. The concrete backends do not inherit from one another.
@@ -93,7 +101,11 @@ Window setup must happen before graphics-device initialization, but the compiled
 
 The hook has exactly one linked implementation. It is a private platform operation, not a runtime registry or a virtual method on `Window`. `Window` retains ownership of the window after creation even though the selected integration determines the graphics flags.
 
-`OpenGLWindowSurface` is a narrowly scoped friend of `Window` for SDL graphics integration. It accesses the private window only to create/use its context and swap buffers. No `Window::nativeHandle()` getter is introduced. The context belongs to the helper, the helper belongs to `OpenGLBackend`, and the backend borrows the window for its lifetime. Generic rendering code and examples cannot obtain the SDL window through this path.
+`Window` grants friendship once to the private abstract `WindowSurface` base. Friendship is not inherited: concrete surfaces use the base's protected `sdlWindow(Window&)` operation, which performs the privileged access. `Window` does not grant friendship to `OpenGLWindowSurface` or future per-API classes, and gains no public `nativeHandle()` getter. Raw SDL window access remains confined to private platform integration.
+
+`WindowSurface` has a virtual destructor and a fallible `initialize(Window&)` contract. Its constructor performs no native allocation. It owns no context, GPU device, or SDL window; concrete surfaces own their API-specific objects and borrow the window. `OpenGLWindowSurface` owns the context and OpenGL swap-interval/swap operations. The OpenGL backend holds that concrete surface directly, so a base class does not require an additional heap allocation or surface factory.
+
+Presentation and VSync are not universal virtual surface methods. Later Metal/Vulkan implementations may need device queues, swapchains, or backend-specific arguments. The owning backend establishes prerequisites before surface initialization; for example, a Vulkan surface can borrow a previously created instance through its concrete construction/configuration before `initialize(window)` attaches it. Define that ownership precisely when implementing the backend, without passing unrelated native handles through the public engine API.
 
 Later integrations follow the same ordering but can have different creation dependencies:
 
@@ -136,7 +148,8 @@ engine/src/
 ├── platform/
 │   ├── Window.h, Window.cpp
 │   ├── internal/
-│   │   └── WindowGraphicsSetup.h        private setup-hook declaration
+│   │   ├── WindowGraphicsSetup.h        private setup-hook declaration
+│   │   └── WindowSurface.h, WindowSurface.cpp
 │   └── opengl/
 │       └── OpenGLWindowSurface.h, OpenGLWindowSurface.cpp
 └── rendering/
@@ -170,7 +183,7 @@ The initial scope and later additions are distinct:
 
 | First OpenGL extraction | Later, when exercised |
 | --- | --- |
-| Concrete `Window`, public device/frame/resource facades, one private abstract backend, one OpenGL implementation | Additional concrete backends and their platform bridges |
+| Concrete `Window`, public device/frame/resource facades, private abstract backend/surface contracts, one OpenGL implementation | Additional concrete backends and surface implementations |
 | Existing window color target, quad vertex data, parameter block, one texture, explicit drawing state | Indexed meshes, depth targets, configurable passes, richer resource bindings |
 | One window, one device, one active frame on the callback thread | Additional concurrency or windowing only when an example needs it |
 | Existing GLSL and PNG/JPEG asset workflow | Native shader artifact tooling and additional formats |
@@ -308,6 +321,7 @@ Ray tracing and mesh shading are optional future capabilities, introduced throug
 ## Alternatives
 
 - **Abstract Window with per-API subclasses:** Makes construction convenient to group, but combines common SDL window behavior with graphics ownership/presentation. Prefer a concrete SDL window plus private per-API surface helpers. Reconsider window polymorphism only if another window implementation is introduced.
+- **Grant Window friendship to every concrete surface:** Gives each implementation direct access, but requires editing the generic window class for each API. Use one private abstract `WindowSurface` as the friend and expose protected access to derived platform integrations instead. Keep the pre-window setup hook separate because attributes are needed before a surface can initialize.
 - **Expose abstract GraphicsDevice directly:** Reduces one forwarding layer, but exposes backend implementation concerns to resource owners and callers. Prefer a stable concrete facade for validation/lifetime rules and a private abstract backend for native operations.
 - **Use only direct calls or compile-time replacement implementations:** Avoids virtual dispatch and is viable with one backend. The proposed single private interface makes the implementation contract explicit now; compare its simplicity and dispatch cost with real examples before introducing more abstraction.
 - **Continue direct OpenGL calls throughout examples:** Lowest immediate effort, but increases API coupling and later migration work.
@@ -329,7 +343,7 @@ Windows/Linux SDKs and runtime verification remain pending. Browser builds and a
 - Exercise Textured Quad with its original texture, geometry, filtering, orientation, scaling, and executable-relative asset lookup, including launch from outside the repository.
 - Exercise both scaffold backgrounds, resizing/Retina drawable sizing, minimization/restoration, Escape/close results, VSync, and software pacing.
 - Check factory/window/device/resource initialization failures, invalid shader/image inputs, callback exit/failure/exception paths, abandoned frames, partial initialization, and resource cleanup before context/device/window destruction.
-- Check graphics window setup before context creation, factory/compiled-backend agreement, and cleanup if the context exists but GLAD initialization fails. Verify `Window` has no context/presentation ownership or public native-handle getter.
+- Check graphics window setup before context creation, factory/compiled-backend agreement, and cleanup if the context exists but GLAD initialization fails. Verify `Window` has no context/presentation ownership or public native-handle getter, and grants graphics friendship only to the private `WindowSurface` base.
 - Check stale/wrong-device resource rejection, parameter-block size/layout mismatches, required bindings, parameter copying between successive draws, operations on completed frames, and failure during frame submission/abandonment. Confirm shader-wrapper cleanup cannot invalidate a live pipeline.
 - Inspect resource uploads and a rendered frame through focused GPU readback checks where practical; keep temporary outputs under ignored `build/`. Screenshots remain owner-supplied.
 - Search for GLAD includes and direct OpenGL calls in examples/public rendering headers and ensure they are confined to implementation code. Verify no engine dependency on example assets/code.
@@ -356,4 +370,6 @@ Report checks actually executed and remaining manual/platform checks. These are 
 
 ## Decision
 
-Draft created on 2026-10-18 to record the agreed learning direction: extract the working OpenGL implementation first, preserve the examples, and use later Metal/Vulkan work to improve the boundary. Refined the same day to propose concrete composition, one private backend interface, private surface integration, and explicit resource/frame/lifetime contracts. These are reviewable design choices, not implemented interfaces. RFCs 0002 and 0003 retain their current status and historical decisions.
+Draft created on 2026-10-18 to record the agreed learning direction: extract the working OpenGL implementation first, preserve the examples, and use later Metal/Vulkan work to improve the boundary. Refined that day to specify composition, private backend dispatch, and explicit resource/frame/lifetime contracts.
+
+Accepted for staged implementation on 2026-10-19 following the owner's instruction to begin the first ownership refactor. The owner also requested a private abstract surface to avoid per-backend friendship in `Window`; `WindowSurface` now defines that integration boundary. The first implementation preserves existing rendering callbacks/resources, moves context/presentation ownership behind `GraphicsDevice`, and moves VSync to `ApplicationConfig::graphics.vsync`. Frame/resource extraction and the later APIs remain pending, so the RFC is not marked Implemented. RFCs 0002 and 0003 retain their historical decisions; current ownership is maintained in the structure guide.

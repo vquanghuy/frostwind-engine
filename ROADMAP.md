@@ -4,11 +4,11 @@ Frostwind grows through practical examples, starting with the working OpenGL imp
 
 The current baseline is native macOS window/application management, frame pacing, shader and texture loading, Textured Quad, and the Asteroids/Mini Artillery window scaffolds. Windows/Linux SDK verification and browser builds remain pending. See the [README](README.md) for current capabilities, [RFCs](docs/rfcs/README.md) for detailed proposals, and the [changelog](CHANGELOG.md) for completed work and owner-supplied captures.
 
-Phase numbers describe future sequencing; they are separate from historical development milestone identifiers. Features below remain planned. A roadmap phase does not accept its detailed RFC, establish platform support, or authorize a release or tag.
+Phase numbers describe intended sequencing; they are separate from historical development milestone identifiers. Each phase describes its target scope; see the changelog for implemented increments. A roadmap phase does not accept its detailed RFC, establish platform support, or authorize a release or tag.
 
 ## Phase 1 - Rendering boundary
 
-The first phase uses the existing OpenGL renderer to learn graphics ownership and establish a small interface that future backends can improve. [Draft RFC 0006](docs/rfcs/0006-rendering-backend-boundary.md) describes the migration. The intended capabilities are:
+The first phase uses the existing OpenGL renderer to learn graphics ownership and establish a small interface that future backends can improve. [Accepted RFC 0006](docs/rfcs/0006-rendering-backend-boundary.md) describes the migration. The intended capabilities are:
 
 - An OpenGL implementation behind shared engine resource and drawing operations.
 - Separate ownership for the SDL window and graphics context/device, including presentation.

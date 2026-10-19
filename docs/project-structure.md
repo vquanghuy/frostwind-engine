@@ -2,7 +2,7 @@
 
 Frostwind contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
 
-The layout, ownership, and callback descriptions below document the current implementation. The [proposed rendering boundary](#proposed-rendering-boundary) at the end summarizes draft RFC 0006 separately; that refactor is not implemented yet. The root [roadmap](../ROADMAP.md) records intended sequencing and future experiments.
+The layout, ownership, and callback descriptions below document the current implementation. The [remaining rendering boundary work](#remaining-rendering-boundary-work) at the end summarizes the target in accepted RFC 0006; the initial ownership split is implemented, while shared frames/resources remain planned. The root [roadmap](../ROADMAP.md) records intended sequencing and future experiments.
 
 ## Repository layout
 
@@ -14,8 +14,15 @@ engine/
 └── src/
     ├── core/Types.h
     ├── app/Application.h, Application.cpp
-    ├── platform/Window.h, Window.cpp
+    ├── platform/
+    │   ├── Window.h, Window.cpp
+    │   ├── internal/WindowGraphicsSetup.h
+    │   ├── internal/WindowSurface.h, WindowSurface.cpp
+    │   └── opengl/OpenGLWindowSurface.h, OpenGLWindowSurface.cpp
     └── rendering/
+        ├── GraphicsDevice.h, GraphicsDevice.cpp
+        ├── internal/GraphicsBackend.h, GraphicsBackendFactory.h
+        ├── backends/opengl/OpenGLBackend.h, OpenGLBackend.cpp
         ├── ShaderProgram.h, ShaderProgram.cpp
         ├── Texture2D.h, Texture2D.cpp
         └── StbImage.cpp
@@ -47,8 +54,12 @@ Headers stay beside implementations. CMake explicitly lists source files. `frost
 | Component | Responsibility |
 | --- | --- |
 | `core/Types.h` | Shared primitive aliases; no runtime initialization or ownership |
-| `frostwind::Application` | Own the window, create the selected application through a factory, coordinate events/frames and FPS pacing, and translate callback exceptions into failures |
-| `frostwind::Window` | Own SDL video/window/context lifetime, GLAD loading, VSync, drawable size/state, and presentation |
+| `frostwind::Application` | Own the window and graphics device, create the selected application through a factory, coordinate events/frames and FPS pacing, and translate callback exceptions into failures |
+| `frostwind::Window` | Own SDL video/window lifetime and report drawable size/state; call the compiled private setup hook before window creation |
+| `frostwind::GraphicsDevice` | Own the compiled backend through a private abstract interface, coordinate graphics initialization, and delegate presentation |
+| Private `OpenGLBackend` | Initialize the context, GLAD, VSync, and existing texture support; own platform integration and report native presentation failures |
+| Private `OpenGLWindowSurface` | Prepare OpenGL attributes/flags, own the SDL OpenGL context, and access the private window for context creation and swapping |
+| Private abstract `WindowSurface` | Define surface initialization and provide protected SDL window access through the window's single graphics friend |
 | `frostwind::ShaderProgram` | Own a linked vertex/fragment program, load files/source, bind, and set cached uniforms |
 | `frostwind::Texture2D` | Own a texture, decode PNG/JPEG files, validate/upload RGBA8 pixels, and bind a texture unit |
 | Example `main.cpp` | Supply SDL's global callbacks, application factory, and window configuration |
@@ -62,17 +73,17 @@ Camera, audio, input systems, physics, terrain, and further example code are add
 
 An example derives from `frostwind::Application` and implements `initialize()` and `render(width, height)`, with optional `handleEvent(event)`. Its factory returns `std::unique_ptr<frostwind::Application>`. SDL's named C callbacks remain global in the example entry point and delegate to the engine's static callbacks.
 
-`Application::onInit` creates the derived instance, initializes its window/context, calls `Texture2D::initializeSupport()`, and then invokes example initialization. Ownership transfers to SDL's opaque state only after success; failed startup cleans up automatically and leaves null state. The factory, startup, event, and frame boundaries handle exceptions so they cannot unwind through SDL. `onQuit` takes ownership back with `unique_ptr`.
+`Application::onInit` creates the derived instance and initializes its window, then graphics device, then example resources. `Window` calls the compiled setup hook after SDL video initialization and before window creation. `GraphicsDevice` creates the private OpenGL backend, whose surface owns the context; the backend loads GLAD and initializes existing texture support before example initialization. Ownership transfers to SDL's opaque state only after success; failed startup cleans up automatically and leaves null state. The factory, startup, event, and frame boundaries handle exceptions so they cannot unwind through SDL. `onQuit` takes ownership back with `unique_ptr`.
 
-SDL owns the loop, delivering events and repeatedly invoking one frame callback. The engine queries drawable pixels, skips minimized/zero-sized windows, invokes the example's renderer, and presents. Example return values can continue, finish, or fail the application. Quit/close events are handled by the engine; Escape is a demo-specific action. There is no duplicate event polling or blocking application loop. Application-owned frame pacing measures each callback with SDL’s monotonic nanosecond clock and waits only for the unused frame budget after presentation. `ApplicationConfig` contains `window` settings and `maxFps` (60 by default, 0 disables software pacing). `WindowConfig::vsync` defaults to true; VSync may lower the achieved rate below the cap. Minimized/zero-sized windows retain a separate 16 ms idle delay. Slow frames do not accumulate catch-up work. This is a rendering limit; fixed-step simulation is future work. See [RFC 0004](rfcs/0004-frame-pacing.md).
+SDL owns the loop, delivering events and repeatedly invoking one frame callback. The engine queries drawable pixels, skips minimized/zero-sized windows, invokes the example's renderer, and presents through `GraphicsDevice`. Example return values can continue, finish, or fail the application. Quit/close events are handled by the engine; Escape is a demo-specific action. There is no duplicate event polling or blocking application loop. Application-owned frame pacing measures each callback with SDL’s monotonic nanosecond clock and waits only for the unused frame budget after presentation. `ApplicationConfig` contains `window` and `graphics` settings plus `maxFps` (60 by default, 0 disables software pacing). `GraphicsConfig::vsync` defaults to true; VSync may lower the achieved rate below the cap. Minimized/zero-sized windows retain a separate 16 ms idle delay. Slow frames do not accumulate catch-up work. This is a rendering limit; fixed-step simulation is future work. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
-The virtual application destructor ensures derived example members are destroyed before the base `Window`. `Window` then releases the OpenGL context, SDL window, and video subsystem in that order. Native handles are private. Example constructors must not allocate GPU resources before window initialization; destructors must tolerate partial startup. SDL's callback framework performs the final SDL_Quit.
+The virtual application destructor ensures derived example members are destroyed before the base `GraphicsDevice`, then `Window`. The device/backend releases its context through `OpenGLWindowSurface`; `Window` subsequently releases the SDL window and video subsystem. Native handles are private. `Window` grants graphics friendship once to the abstract `WindowSurface` base; derived surfaces use its protected SDL access instead of gaining their own friendship or a public handle getter. Failed window/device initialization cleans up scoped candidates, and a successful second initialization is rejected. Example constructors must not allocate GPU resources before graphics initialization; destructors must tolerate partial startup. SDL's callback framework performs the final SDL_Quit.
 
 ## Rendering and assets
 
-Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a compatible 4.1 context. GLAD 2.0.8 is generated for API functions through 3.3. Alternate graphics APIs and 3D physics are planned, with no backend hierarchy introduced yet.
+Rendering currently targets OpenGL 3.3 Core; the development Mac supplies a compatible 4.1 context. GLAD 2.0.8 is generated for API functions through 3.3. A private abstract `GraphicsBackend` now has one compiled implementation, `OpenGLBackend`. Its initial contract covers initialization and presentation only. Alternate graphics APIs, shared frame/resource operations, and 3D physics remain planned.
 
-`ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). The private `StbImage.cpp` compiles the local PNG/JPEG decoder once. Application startup calls `Texture2D::initializeSupport()` before example initialization. This rendering-owned setup configures bottom-left image orientation and caches the maximum texture size for the single context. Both file loads and raw uploads reuse that limit; application code does not depend on stb_image. Example code chooses texture paths; the engine does not choose assets. Buffer/framebuffer wrappers and additional formats remain deferred.
+`ShaderProgram` and `Texture2D` are engine-owned resource types; concrete objects are owned by the renderer that uses them. Initialize/destroy them while their context is current. Their current OpenGL contracts are detailed in [RFC 0002](rfcs/0002-graphics-integration.md#rendering-support-classes). The private `StbImage.cpp` compiles the local PNG/JPEG decoder once. `OpenGLBackend` calls `Texture2D::initializeSupport()` before example initialization. This rendering-owned setup configures bottom-left image orientation and caches the maximum texture size for the single context. Both file loads and raw uploads reuse that limit; application code does not depend on stb_image. Example code chooses texture paths; the engine does not choose assets. Resource headers still expose GLAD types and examples still draw directly with OpenGL during this migration. Buffer/framebuffer wrappers and additional formats remain deferred.
 
 Each example README introduces its current status and embeds its preferred concept or implemented capture. Planning artwork, older concept versions, sprite prototypes, prompts, and third-party reference attribution live in that example’s `docs/assets/`. They are separate from runtime `assets/` and are not copied beside executables. Shared branding and historical milestone images remain under `docs/assets/`; preserve their captions and bytes. Add runtime asset folders and `assets/LICENSES.md` when assets are actually imported.
 
@@ -105,11 +116,11 @@ The framework's headers are supplied through its framework search path; Windows/
 
 Preserve exact versions, licenses, provenance, framework symlinks, and header/binary matching. The official macOS universal SDL3 framework is the explicit dynamic-linking exception. Browser builds will need a separate WASM-compatible SDL3 library and GLES3 integration. See [dependency policy](../external/README.md) and [development](development.md).
 
-## Proposed rendering boundary
+## Remaining rendering boundary work
 
-[Draft RFC 0006](rfcs/0006-rendering-backend-boundary.md) proposes extracting OpenGL behind a shared rendering interface before adding other native graphics APIs. The [README's proposed tree](../README.md#proposed-rendering-layout) summarizes the intended files; the RFC is the detailed design reference. This section does not replace the implemented contracts above.
+[Accepted RFC 0006](rfcs/0006-rendering-backend-boundary.md) defines the staged extraction. Window/device/backend ownership and private platform integration are implemented as described above. The [README's target tree](../README.md#proposed-rendering-layout) also includes planned types; the RFC is the detailed design reference. `RenderFrame`, resource identities, `Shader`/`GraphicsPipeline`, and independent CPU images are still pending.
 
-The proposed ownership is:
+The implemented ownership is:
 
 ```text
 Example application : Application
@@ -123,7 +134,7 @@ Example application : Application
                 └── GPU resources and frame state
 ```
 
-| Boundary | Proposed responsibility |
+| Boundary | Responsibility in the target design |
 | --- | --- |
 | `platform/Window` | Concrete SDL window/video ownership, dimensions, and state; graphics setup delegated to the compiled private platform hook |
 | `platform/internal/` and `platform/opengl/` | Private graphics window setup and context/surface integration, without a public native-handle getter |
@@ -133,10 +144,10 @@ Example application : Application
 | `rendering/backends/opengl/` | First concrete implementation, containing native drawing, resource storage, and GLAD integration |
 | `rendering/Image` and `StbImage.cpp` | CPU PNG/JPEG loading, with the decoder compiled once independently of GPU initialization |
 
-Window ownership uses composition: there is no proposed `WindowOpenGL`/`WindowMetal` hierarchy. Future `MetalBackend` and `VulkanBackend` classes would implement `GraphicsBackend`, with private platform integration for their native surfaces. They would not inherit from `Window` or the public `GraphicsDevice` facade.
+Window ownership uses composition: there is no `WindowOpenGL`/`WindowMetal` hierarchy. Future `MetalBackend` and `VulkanBackend` classes would implement `GraphicsBackend`, with private platform integration for their native surfaces. They would not inherit from `Window` or the public `GraphicsDevice` facade.
 
-At startup, the compiled platform hook would establish window flags/attributes before SDL window creation. The device/backend would then initialize graphics against that window, followed by example resources. Each frame would be acquired by `Application`, passed to `render(RenderFrame&)`, then submitted/presented or safely abandoned. Example resource owners would be destroyed before the device, and the device before the window; backend retirement would protect native resources still used by GPU work.
+The startup and destruction ownership is already in place. The next increment will introduce frame acquisition, `render(RenderFrame&)`, and submit/abandon handling. Resource wrappers/retirement will follow; the current OpenGL wrappers continue to use context-scoped native deletion.
 
 The migration would replace public OpenGL uniform/binding operations and example `gl*` calls with engine pipeline/resource/parameter descriptions. Textured Quad would retain its geometry, crate appearance, and asset selection; Asteroids and Mini Artillery would retain their scaffold backgrounds and controls. All affected examples would be updated with each shared-interface change, with existing target names, output packaging, and SDL callback flow preserved.
 
-Only OpenGL would be implemented in the first extraction. Metal on macOS and Vulkan on Windows/Linux would follow as real implementations, with one backend compiled per build initially. Do not create empty future-backend directories or advertise unsupported build choices. When code lands, update the current layout and ownership sections above, development commands, and project guidance to match the verified implementation.
+Only OpenGL is compiled today. Metal on macOS and Vulkan on Windows/Linux will follow as real implementations, with one backend compiled per build initially. Do not create empty future-backend directories or advertise unsupported build choices. Keep the current layout and ownership sections above, development commands, and project guidance aligned with each verified implementation increment.

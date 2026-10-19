@@ -6,16 +6,18 @@
 #include <core/Types.h>
 
 #include "../platform/Window.h"
+#include "../rendering/GraphicsDevice.h"
 
 namespace frostwind {
 
 struct ApplicationConfig {
     WindowConfig window;
+    GraphicsConfig graphics;
     // Zero disables software pacing; VSync is configured separately.
     u32 maxFps = 60;
 };
 
-// Derived applications supply behavior; their members die before Window.
+// Derived GPU members die before GraphicsDevice, which dies before Window.
 class Application {
 public:
     using Factory = std::unique_ptr<Application> (*)();
@@ -38,6 +40,7 @@ protected:
 private:
     SDL_AppResult iterate();
     Window window_;
+    GraphicsDevice graphics_;
     u64 frameIntervalNs_ = 0;
 };
 

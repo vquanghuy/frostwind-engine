@@ -3,8 +3,6 @@
 #include <exception>
 #include <memory>
 
-#include "../rendering/Texture2D.h"
-
 namespace frostwind {
 
 SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, const ApplicationConfig& config)
@@ -19,7 +17,7 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
         if (!application->window_.initialize(config.window)) {
             return SDL_APP_FAILURE;
         }
-        if (!Texture2D::initializeSupport() || !application->initialize()) {
+        if (!application->graphics_.initialize(application->window_, config.graphics) || !application->initialize()) {
             return SDL_APP_FAILURE;
         }
         // Round up so integer division never raises the requested FPS ceiling.
@@ -90,8 +88,7 @@ SDL_AppResult Application::iterate()
     if (result != SDL_APP_CONTINUE) {
         return result;
     }
-    if (!window_.present()) {
-        SDL_Log("OpenGL presentation failed: %s", SDL_GetError());
+    if (!graphics_.present()) {
         return SDL_APP_FAILURE;
     }
     // Rendering and swap blocking consume the budget. Late frames start fresh

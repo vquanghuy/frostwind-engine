@@ -6,6 +6,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Added
 
+- Engine: concrete `GraphicsDevice` facade, private abstract `GraphicsBackend`, and the first OpenGL implementation for graphics initialization and presentation, with a private abstract `WindowSurface` providing one controlled SDL-access boundary for concrete surfaces. Shared frames/resources and additional backends remain planned.
 - Documentation: root `ROADMAP.md`, organized into themed phases using Dovyski's roadmap template, and draft RFC 0006 for extracting the existing OpenGL backend, migrating all three examples, and later exploring Metal, Vulkan, mesh shading, and ray tracing; implementation remains planned.
 - Documentation: roadmap ideas for grass/vegetation, water/fluid simulation, and a physics sandbox, with initial scopes, prerequisites, and guidance for turning ideas into example experiments.
 - Asteroids and Mini Artillery: separate runnable OpenGL window scaffolds, CMake executable targets, and runtime SDL packaging; all build presets now select all three examples. Gameplay and runtime art remain planned.
@@ -20,6 +21,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Engine: separated SDL window/video ownership from OpenGL context and presentation ownership; `Application` now destroys example GPU resources before the device/context, then the window. Moved VSync from `WindowConfig::vsync` to `ApplicationConfig::graphics.vsync`, preserving the existing rendering callbacks and frame pacing.
+- Documentation: accepted RFC 0006 for staged implementation and recorded its initial ownership refactor; shared frame/resource migration remains pending.
 - Documentation: aligned the README technical approach and project structure guide with draft RFC 0006, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
 - Documentation: expanded draft RFC 0006 with concrete window/device composition, private backend inheritance and surface integration, resource/frame contracts, and staged example migration criteria.
 - Examples: numbered source directories as `01-textured-quad`, `02-asteroids`, and `03-mini-artillery` for suggested learning order; updated build and documentation paths while retaining target names and executable output paths.

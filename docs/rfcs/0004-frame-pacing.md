@@ -7,6 +7,8 @@
 
 ## Problem
 
+The original settings described here used `WindowConfig::vsync`. The ownership refactor in [RFC 0006](0006-rendering-backend-boundary.md) moves that setting to `ApplicationConfig::graphics.vsync` while retaining this pacing behavior; see the [current development guide](../development.md#current-implementation).
+
 VSync alone follows the display refresh rate. When unavailable, the previous 16 ms post-swap delay added to rendering time, producing a variable rate without an explicit FPS cap.
 
 ## Design

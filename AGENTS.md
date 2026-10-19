@@ -4,7 +4,7 @@
 
 Frostwind is an experimental C++17 engine for 2D and 3D games, developed through practical examples in one repository. Reusable engine code lives under `engine/`; examples own application behavior, game rules, and their assets. Mini Artillery is a planned destructible-terrain example, not the engine's identity or an implemented game. Keep scope lightweight and add systems only as examples need them.
 
-Implemented: native SDL3/OpenGL window and application lifecycle, shader-program source/file loading, RGBA8 textures with PNG/JPEG file loading, the textured-quad example, and minimal Asteroids/Mini Artillery window scaffolds. Camera, audio, physics, terrain destruction, 3D systems, and additional graphics APIs remain planned. Read `README.md`, `docs/coding-conventions.md`, `docs/project-structure.md`, and relevant RFCs before changes. RFC 0003 records the engine/example direction.
+Implemented: native SDL3 window and application lifecycle, separate graphics ownership through `GraphicsDevice` and a private OpenGL backend, shader-program source/file loading, RGBA8 textures with PNG/JPEG file loading, the textured-quad example, and minimal Asteroids/Mini Artillery window scaffolds. Shared frame/resource interfaces, camera, audio, physics, terrain destruction, 3D systems, and additional graphics APIs remain planned. Read `README.md`, `docs/coding-conventions.md`, `docs/project-structure.md`, and relevant RFCs before changes. RFC 0003 records the engine/example direction; accepted RFC 0006 records the staged rendering boundary.
 
 ## Technology decisions
 
@@ -24,8 +24,8 @@ Follow `docs/coding-conventions.md` and `docs/project-structure.md`. Headers sta
 Use primitive aliases from `<core/Types.h>` where appropriate: `u8`, `u32`, `i32`, `f32`, `byte`, and `usize`; qualify them in examples. Keep external API types and ordinary `int` dimensions where they fit. Prefer implicit numeric conversions for validated values, avoid redundant casts, and keep size arithmetic in `usize` to prevent integer overflow. Required pointer conversions remain explicit.
 
 - `engine/src/app/`: reusable application lifecycle, callback coordination, and future simulation scheduling.
-- `engine/src/platform/`: native/browser integration; `Window` owns SDL video/window/OpenGL context and presentation.
-- `engine/src/rendering/`: shader programs, textures, and future rendering facilities.
+- `engine/src/platform/`: native/browser integration; concrete `Window` owns SDL video/window state. The compiled private setup hook selects graphics window attributes/flags. Abstract private `WindowSurface` is the window's sole graphics friend and provides protected SDL access to derived surfaces; `OpenGLWindowSurface` owns the context and SDL presentation integration. Do not add per-backend friends or a public native-handle getter.
+- `engine/src/rendering/`: concrete `GraphicsDevice` facade, private abstract `GraphicsBackend` and OpenGL implementation, existing shader/texture owners, and future rendering facilities. The backend owns graphics initialization and presentation. VSync lives in `ApplicationConfig::graphics`; examples retain their direct OpenGL drawing during the initial extraction.
 - Future engine camera, input, audio, terrain, and physics modules belong in the engine when needed.
 - `examples/01-textured-quad/`: current demo, executable entry point, and its assets/license record.
 - `examples/02-asteroids/`: minimal window scaffold and CMake target, plus a planning README and `docs/assets/` concepts/prototypes; future ship, asteroid, arena, weapon, collision, scoring, and game rules stay here.
@@ -35,7 +35,7 @@ Use primitive aliases from `<core/Types.h>` where appropriate: `u8`, `u32`, `i32
 - `external/`: shared pinned dependencies; `cmake/`: shared build/SDK/example packaging helpers.
 - `docs/assets/`: shared branding and historical milestone PNGs/captions; game-specific concept and reference images belong with their owning examples.
 
-Dependencies flow from examples to the engine. Engine code must not include example code or choose example assets. Each example derives from `frostwind::Application` to supply startup, events, and rendering; its global SDL callback adapters delegate to the engine. Example GPU members must be destroyed before the base window/context. Keep native handles private and use scoped ownership for heap/C API resources. Keep geometry and simulation independent of a graphics context where practical.
+Dependencies flow from examples to the engine. Engine code must not include example code or choose example assets. Each example derives from `frostwind::Application` to supply startup, events, and rendering; its global SDL callback adapters delegate to the engine. Example GPU members must be destroyed before the base graphics device/context, and the device before the window. Keep native handles private and use scoped ownership for heap/C API resources. Keep geometry and simulation independent of a graphics context where practical.
 
 ## Future terrain and simulation rules
 
