@@ -20,6 +20,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Documentation: aligned the README technical approach and project structure guide with draft RFC 0006, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
+- Documentation: expanded draft RFC 0006 with concrete window/device composition, private backend inheritance and surface integration, resource/frame contracts, and staged example migration criteria.
 - Examples: numbered source directories as `01-textured-quad`, `02-asteroids`, and `03-mini-artillery` for suggested learning order; updated build and documentation paths while retaining target names and executable output paths.
 - Asteroids: placed the selected concept first in its README and specified mouse heading, heading-relative WASD movement, and Escape to quit; camera follows automatically at fixed rotation/zoom, while manual camera controls are deferred to another example.
 - Asteroids: documented its purpose as a focused engine experiment, planned technical challenges and validation evidence, and completion criteria independent of a fully functional game.

@@ -34,7 +34,8 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 | Audio | SDL3 built-in audio planned; SDL3_mixer if richer playback is needed |
 | 2D physics and terrain | Box2D 3.x and Clipper2 planned |
 | 3D physics | Planned; library selection deferred |
-| Additional graphics APIs | Planned; backend design deferred |
+| Rendering architecture | Proposed in draft RFC 0006: concrete SDL Window, public GraphicsDevice facade, private abstract GraphicsBackend; extraction not implemented |
+| Additional graphics APIs | Planned: Metal on macOS and Vulkan on Windows/Linux, after extracting the existing OpenGL implementation |
 | Browser | Planned Emscripten/WebAssembly and WebGL 2 through its GLES3 interface; not configured |
 
 OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.
@@ -42,6 +43,10 @@ OpenGL and the current 2D example are the starting point, not limits on Frostwin
 The [engine roadmap](ROADMAP.md) records the intended learning sequence: extract the existing OpenGL backend, develop 2D/3D fundamentals, then explore Metal, Vulkan, and optional advanced rendering. [Draft RFC 0006](docs/rfcs/0006-rendering-backend-boundary.md) proposes the first rendering boundary and migration of the existing examples; those changes remain unimplemented.
 
 ## Project structure
+
+### Current layout
+
+This tree shows the implemented repository. The rendering boundary described below remains a proposal.
 
 ```text
 frostwind-engine/
@@ -61,12 +66,51 @@ frostwind-engine/
 │   └── 03-mini-artillery/      # Window scaffold, CMake target, and planning artwork
 ├── external/                   # Pinned dependencies and license records
 ├── docs/                       # Structure, development, conventions, and RFCs
+├── ROADMAP.md                  # Learning phases and future experiments
 ├── CHANGELOG.md
 ├── LICENSE
 └── build/                      # Ignored generated outputs
 ```
 
 Engine code uses namespace `frostwind`; example code stays outside it. Headers live beside their `.cpp` files. Add camera, input, audio, terrain, physics, further examples, and tests when needed. The [structure guide](docs/project-structure.md) records ownership, callbacks, runtime assets, and platform SDK layout.
+
+### Proposed rendering layout
+
+[Draft RFC 0006](docs/rfcs/0006-rendering-backend-boundary.md) proposes the following engine organization for the first OpenGL extraction. These new files/directories are not implemented yet; create them through the staged migration of all three examples.
+
+```text
+engine/src/
+├── core/Types.h
+├── app/
+│   └── Application.h, Application.cpp
+├── platform/
+│   ├── Window.h, Window.cpp                    # Concrete SDL window owner
+│   ├── internal/WindowGraphicsSetup.h          # Private setup-hook declaration
+│   └── opengl/
+│       └── OpenGLWindowSurface.h, .cpp         # Context and SDL integration
+└── rendering/
+    ├── GraphicsDevice.h, .cpp                  # Concrete public facade
+    ├── GraphicsTypes.h                        # Descriptions and configuration
+    ├── RenderFrame.h, .cpp                     # Scoped drawing interface
+    ├── Buffer.h, .cpp
+    ├── Texture2D.h, .cpp
+    ├── Shader.h, .cpp
+    ├── GraphicsPipeline.h, .cpp
+    ├── Image.h, .cpp                          # CPU image loading
+    ├── StbImage.cpp
+    ├── internal/
+    │   ├── GraphicsBackend.h                  # Private abstract interface
+    │   ├── GraphicsBackendFactory.h
+    │   └── ResourceHandle.h
+    └── backends/opengl/
+        ├── OpenGLBackend.h, .cpp              # Concrete backend implementation
+        ├── OpenGLResources.cpp
+        └── OpenGLCommands.cpp
+```
+
+`Application` would own a concrete `Window` and `GraphicsDevice`. The device would own a private `GraphicsBackend` implementation; `OpenGLBackend` would implement it first. `Window` would retain SDL window state, while graphics context ownership and presentation would move behind the device. Examples would draw through `RenderFrame` and engine resource types, without OpenGL calls or native handles.
+
+Later `MetalBackend` and `VulkanBackend` implementations would inherit from the same private backend interface. They would not require per-API public window subclasses. Keep those implementations and their platform integration out of the tree until work begins. The [proposed ownership summary](docs/project-structure.md#proposed-rendering-boundary) and RFC describe startup, resource lifetime, shader bindings, and the migration in more detail.
 
 ## Build and run
 

@@ -2,6 +2,8 @@
 
 Frostwind contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
 
+The layout, ownership, and callback descriptions below document the current implementation. The [proposed rendering boundary](#proposed-rendering-boundary) at the end summarizes draft RFC 0006 separately; that refactor is not implemented yet. The root [roadmap](../ROADMAP.md) records intended sequencing and future experiments.
+
 ## Repository layout
 
 Example directories use two-digit prefixes to sort by suggested learning progression. The prefixes apply to source directories; CMake targets, executable names, and runtime output paths retain names such as `frostwind-asteroids`.
@@ -102,3 +104,39 @@ external/sdl3/
 The framework's headers are supplied through its framework search path; Windows/Linux use matching SDK include directories. Consumers include `<SDL3/SDL.h>` consistently. `cmake/SDL3.cmake` defines `SDL3::SDL3` and refuses missing SDK files instead of fetching or falling back to system packages. `cmake/GLAD.cmake` defines the native static loader target.
 
 Preserve exact versions, licenses, provenance, framework symlinks, and header/binary matching. The official macOS universal SDL3 framework is the explicit dynamic-linking exception. Browser builds will need a separate WASM-compatible SDL3 library and GLES3 integration. See [dependency policy](../external/README.md) and [development](development.md).
+
+## Proposed rendering boundary
+
+[Draft RFC 0006](rfcs/0006-rendering-backend-boundary.md) proposes extracting OpenGL behind a shared rendering interface before adding other native graphics APIs. The [README's proposed tree](../README.md#proposed-rendering-layout) summarizes the intended files; the RFC is the detailed design reference. This section does not replace the implemented contracts above.
+
+The proposed ownership is:
+
+```text
+Example application : Application
+├── example renderer and engine resource owners
+└── base Application
+    ├── Window                           concrete SDL window owner
+    └── GraphicsDevice                   concrete public facade
+        └── unique_ptr<GraphicsBackend>  private abstract interface
+            └── OpenGLBackend            first implementation
+                ├── OpenGLWindowSurface  context and SDL integration
+                └── GPU resources and frame state
+```
+
+| Boundary | Proposed responsibility |
+| --- | --- |
+| `platform/Window` | Concrete SDL window/video ownership, dimensions, and state; graphics setup delegated to the compiled private platform hook |
+| `platform/internal/` and `platform/opengl/` | Private graphics window setup and context/surface integration, without a public native-handle getter |
+| `rendering/GraphicsDevice` | Concrete facade for initialization, limits, resource operations, and frame submission/presentation |
+| `rendering/RenderFrame` and resource types | Example-facing drawing and scoped ownership without native graphics types |
+| `rendering/internal/GraphicsBackend` | Abstract implementation contract owned by the device; concrete backend classes inherit from it |
+| `rendering/backends/opengl/` | First concrete implementation, containing native drawing, resource storage, and GLAD integration |
+| `rendering/Image` and `StbImage.cpp` | CPU PNG/JPEG loading, with the decoder compiled once independently of GPU initialization |
+
+Window ownership uses composition: there is no proposed `WindowOpenGL`/`WindowMetal` hierarchy. Future `MetalBackend` and `VulkanBackend` classes would implement `GraphicsBackend`, with private platform integration for their native surfaces. They would not inherit from `Window` or the public `GraphicsDevice` facade.
+
+At startup, the compiled platform hook would establish window flags/attributes before SDL window creation. The device/backend would then initialize graphics against that window, followed by example resources. Each frame would be acquired by `Application`, passed to `render(RenderFrame&)`, then submitted/presented or safely abandoned. Example resource owners would be destroyed before the device, and the device before the window; backend retirement would protect native resources still used by GPU work.
+
+The migration would replace public OpenGL uniform/binding operations and example `gl*` calls with engine pipeline/resource/parameter descriptions. Textured Quad would retain its geometry, crate appearance, and asset selection; Asteroids and Mini Artillery would retain their scaffold backgrounds and controls. All affected examples would be updated with each shared-interface change, with existing target names, output packaging, and SDL callback flow preserved.
+
+Only OpenGL would be implemented in the first extraction. Metal on macOS and Vulkan on Windows/Linux would follow as real implementations, with one backend compiled per build initially. Do not create empty future-backend directories or advertise unsupported build choices. When code lands, update the current layout and ownership sections above, development commands, and project guidance to match the verified implementation.
