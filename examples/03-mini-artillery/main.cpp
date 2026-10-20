@@ -4,7 +4,6 @@
 #include <memory>
 
 #include <SDL3/SDL.h>
-#include <glad/gl.h>
 
 #include <app/Application.h>
 
@@ -25,12 +24,9 @@ protected:
         return SDL_APP_CONTINUE;
     }
 
-    SDL_AppResult render(int width, int height) override
+    SDL_AppResult render(frostwind::RenderFrame& frame) override
     {
-        glViewport(0, 0, width, height);
-        glClearColor(0.06f, 0.08f, 0.05f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        return SDL_APP_CONTINUE;
+        return frame.clear({0.06f, 0.08f, 0.05f, 1.0f}) ? SDL_APP_CONTINUE : SDL_APP_FAILURE;
     }
 };
 

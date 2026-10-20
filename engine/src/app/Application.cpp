@@ -74,21 +74,29 @@ SDL_AppResult Application::handleEvent(const SDL_Event&)
 SDL_AppResult Application::iterate()
 {
     const u64 frameStart = SDL_GetTicksNS();
-    int width = 0;
-    int height = 0;
-    if (!window_.pixelSize(width, height)) {
-        SDL_Log("Window pixel size query failed: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-    if (window_.minimized() || width <= 0 || height <= 0) {
+    if (window_.minimized()) {
         SDL_Delay(16);
         return SDL_APP_CONTINUE;
     }
-    const SDL_AppResult result = render(width, height);
-    if (result != SDL_APP_CONTINUE) {
-        return result;
+    RenderFrame frame;
+    const auto status = graphics_.beginFrame(frame);
+    if (status == FrameStatus::Failed) {
+        return SDL_APP_FAILURE;
     }
-    if (!graphics_.present()) {
+    if (status == FrameStatus::Unavailable) {
+        // A zero-size/recreating target must not busy-loop with an uncapped app.
+        const u64 budget = frameIntervalNs_ ? frameIntervalNs_ : 16 * SDL_NS_PER_MS;
+        const u64 elapsed = SDL_GetTicksNS() - frameStart;
+        if (elapsed < budget) {
+            SDL_DelayPrecise(budget - elapsed);
+        }
+        return SDL_APP_CONTINUE;
+    }
+    const SDL_AppResult result = render(frame);
+    if (result != SDL_APP_CONTINUE) {
+        return result; // The scoped frame abandons on early exit or exception.
+    }
+    if (!graphics_.submit(frame)) {
         return SDL_APP_FAILURE;
     }
     // Rendering and swap blocking consume the budget. Late frames start fresh

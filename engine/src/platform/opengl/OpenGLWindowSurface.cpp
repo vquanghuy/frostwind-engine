@@ -12,7 +12,13 @@ bool prepareGraphicsWindow(SDL_WindowFlags& flags)
         !SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3) ||
         !SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) ||
         !SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG) ||
-        !SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1)) {
+        !SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1) ||
+        !SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8) ||
+        !SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8) ||
+        !SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8) ||
+        !SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8) ||
+        !SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0) ||
+        !SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0)) {
         SDL_Log("OpenGL attributes failed: %s", SDL_GetError());
         return false;
     }
@@ -53,6 +59,11 @@ bool OpenGLWindowSurface::initialize(Window& window)
     context_ = candidate.context_;
     candidate.context_ = nullptr;
     return true;
+}
+
+bool OpenGLWindowSurface::makeCurrent() const
+{
+    return context_ && SDL_GL_MakeCurrent(window_, context_);
 }
 
 bool OpenGLWindowSurface::setVsync(bool enabled) const

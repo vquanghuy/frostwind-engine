@@ -16,6 +16,7 @@ public:
     OpenGLWindowSurface& operator=(const OpenGLWindowSurface&) = delete;
 
     bool initialize(Window& window) override;
+    bool makeCurrent() const;
     bool setVsync(bool enabled) const;
     bool present() const;
 

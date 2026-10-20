@@ -5,6 +5,8 @@
 - **Supersedes:** None
 - **Superseded by:** None
 
+**Evolution (2026-10-19):** The shared rendering extraction established the boundary investigated in what is now deferred [RFC 9999](9999-multi-backend-rendering-research.md). `Window` now owns only SDL window/video state; graphics initialization, resources, frames, and presentation live behind `GraphicsDevice`. `Shader`/`GraphicsPipeline` replace the public `ShaderProgram` uniform API, and `Image` handles CPU decoding. The sections below retain the original integration decisions; [project structure](../project-structure.md) describes current APIs.
+
 ## Problem
 
 Before this RFC was implemented, the scaffold drew an SDL window surface. Terrain textures and GPU destruction masks needed a programmable graphics pipeline, with a path to the later browser experiment.

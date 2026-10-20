@@ -3,11 +3,14 @@
 #include <filesystem>
 
 #include <core/Types.h>
-#include <glad/gl.h>
+
+#include "internal/ResourceHandle.h"
 
 namespace frostwind {
 
-// Owns a 2D texture. The context must outlive this object.
+class GraphicsDevice;
+
+// RGBA8, nearest filtering, clamp-to-edge, no mipmaps. Device must outlive it.
 class Texture2D {
 public:
     Texture2D() = default;
@@ -15,22 +18,18 @@ public:
     Texture2D(const Texture2D&) = delete;
     Texture2D& operator=(const Texture2D&) = delete;
 
-    // Call at startup with the single OpenGL context current and GLAD loaded.
-    // Configures image orientation and caches the context's texture-size limit.
-    static bool initializeSupport();
-
-    // Tightly packed RGBA8, first row at the bottom; copies pixels to the GPU.
-    // Uses nearest filtering and clamp-to-edge without mipmaps.
-    bool initializeRGBA8(int width, int height, const byte* pixels, usize byteCount);
-    // PNG/JPEG decoded to RGBA8 and flipped to the bottom-left UV convention.
-    // Application startup initializes texture support before textures are loaded.
-    // Relative paths resolve against the caller's working directory.
-    bool initializeFromFile(const std::filesystem::path& path);
-    void bind(u32 unit = 0) const;
+    // Requires an initialized device, positive dimensions within its limit, and
+    // exactly width * height * 4 tightly packed bytes, first row at the bottom.
+    // Copied/consumed before return; one-time after success, retry after failure.
+    bool initializeRGBA8(GraphicsDevice& device, int width, int height, const byte* pixels, usize byteCount);
+    // CPU Image decode followed by upload, using the device dimension limit.
+    // Relative paths use the caller's working directory; logs identify failures.
+    bool initializeFromFile(GraphicsDevice& device, const std::filesystem::path& path);
 
 private:
-    inline static GLint maxSize_ = 0;
-    GLuint texture_ = 0;
+    friend class GraphicsDevice;
+    GraphicsDevice* device_ = nullptr;
+    detail::TextureHandle handle_;
 };
 
 } // namespace frostwind
