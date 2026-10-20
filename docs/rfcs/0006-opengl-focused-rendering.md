@@ -46,13 +46,13 @@ Application → drawable size / current context / viewport
 
 Engine graphics calls remain in implementation files. Resource headers expose primitive types and private handles without requiring GLAD. Examples choose assets and parameters; the engine does not depend on example code. The root static library, pinned dependencies, executable-relative assets, and framework packaging remain unchanged.
 
-Delete the device/frame/pipeline/backend/surface abstraction and its resource identities. `OpenGLChecks.h/.cpp` provides only private context/error checks shared by the direct owners. This helper does not dispatch resource operations or manage lifetime. A concrete Renderer handles clear/draw submission. Application owns that persistent renderer and performs viewport setup directly. There is no backend interface or per-frame renderer allocation.
+Delete the device/frame/pipeline/backend/surface abstraction and its resource identities. `GraphicsChecks.h/.cpp` provides only private context/error checks shared by the direct owners. This helper does not dispatch resource operations or manage lifetime. A concrete Renderer handles clear/draw submission. Application owns that persistent renderer and performs viewport setup directly. There is no backend interface or per-frame renderer allocation.
 
 ### Window and Application
 
 Window sets context attributes before SDL window creation, creates/makes current its context, loads GLAD through SDL, and requests the configured swap interval. `WindowConfig` owns `vsync` again. Startup uses a scoped candidate so failures release completed context/window/video stages and permit retry. Successful repeated initialization is rejected. Native handles remain private with no graphics friend classes.
 
-Application initializes Window before calling the derived initializer, supplies its persistent renderer and current drawable pixels to `render(Renderer& renderer, int width, int height)`, and presents only when it returns continue. It makes the context current and sets the viewport before the callback. Success/failure returns and exceptions skip presentation; already issued GL operations are not rolled back. Callers must check resource/command results; there is no frame failure latch.
+Application initializes Window before calling the derived initializer, supplies its persistent renderer and current drawable pixels to `render(Renderer& renderer, int width, int height)`, and presents only when it returns continue. It makes the context current and sets the viewport before the callback. Success/failure returns and exceptions skip presentation; already issued GL operations are not rolled back. Resource initialization/use, Image loading, and rendering operations throw `std::runtime_error` with diagnostics. Commands return `void`; SDL callback boundaries log once and convert exceptions to `SDL_APP_FAILURE`, skipping presentation. Window retains checked boolean SDL results.
 
 Retain application-owned software pacing from [RFC 0004](0004-frame-pacing.md), including render/swap time, independent VSync, capped/uncapped operation, and no catch-up. Minimized windows use a 16 ms delay. Zero-sized targets use the remaining frame budget or 16 ms when uncapped. Fixed simulation scheduling remains future work.
 
@@ -68,7 +68,7 @@ CPU Image loading retains the pinned PNG/JPEG decoder, preflight dimension/overf
 
 ShaderProgram compiles vertex/fragment sources, links one program, and releases temporary stages. Retain source/file entry points and compiler/linker/path diagnostics. Failure cleans partial resources and permits retry. There is no separate public Shader stage or GraphicsPipeline wrapper.
 
-`use()` activates the program. `uniformLocation(name)` returns a cacheable program-local integer, or -1 for a missing/inactive uniform. Setters cover integer, float, vec2/3/4, and a mat4 supplied as sixteen column-major floats. They require this program to be active, reject a negative location/null matrix input, and report native errors such as uniform type mismatches. Setters do not automatically activate a program. Callers must keep cached locations associated with their program; integer locations alone do not carry owner identity.
+`use()` activates the program. `uniformLocation(name)` returns a cacheable program-local integer, and throws for a missing/inactive required uniform. Setters cover integer, float, vec2/3/4, and a mat4 supplied as sixteen column-major floats. They require this program to be active, reject a negative location/null matrix input, and report native errors such as uniform type mismatches. Setters do not automatically activate a program. Callers must keep cached locations associated with their program; integer locations alone do not carry owner identity.
 
 The quad uses `uniform vec2 uScale` and an integer texture-unit sampler. It no longer needs a padded std140 block or uniform-buffer allocation. Uniform blocks may be added for a demonstrated use; they are not required for ordinary parameters. Future camera matrices and light values can use the typed methods without adding a math library to this change.
 
@@ -80,11 +80,13 @@ VertexBuffer exposes `bind()` and `vertexCount()`; it does not issue draw comman
 
 Renderer owns no GPU resources, needs no initialization, and operates immediately on the current context. `drawTriangles(vertices, count, first)` borrows geometry, validates a nonempty triangle-list range and active program, binds the buffer layout, issues the native draw, and restores the prior VAO even when binding fails. Shader programs, uniforms, and textures are explicitly selected by the example. The renderer retains no geometry or callback references.
 
-`Renderer::clear(Color)` covers the full color target independently of scissor/color masks. Application iteration sets the viewport directly before calling `render(renderer, width, height)`; Window owns context management and presentation. Callers check results and propagate failure; drawing does not implicitly reset all GL state. Future depth/blend/culling controls and indexed/instanced drawing arrive when an example needs them.
+`Renderer::clear(Color)` covers the full color target independently of scissor/color masks. Application iteration sets the viewport directly before calling `render(renderer, width, height)`; Window owns context management and presentation. Failures throw to the callback boundary; drawing does not implicitly reset all GL state. Future depth/blend/culling controls and indexed/instanced drawing arrive when an example needs them.
 
 Application supplies the same Renderer instance by reference on every callback. Examples do not own another renderer, copy it per frame, or retain the borrowed reference. Mesh/Material/Model loading and high-level model drawing remain a possible later extension, not implemented capabilities. Renderer is named for that broader responsibility without adding speculative model APIs now.
 
 ### Lifetime and failure handling
+
+Operations throw diagnostic `std::runtime_error` exceptions rather than returning success flags. Standard allocation/filesystem exceptions also propagate. Required uniform lookup throws for an absent/optimized-out name; valid lookup still returns an integer. Destructors and binding-restoration guards never throw. Destruction with an unavailable creating context logs the lifetime violation and skips deletion. Scoped candidates release partial GPU objects during unwinding; texture/vertex uploads restore their promised state before checking GL errors, and a scoped guard restores the prior draw VAO even on binding failure. Owners remain retryable after failed initialization.
 
 GPU owners are non-copyable. They record the creating context and require it to remain current and outlive initialization/use/destruction. Context checks diagnose foreign-context use but do not switch contexts, retain Window, or implement context-loss recovery. Resources cannot survive context recreation.
 
@@ -99,7 +101,7 @@ Application stores Window before Renderer so the renderer dies first; derived GP
 
 ## Risks and limitations
 
-Explicit state is easier to inspect but callers must choose the correct program, uniform locations/types, texture units, and attribute layouts. Missing result checks can allow presentation after an operation failed. Program-local integer locations and native context pointers are lightweight contracts, not ownership-safe handles. The documented application/context lifetime and current-context requirements remain necessary.
+Explicit state is easier to inspect but callers must choose the correct program, uniform locations/types, texture units, and attribute layouts. Catching a required rendering exception and returning continue can present a partially rendered target; let it reach the callback boundary unless recovery is deliberate. Program-local integer locations and native context pointers are lightweight contracts, not ownership-safe handles. The documented application/context lifetime and current-context requirements remain necessary.
 
 The API is intentionally OpenGL-specific. Another backend would need a new design and coordinated example migration; preserving research does not guarantee reuse unchanged. Windows/Linux runtime and browser integration remain unverified. This change establishes no speedup, new dependency, release, or tag.
 
@@ -131,3 +133,5 @@ Accepted and implemented on 2026-10-20 following the owner's instruction to simp
 Native example and fresh engine-only builds passed. Actual example callbacks retained byte-identical framebuffer hashes, and focused direct-resource, context, lifecycle/fault, and controlled-pacing checks passed. See the [development verification record](../development.md#opengl-focused-simplification-validation-2026-10-20) for executed evidence and remaining manual checks. The archived branch is unchanged.
 
 Clarified that day after the owner's review: drawing belongs to Renderer rather than VertexBuffer, and clearing belongs alongside drawing. The persistent renderer is owned by Application and borrowed as an explicit callback parameter. No model loader, material hierarchy, or universal backend interface was added.
+
+Revised that day to use exception-based rendering failures: direct command sequences replace boolean checks in examples, with reporting at existing SDL callback boundaries. Window boolean integration and callback control-flow results remain unchanged. See the [exception validation record](../development.md#exception-based-rendering-validation-2026-10-20) for executed checks.

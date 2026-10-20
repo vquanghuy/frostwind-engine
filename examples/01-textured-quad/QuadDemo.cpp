@@ -22,19 +22,15 @@ bool QuadDemo::initialize()
         {-1, -1, 0, 0}, {1, -1, 1, 0}, {1, 1, 1, 1},
         {-1, -1, 0, 0}, {1, 1, 1, 1}, {-1, 1, 0, 1},
     };
-    if (!vertices_.initialize(vertices, sizeof(vertices), sizeof(Vertex), {
-            {0, 2, offsetof(Vertex, x)}, {1, 2, offsetof(Vertex, u)},
-        }) ||
-        !texture_.initializeFromFile(assetDirectory / "textures" / "crate.png") ||
-        !program_.initializeFromFiles(assetDirectory / "shaders" / "quad.vert", assetDirectory / "shaders" / "quad.frag")) {
-        return false;
-    }
+    vertices_.initialize(vertices, sizeof(vertices), sizeof(Vertex), {
+        {0, 2, offsetof(Vertex, x)}, {1, 2, offsetof(Vertex, u)},
+    });
+    texture_.initializeFromFile(assetDirectory / "textures" / "crate.png");
+    program_.initializeFromFiles(assetDirectory / "shaders" / "quad.vert", assetDirectory / "shaders" / "quad.frag");
     scaleLocation_ = program_.uniformLocation("uScale");
     const int textureLocation = program_.uniformLocation("uTexture");
-    if (scaleLocation_ < 0 || textureLocation < 0 || !program_.use() || !program_.setInt(textureLocation, 0)) {
-        SDL_Log("Quad shader requires uScale and uTexture uniforms.");
-        return false;
-    }
+    program_.use();
+    program_.setInt(textureLocation, 0);
     SDL_Log("Frostwind textured quad initialized. Press Escape or close the window to quit.");
     return true;
 }
@@ -50,25 +46,10 @@ SDL_AppResult QuadDemo::handleEvent(const SDL_Event& event)
 SDL_AppResult QuadDemo::render(frostwind::Renderer& renderer, int width, int height)
 {
     const frostwind::f32 side = std::min(width, height) * 0.66f;
-    if (!renderer.clear({24.0f / 255.0f, 28.0f / 255.0f, 34.0f / 255.0f, 1.0f})) {
-        SDL_Log("Quad background clear failed.");
-        return SDL_APP_FAILURE;
-    }
-    if (!program_.use()) {
-        SDL_Log("Quad shader activation failed.");
-        return SDL_APP_FAILURE;
-    }
-    if (!program_.setVec2(scaleLocation_, side / width, side / height)) {
-        SDL_Log("Quad scale uniform update failed.");
-        return SDL_APP_FAILURE;
-    }
-    if (!texture_.bind(0)) {
-        SDL_Log("Quad texture binding failed.");
-        return SDL_APP_FAILURE;
-    }
-    if (!renderer.drawTriangles(vertices_, 6)) {
-        SDL_Log("Quad draw failed.");
-        return SDL_APP_FAILURE;
-    }
+    renderer.clear({24.0f / 255.0f, 28.0f / 255.0f, 34.0f / 255.0f, 1.0f});
+    program_.use();
+    program_.setVec2(scaleLocation_, side / width, side / height);
+    texture_.bind(0);
+    renderer.drawTriangles(vertices_, 6);
     return SDL_APP_CONTINUE;
 }

@@ -206,3 +206,15 @@ cmake --build --preset linux-debug --parallel
 ```
 
 Windows packages the DLL beside its executable; Linux packages `lib/` and uses `$ORIGIN/lib`. Linux system dependencies are not bundled automatically. Browser compilation still requires a separate WASM-compatible SDL3 library and Emscripten integration; no working browser build command is claimed.
+
+### Exception-based rendering validation (2026-10-20)
+
+The native preset built all three examples after converting rendering/resource commands and CPU Image loading to exception-based failures. Temporary checks under `build/opengl-focus-check/` were adapted to the new API and ran from `/private/tmp` with approved display access. Each actual example entry point rendered three frames in two runs, handled synthetic Escape/close exits, and retained its exact framebuffer hash listed above. No screenshots were captured.
+
+Resource checks exercised failed shader compilation/linking/file loading and retry, missing required uniforms, wrong-active-program writes, native uniform type errors, texture/image validation, injected texture/buffer upload failures and retry, unpack/binding preservation, shared-geometry draws, foreign-context rejection, and resource deletion. A focused injected native draw error verified an operation-specific exception, drained GL errors, and restoration of the previous VAO; foreign-context binding failures also preserved that binding. GPU owner destructors were checked as non-throwing at compile time, and failed initialization unwound while the context was still available.
+
+Lifecycle checks confirmed that real resource exceptions during initialization, events, and rendering reach the SDL callback boundary and produce one diagnostic each. Failed frames returned `SDL_APP_FAILURE` without swapping; failed startup left `appstate` null. Standard/unknown callback exceptions, Window failures/retry, real drawable resize, VSync fallback, presentation failure, and texture-before-context/window/video teardown also passed. Controlled-clock pacing checks passed with the updated private check signatures.
+
+Local documentation links/images/anchors and code fences, source boundaries, and diff whitespace were checked. These remain temporary checks rather than a committed automated suite. Native minimize/restore still requires manual confirmation because SDL did not synchronize the transition; visual Retina/resize assessment, IDE use, Windows/Linux, and browser behavior remain unverified.
+
+The private helpers were subsequently renamed from OpenGLChecks to `GraphicsChecks` without behavior changes. All three native examples rebuilt successfully; documentation links and diff whitespace checks passed. Runtime checks were not repeated for this rename.

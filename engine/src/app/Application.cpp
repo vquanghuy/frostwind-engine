@@ -5,7 +5,7 @@
 
 #include <glad/gl.h>
 
-#include "../rendering/OpenGLChecks.h"
+#include "../rendering/GraphicsChecks.h"
 
 namespace frostwind {
 
@@ -95,14 +95,13 @@ SDL_AppResult Application::iterate()
         }
         return SDL_APP_CONTINUE;
     }
-    if (!window_.makeCurrent() || !detail::requireOpenGL("Viewport")) {
+    if (!window_.makeCurrent()) {
         SDL_Log("Could not prepare the OpenGL rendering context: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+    detail::requireOpenGL("Viewport");
     glViewport(0, 0, width, height);
-    if (!detail::checkOpenGL("Viewport")) {
-        return SDL_APP_FAILURE;
-    }
+    detail::checkOpenGL("Viewport");
     const SDL_AppResult result = render(renderer_, width, height);
     if (result != SDL_APP_CONTINUE) {
         return result;

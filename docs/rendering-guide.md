@@ -45,7 +45,7 @@ sequenceDiagram
     App->>App: wait for remaining frame budget
 ```
 
-Returning success or failure skips presentation. Exceptions are caught at SDL callback boundaries. Check each rendering operation; ignored failures are not automatically latched by a frame object.
+Returning success or failure skips presentation. Rendering operations and resource initialization throw `std::runtime_error` with operation/file/compiler diagnostics. `Application::onInit`, `onEvent`, and `onIterate` catch exceptions, log once, and return `SDL_APP_FAILURE`; a failed frame skips presentation. The example can call operations in sequence without per-call checks or a local try/catch. Window retains checked boolean SDL results.
 
 ## Class reference
 
@@ -95,7 +95,7 @@ texture_.bind(0);
 renderer.drawTriangles(vertices_, 6);
 ```
 
-This short excerpt omits failure handling; the linked example checks every result. `Renderer::clear(Color)` changes the target's pixels; `Renderer::drawTriangles` submits geometry. VertexBuffer owns storage/layout and never draws itself. Program and texture bindings remain active until changed. There is no pipeline object or opaque parameter-byte block. The quad's two scale values map directly to GLSL `uniform vec2 uScale`.
+This is the same straight-line error-handling style used by the example: a failed call throws and prevents later calls. The application callback boundary handles the exception. `Renderer::clear(Color)` changes the target's pixels; `Renderer::drawTriangles` submits geometry. VertexBuffer owns storage/layout and never draws itself. Program and texture bindings remain active until changed. There is no pipeline object or opaque parameter-byte block. The quad's two scale values map directly to GLSL `uniform vec2 uScale`.
 
 ## Use more than one shader program
 
@@ -106,9 +106,15 @@ object A → program A.use() → A uniforms/textures → renderer.drawTriangles(
 object B → program B.use() → B uniforms/textures → renderer.drawTriangles(shared vertices, count)
 ```
 
-Cache uniform locations separately for each linked program, even when names match. Call that program's `use()` before its setters. Missing or optimized-out uniforms return -1; setters reject -1. An integer location is local to its program and must not be reused with another program. The active-program guard does not prove that a supplied integer originated from that program.
+Cache uniform locations separately for each linked program, even when names match. Call that program's `use()` before its setters. `uniformLocation` treats the named uniform as required and throws if missing or optimized out; setters also reject negative locations. An integer location is local to its program and must not be reused with another program. The active-program guard does not prove that a supplied integer originated from that program.
 
 Match vertex attribute locations/components to each shader's inputs. Match uniform setters to the declared GLSL types: integer for a sampler/unit, float/vec2/vec3/vec4 for those values, and `setMat4` for sixteen column-major floats. Matrix/light semantics belong to the scene/shader; no math library is required by these setters. The current engine does not automatically reflect and validate arbitrary vertex layouts or build materials.
+
+## Error handling
+
+Let rendering exceptions reach Application unless the example can recover from a specific failure. For example, an optional texture can be loaded in a local `try`/`catch (const std::runtime_error&)` and replaced with a fallback. Do not catch a required draw failure and return continue: earlier GL operations have already changed the target, and no rollback occurs. Standard allocation/filesystem exceptions also reach the callback boundary.
+
+Failed initialization keeps an owner empty and retryable; previously initialized owners remain intact when repeated initialization is rejected. Texture uploads restore unpack state and bindings, vertex uploads restore VAO/VBO bindings, and triangle submission restores the prior VAO even when binding or drawing throws. Program activation, uniform writes, texture selection, and clears intentionally change active rendering state.
 
 ## Resource lifetime
 
@@ -122,7 +128,7 @@ flowchart TD
     Base --> Window[Window: SDL and GL context]
 ```
 
-Application supplies the same Renderer instance each callback; it needs no initialization, has no GPU resources, and does not retain geometry or frame references. Do not retain the borrowed callback reference. Derived members are destroyed before the base Renderer and Window. GPU destruction must happen with the creating context still current. Outside Application, declare Window before GPU owners and keep them in a scope that ends first. Each resource checks its recorded context; it does not switch contexts or keep Window alive. Cross-context operations fail. Using resources after context destruction is a lifetime error, not a supported recovery path.
+Application supplies the same Renderer instance each callback; it needs no initialization, has no GPU resources, and does not retain geometry or frame references. Do not retain the borrowed callback reference. Derived members are destroyed before the base Renderer and Window. GPU destruction must happen with the creating context still current. Outside Application, declare Window before GPU owners and keep them in a scope that ends first. Each resource checks its recorded context; it does not switch contexts or keep Window alive. Cross-context operations throw. Destructors never throw, including during stack unwinding; if the required context is unavailable they log a lifetime violation and skip deletion. This cannot reclaim resources through another context. Using resources after context destruction is a lifetime error, not a supported recovery path.
 
 CPU `Image` loading needs no context. GPU uploads and shader compilation require both the current context and loaded GLAD. All current operations run on SDL's callback thread.
 

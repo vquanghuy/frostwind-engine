@@ -27,7 +27,8 @@ protected:
 
     SDL_AppResult render(frostwind::Renderer& renderer, int, int) override
     {
-        return renderer.clear({0.02f, 0.03f, 0.06f, 1.0f}) ? SDL_APP_CONTINUE : SDL_APP_FAILURE;
+        renderer.clear({0.02f, 0.03f, 0.06f, 1.0f});
+        return SDL_APP_CONTINUE;
     }
 };
 

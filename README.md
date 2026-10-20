@@ -90,11 +90,11 @@ engine/src/
     ├── Renderer.h, .cpp        # Clear and draw submission
     ├── VertexBuffer.h, .cpp    # Vertex upload and attribute layout
     ├── Image.h, .cpp           # CPU PNG/JPEG loading
-    ├── OpenGLChecks.h, .cpp          # Private context/error checks
+    ├── GraphicsChecks.h, .cpp          # Private context/error checks
     └── StbImage.cpp
 ```
 
-Examples implement `initialize()` and `render(renderer, width, height)`, borrowing Application's persistent Renderer and owning resource members that are destroyed before the base Window/context. Shader programs are activated explicitly, uniforms use cached locations, and textures and vertex buffers manage their bindings while Renderer submits draws. Native calls stay inside engine implementations; GLAD remains private to the engine target.
+Examples implement `initialize()` and `render(renderer, width, height)`, borrowing Application's persistent Renderer and owning resource members that are destroyed before the base Window/context. Shader programs are activated explicitly, uniforms use cached locations, and textures and vertex buffers manage their bindings while Renderer submits draws. Rendering failures throw diagnostic exceptions, caught and logged once by Application at SDL callback boundaries; examples call commands in sequence. Native calls stay inside engine implementations; GLAD remains private to the engine target.
 
 The [structure guide](docs/project-structure.md) explains lifetime and packaging; the [rendering guide](docs/rendering-guide.md) demonstrates the actual example. There is no abstract backend/surface, device facade, pipeline description, or per-frame submission object.
 

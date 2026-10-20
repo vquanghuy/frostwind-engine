@@ -33,10 +33,12 @@ public:
 
 protected:
     // Called after Window has initialized SDL, the context, and GLAD.
+    // Resource exceptions propagate to onInit, which logs and returns failure.
     virtual bool initialize() = 0;
     virtual SDL_AppResult handleEvent(const SDL_Event& event);
     // Borrow the persistent renderer during this callback; do not retain it.
     // Dimensions are drawable pixels. Continue presents; exit/failure skips swap.
+    // Rendering exceptions propagate to onIterate; no local catch is required.
     virtual SDL_AppResult render(Renderer& renderer, int width, int height) = 0;
 
 private:

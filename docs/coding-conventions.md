@@ -45,7 +45,8 @@ Prefer implicit numeric conversions when they preserve the intended value, inclu
 ## Initialization and errors
 
 - Keep platform/resource constructors empty and establish fallible resources through explicit initialization. Initialization is a one-time operation unless repeat initialization is deliberately supported.
-- Check external API return values. Log the failed operation and its diagnostic, then propagate failure to the caller.
+- Check external API return values. Rendering resource initialization/use, CPU image loading, and renderer operations throw `std::runtime_error` with the failed operation and diagnostic; their command methods return `void`. Log once at the application callback boundary. Keep Window's SDL-facing boolean results checked and propagated.
+- Required uniform lookup throws for missing/inactive names; valid lookup returns a program-local location. Destructors and cleanup guards never throw. Restore promised GL bindings before propagating an exception.
 - Never allow C++ exceptions to unwind through C callbacks. Convert exceptions into the API's error result at callback boundaries that perform throwing operations.
 - Keep cleanup automatic. Avoid adding manual cleanup branches for each initialization failure.
 - Optional features may degrade gracefully when documented. Do not silently continue after a required initialization step fails.

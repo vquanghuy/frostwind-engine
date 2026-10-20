@@ -2,7 +2,7 @@ add_library(frostwind STATIC
     src/app/Application.cpp
     src/platform/Window.cpp
     src/rendering/Renderer.cpp
-    src/rendering/OpenGLChecks.cpp
+    src/rendering/GraphicsChecks.cpp
     src/rendering/VertexBuffer.cpp
     src/rendering/ShaderProgram.cpp
     src/rendering/Image.cpp

@@ -16,19 +16,21 @@ struct VertexAttribute {
 
 // Owns an OpenGL VBO and its VAO layout. The creating context must be current
 // for use/destruction and outlive this owner. Geometry is independent of shaders.
+// Initialization/use throw std::runtime_error with operation diagnostics.
+// Destruction never throws.
 class VertexBuffer {
 public:
     VertexBuffer() = default;
-    ~VertexBuffer();
+    ~VertexBuffer() noexcept;
     VertexBuffer(const VertexBuffer&) = delete;
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
     // Immutable interleaved float attributes; consumes bytes before returning.
     // One-time after success, retry after failure. Preserves VAO/VBO bindings.
-    bool initialize(const void* data, usize byteCount, usize stride,
+    void initialize(const void* data, usize byteCount, usize stride,
         std::initializer_list<VertexAttribute> attributes);
     // Selects this vertex layout. Requires the creating context to be current.
-    bool bind() const;
+    void bind() const;
     usize vertexCount() const { return vertexCount_; }
 
 private:

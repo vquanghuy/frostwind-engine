@@ -1,18 +1,19 @@
 #include "VertexBuffer.h"
 
 #include <limits>
+#include <stdexcept>
 #include <utility>
 
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
 
-#include "OpenGLChecks.h"
+#include "GraphicsChecks.h"
 
 namespace frostwind {
 
-VertexBuffer::~VertexBuffer()
+VertexBuffer::~VertexBuffer() noexcept
 {
-    if ((array_ || buffer_) && detail::requireContext(context_, "Vertex buffer destruction")) {
+    if ((array_ || buffer_) && detail::canDestroy(context_, "Vertex buffer destruction")) {
         if (array_) {
             glDeleteVertexArrays(1, &array_);
         }
@@ -22,31 +23,29 @@ VertexBuffer::~VertexBuffer()
     }
 }
 
-bool VertexBuffer::initialize(const void* data, usize byteCount, usize stride,
+void VertexBuffer::initialize(const void* data, usize byteCount, usize stride,
     std::initializer_list<VertexAttribute> attributes)
 {
+    detail::requireOpenGL("Vertex buffer initialization");
     if (buffer_ || !data || !stride || !byteCount || byteCount % stride || attributes.size() == 0 ||
         stride > usize(std::numeric_limits<GLsizei>::max()) ||
-        byteCount > usize(std::numeric_limits<GLsizeiptr>::max()) ||
-        !detail::requireOpenGL("Vertex buffer initialization")) {
-        SDL_Log("Invalid vertex buffer data, size, or layout.");
-        return false;
+        byteCount > usize(std::numeric_limits<GLsizeiptr>::max())) {
+        throw std::runtime_error("Invalid vertex buffer data, size, or layout.");
     }
     GLint maxAttributes = 0;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttributes);
-    if (!detail::checkOpenGL("Vertex attribute limit query") || maxAttributes <= 0) {
-        return false;
+    detail::checkOpenGL("Vertex attribute limit query");
+    if (maxAttributes <= 0) {
+        throw std::runtime_error("Vertex attribute limit must be positive.");
     }
     for (auto it = attributes.begin(); it != attributes.end(); ++it) {
         if (it->components < 1 || it->components > 4 || it->location >= u32(maxAttributes) ||
             it->offset > stride || usize(it->components) * sizeof(f32) > stride - it->offset) {
-            SDL_Log("Vertex attribute exceeds the stride or current context's limits.");
-            return false;
+            throw std::runtime_error("Vertex attribute exceeds the stride or current context's limits.");
         }
         for (auto previous = attributes.begin(); previous != it; ++previous) {
             if (previous->location == it->location) {
-                SDL_Log("Vertex attribute locations must be unique.");
-                return false;
+                throw std::runtime_error("Vertex attribute locations must be unique.");
             }
         }
     }
@@ -55,8 +54,7 @@ bool VertexBuffer::initialize(const void* data, usize byteCount, usize stride,
     glGenVertexArrays(1, &candidate.array_);
     glGenBuffers(1, &candidate.buffer_);
     if (!candidate.array_ || !candidate.buffer_) {
-        SDL_Log("Could not create OpenGL vertex storage/layout.");
-        return false;
+        throw std::runtime_error("Could not create OpenGL vertex storage/layout.");
     }
     GLint previousArray = 0, previousBuffer = 0;
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousArray);
@@ -71,23 +69,18 @@ bool VertexBuffer::initialize(const void* data, usize byteCount, usize stride,
     }
     glBindVertexArray(previousArray);
     glBindBuffer(GL_ARRAY_BUFFER, previousBuffer);
-    if (!detail::checkOpenGL("Vertex buffer initialization")) {
-        return false;
-    }
+    detail::checkOpenGL("Vertex buffer initialization");
     std::swap(buffer_, candidate.buffer_);
     std::swap(array_, candidate.array_);
     std::swap(context_, candidate.context_);
     vertexCount_ = byteCount / stride;
-    return true;
 }
 
-bool VertexBuffer::bind() const
+void VertexBuffer::bind() const
 {
-    if (!array_ || !detail::requireContext(context_, "Vertex buffer binding")) {
-        return false;
-    }
+    detail::requireContext(context_, "Vertex buffer binding");
     glBindVertexArray(array_);
-    return detail::checkOpenGL("Vertex buffer binding");
+    detail::checkOpenGL("Vertex buffer binding");
 }
 
 } // namespace frostwind

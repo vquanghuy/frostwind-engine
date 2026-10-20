@@ -24,8 +24,10 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Engine: rendering/resource commands and CPU image loading now throw diagnostic exceptions instead of returning success flags; required uniform lookup throws for missing/inactive names. Application reports exceptions at SDL callback boundaries and skips failed-frame presentation. Destructors remain non-throwing; failed initialization cleans up for retry and promised upload/draw state is restored.
+- Examples: simplified quad initialization/rendering and scaffold clears to direct engine calls, removing per-operation boolean checks and duplicate failure logs.
 - Engine: Application owns and passes a persistent concrete Renderer to `render(Renderer&, width, height)`; Renderer handles clearing and triangle draw submission, while VertexBuffer handles storage/layout/binding without drawing itself. All examples use the renderer reference.
-- Engine: removed the separate RenderCommands module and renamed shared private context/error helpers to OpenGLChecks. Application sets the viewport directly; Renderer handles clearing and drawing.
+- Engine: removed the separate RenderCommands module and named the shared private context/error helpers `GraphicsChecks`. Application sets the viewport directly; Renderer handles clearing and drawing.
 - Engine: simplified OpenGL ownership: Window now owns context creation, GLAD, VSync, and presentation; Texture2D performs its own GL uploads/binding; linked ShaderProgram provides activation, uniform lookup, and integer/float/vec2/3/4/mat4 setters. GPU owners retain creating-context checks and automatic cleanup.
 - Engine: supplied Renderer and drawable dimensions to rendering callbacks and restored `WindowConfig::vsync`; retained callback failures/exceptions, initialization retry, resource-before-context teardown, drawable viewport sizing, and software pacing.
 - Documentation: aligned the README, structure/usage/development guides, project instructions, roadmap, and all examples with RFC 0006; the multi-backend checkpoint remains on `archive/multi-backend-experiment`.
@@ -33,7 +35,6 @@ All notable changes to Frostwind and its examples are documented in this file.
 - Textured Quad: folded the example-owned `QuadRenderer` into `QuadDemo`, keeping resource creation, Escape handling, and clear/scale/draw callbacks together; added an ownership diagram to the example README and aligned the rendering guide/structure notes.
 - Documentation: recorded the OpenGL-first learning plan in RFC 9999 and aligned the roadmap/current guidance: retain the provisional rendering boundary, develop a small 3D scene and bounded grass experiment, and defer additional backends and shader-portability infrastructure.
 - Textured Quad: uses VertexBuffer, ShaderProgram, Texture2D, and the borrowed Renderer through engine methods, with a regular vec2 scale uniform; retained crate pixels, orientation, sampling, and square scaling. Asteroids and Mini Artillery use the engine color-clear function.
-- Textured Quad: split clearing, shader activation, uniform updates, texture binding, and drawing into individually checked steps with operation-specific diagnostics. Rendering methods still report failures through return values; SDL callback boundaries catch application exceptions.
 - Engine: kept GLAD as a private implementation dependency; public rendering headers and examples require no native graphics calls or GLAD headers.
 - Documentation: accepted RFC 9999 for staged implementation and recorded its initial ownership refactor; completed the shared frame/resource migration through all three examples.
 - Documentation: aligned the README technical approach and project structure guide with draft RFC 9999, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.

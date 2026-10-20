@@ -4,58 +4,51 @@
 #include <fstream>
 #include <limits>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
-#include <SDL3/SDL.h>
 #include <stb_image.h>
 
 namespace frostwind {
 
-bool Image::load(const std::filesystem::path& path, int maxDimension)
+void Image::load(const std::filesystem::path& path, int maxDimension)
 {
     if (!pixels_.empty() || maxDimension <= 0) {
-        SDL_Log("Image loading requires an empty image and a positive dimension limit.");
-        return false;
+        throw std::runtime_error("Image loading requires an empty image and a positive dimension limit.");
     }
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     const std::streamoff size = file ? file.tellg() : std::streampos(-1);
     if (size <= 0 || size > std::numeric_limits<int>::max()) {
-        SDL_Log("Could not read image (missing, empty, or oversized): %s", path.u8string().c_str());
-        return false;
+        throw std::runtime_error("Could not read image (missing, empty, or oversized): " + path.u8string());
     }
     const int length = size;
     std::vector<byte> encoded(length);
     file.seekg(0);
     if (!file.read(reinterpret_cast<char*>(encoded.data()), length)) {
-        SDL_Log("Could not read complete image file: %s", path.u8string().c_str());
-        return false;
+        throw std::runtime_error("Could not read complete image file: " + path.u8string());
     }
     int width = 0, height = 0, channels = 0;
     if (!stbi_info_from_memory(encoded.data(), length, &width, &height, &channels)) {
-        SDL_Log("Could not inspect image %s: %s", path.u8string().c_str(), stbi_failure_reason());
-        return false;
+        throw std::runtime_error("Could not inspect image " + path.u8string() + ": " + stbi_failure_reason());
     }
     if (width <= 0 || height <= 0 || width > maxDimension || height > maxDimension) {
-        SDL_Log("Image dimensions exceed the supplied limit of %d: %s", maxDimension, path.u8string().c_str());
-        return false;
+        throw std::runtime_error("Image dimensions exceed the supplied limit of " + std::to_string(maxDimension) + ": " + path.u8string());
     }
     const usize w = width;
     const usize h = height;
     if (w > std::numeric_limits<usize>::max() / 4 / h) {
-        SDL_Log("Image byte count exceeds addressable memory: %s", path.u8string().c_str());
-        return false;
+        throw std::runtime_error("Image byte count exceeds addressable memory: " + path.u8string());
     }
     const int inspectedWidth = width;
     const int inspectedHeight = height;
     using Pixels = std::unique_ptr<stbi_uc, decltype(&stbi_image_free)>;
     Pixels decoded(stbi_load_from_memory(encoded.data(), length, &width, &height, &channels, STBI_rgb_alpha), stbi_image_free);
     if (!decoded) {
-        SDL_Log("Could not decode image %s: %s", path.u8string().c_str(), stbi_failure_reason());
-        return false;
+        throw std::runtime_error("Could not decode image " + path.u8string() + ": " + stbi_failure_reason());
     }
     if (width != inspectedWidth || height != inspectedHeight) {
-        SDL_Log("Decoded image dimensions do not match the inspected dimensions.");
-        return false;
+        throw std::runtime_error("Decoded image dimensions do not match the inspected dimensions.");
     }
     std::vector<byte> pixels(decoded.get(), decoded.get() + w * h * 4);
     // Keep orientation local to this loader instead of changing decoder globals.
@@ -68,7 +61,6 @@ bool Image::load(const std::filesystem::path& path, int maxDimension)
     pixels_ = std::move(pixels);
     width_ = width;
     height_ = height;
-    return true;
 }
 
 } // namespace frostwind

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <fstream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -10,7 +11,7 @@
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
 
-#include "OpenGLChecks.h"
+#include "GraphicsChecks.h"
 
 namespace frostwind {
 namespace {
@@ -25,16 +26,14 @@ struct CompiledShader {
     }
 };
 
-bool compile(CompiledShader& shader, GLenum stage, std::string_view source)
+void compile(CompiledShader& shader, GLenum stage, std::string_view source)
 {
     if (source.empty() || source.size() > usize(std::numeric_limits<GLint>::max())) {
-        SDL_Log("Shader source is empty or exceeds the OpenGL length limit.");
-        return false;
+        throw std::runtime_error("Shader source is empty or exceeds the OpenGL length limit.");
     }
     shader.object = glCreateShader(stage);
     if (!shader.object) {
-        SDL_Log("Could not create OpenGL shader stage.");
-        return false;
+        throw std::runtime_error("Could not create OpenGL shader stage.");
     }
     const char* data = source.data();
     const GLint length = source.size();
@@ -47,54 +46,48 @@ bool compile(CompiledShader& shader, GLenum stage, std::string_view source)
         glGetShaderiv(shader.object, GL_INFO_LOG_LENGTH, &logLength);
         std::vector<char> log(std::max(logLength, 1), '\0');
         glGetShaderInfoLog(shader.object, log.size(), nullptr, log.data());
-        SDL_Log("%s shader compilation failed: %s", stage == GL_VERTEX_SHADER ? "Vertex" : "Fragment", log.data());
-        return false;
+        throw std::runtime_error(std::string(stage == GL_VERTEX_SHADER ? "Vertex" : "Fragment") + " shader compilation failed: " + log.data());
     }
-    return detail::checkOpenGL("Shader compilation");
+    detail::checkOpenGL("Shader compilation");
 }
 
-bool readSource(const std::filesystem::path& path, std::string& source)
+void readSource(const std::filesystem::path& path, std::string& source)
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     const std::streamoff size = file ? file.tellg() : std::streampos(-1);
     if (size <= 0 || size > std::numeric_limits<GLint>::max()) {
-        SDL_Log("Shader file is missing, empty, or oversized: %s", path.u8string().c_str());
-        return false;
+        throw std::runtime_error("Shader file is missing, empty, or oversized: " + path.u8string());
     }
     source.resize(size);
     file.seekg(0);
     if (!file.read(source.data(), size)) {
-        SDL_Log("Could not read complete shader file: %s", path.u8string().c_str());
-        return false;
+        throw std::runtime_error("Could not read complete shader file: " + path.u8string());
     }
-    return true;
 }
 
 } // namespace
 
-ShaderProgram::~ShaderProgram()
+ShaderProgram::~ShaderProgram() noexcept
 {
-    if (program_ && detail::requireContext(context_, "Shader program destruction")) {
+    if (program_ && detail::canDestroy(context_, "Shader program destruction")) {
         glDeleteProgram(program_);
     }
 }
 
-bool ShaderProgram::initialize(std::string_view vertexSource, std::string_view fragmentSource)
+void ShaderProgram::initialize(std::string_view vertexSource, std::string_view fragmentSource)
 {
-    if (program_ || !detail::requireOpenGL("Shader program initialization")) {
-        SDL_Log("Shader program initialization requires an empty owner and current context.");
-        return false;
+    detail::requireOpenGL("Shader program initialization");
+    if (program_) {
+        throw std::runtime_error("Shader program initialization requires an empty owner and current context.");
     }
     CompiledShader vertex, fragment;
-    if (!compile(vertex, GL_VERTEX_SHADER, vertexSource) || !compile(fragment, GL_FRAGMENT_SHADER, fragmentSource)) {
-        return false;
-    }
+    compile(vertex, GL_VERTEX_SHADER, vertexSource);
+    compile(fragment, GL_FRAGMENT_SHADER, fragmentSource);
     ShaderProgram candidate;
     candidate.context_ = SDL_GL_GetCurrentContext();
     candidate.program_ = glCreateProgram();
     if (!candidate.program_) {
-        SDL_Log("Could not create OpenGL shader program.");
-        return false;
+        throw std::runtime_error("Could not create OpenGL shader program.");
     }
     glAttachShader(candidate.program_, vertex.object);
     glAttachShader(candidate.program_, fragment.object);
@@ -108,117 +101,103 @@ bool ShaderProgram::initialize(std::string_view vertexSource, std::string_view f
         glGetProgramiv(candidate.program_, GL_INFO_LOG_LENGTH, &logLength);
         std::vector<char> log(std::max(logLength, 1), '\0');
         glGetProgramInfoLog(candidate.program_, log.size(), nullptr, log.data());
-        SDL_Log("Shader program linking failed: %s", log.data());
-        return false;
+        throw std::runtime_error(std::string("Shader program linking failed: ") + log.data());
     }
-    if (!detail::checkOpenGL("Shader program linking")) {
-        return false;
-    }
+    detail::checkOpenGL("Shader program linking");
     std::swap(program_, candidate.program_);
     std::swap(context_, candidate.context_);
-    return true;
 }
 
-bool ShaderProgram::initializeFromFiles(const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath)
+void ShaderProgram::initializeFromFiles(const std::filesystem::path& vertexPath, const std::filesystem::path& fragmentPath)
 {
-    if (program_ || !detail::requireOpenGL("Shader file loading")) {
-        return false;
-    }
     std::string vertex, fragment;
-    if (!readSource(vertexPath, vertex) || !readSource(fragmentPath, fragment)) {
-        return false;
+    readSource(vertexPath, vertex);
+    readSource(fragmentPath, fragment);
+    try {
+        initialize(vertex, fragment);
+    } catch (const std::runtime_error& error) {
+        throw std::runtime_error("Shader program from " + vertexPath.u8string() + " and " +
+            fragmentPath.u8string() + ": " + error.what());
     }
-    if (!initialize(vertex, fragment)) {
-        SDL_Log("Shader program failed for %s and %s", vertexPath.u8string().c_str(), fragmentPath.u8string().c_str());
-        return false;
-    }
-    return true;
 }
 
-bool ShaderProgram::use() const
+void ShaderProgram::use() const
 {
-    if (!program_ || !detail::requireContext(context_, "Shader program activation")) {
-        return false;
-    }
+    detail::requireContext(context_, "Shader program activation");
     glUseProgram(program_);
-    return detail::checkOpenGL("Shader program activation");
+    detail::checkOpenGL("Shader program activation");
 }
 
 int ShaderProgram::uniformLocation(const char* name) const
 {
-    if (!program_ || !name || !*name || !detail::requireContext(context_, "Uniform lookup")) {
-        return -1;
+    detail::requireContext(context_, "Uniform lookup");
+    if (!name || !*name) {
+        throw std::runtime_error("Uniform lookup requires a nonempty name.");
     }
     const GLint location = glGetUniformLocation(program_, name);
-    return detail::checkOpenGL("Uniform lookup") ? location : -1;
+    detail::checkOpenGL("Uniform lookup");
+    if (location < 0) {
+        throw std::runtime_error(std::string("Required uniform is missing or inactive: ") + name);
+    }
+    return location;
 }
 
-bool ShaderProgram::canWrite(int location) const
+void ShaderProgram::requireWritable(int location) const
 {
-    if (!program_ || location < 0 || !detail::requireContext(context_, "Uniform update")) {
-        return false;
+    detail::requireContext(context_, "Uniform update");
+    if (location < 0) {
+        throw std::runtime_error("Uniform update requires a valid location from this program.");
     }
     GLint current = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &current);
     if (u32(current) != program_) {
-        SDL_Log("Activate this shader program before updating its uniforms.");
-        return false;
+        throw std::runtime_error("Activate this shader program before updating its uniforms.");
     }
-    return true;
 }
 
-bool ShaderProgram::setInt(int location, int value) const
+void ShaderProgram::setInt(int location, int value) const
 {
-    if (!canWrite(location)) {
-        return false;
-    }
+    requireWritable(location);
     glUniform1i(location, value);
-    return detail::checkOpenGL("Integer uniform update");
+    detail::checkOpenGL("Integer uniform update");
 }
 
-bool ShaderProgram::setFloat(int location, f32 value) const
+void ShaderProgram::setFloat(int location, f32 value) const
 {
-    if (!canWrite(location)) {
-        return false;
-    }
+    requireWritable(location);
     glUniform1f(location, value);
-    return detail::checkOpenGL("Float uniform update");
+    detail::checkOpenGL("Float uniform update");
 }
 
-bool ShaderProgram::setVec2(int location, f32 x, f32 y) const
+void ShaderProgram::setVec2(int location, f32 x, f32 y) const
 {
-    if (!canWrite(location)) {
-        return false;
-    }
+    requireWritable(location);
     glUniform2f(location, x, y);
-    return detail::checkOpenGL("Vec2 uniform update");
+    detail::checkOpenGL("Vec2 uniform update");
 }
 
-bool ShaderProgram::setVec3(int location, f32 x, f32 y, f32 z) const
+void ShaderProgram::setVec3(int location, f32 x, f32 y, f32 z) const
 {
-    if (!canWrite(location)) {
-        return false;
-    }
+    requireWritable(location);
     glUniform3f(location, x, y, z);
-    return detail::checkOpenGL("Vec3 uniform update");
+    detail::checkOpenGL("Vec3 uniform update");
 }
 
-bool ShaderProgram::setVec4(int location, f32 x, f32 y, f32 z, f32 w) const
+void ShaderProgram::setVec4(int location, f32 x, f32 y, f32 z, f32 w) const
 {
-    if (!canWrite(location)) {
-        return false;
-    }
+    requireWritable(location);
     glUniform4f(location, x, y, z, w);
-    return detail::checkOpenGL("Vec4 uniform update");
+    detail::checkOpenGL("Vec4 uniform update");
 }
 
-bool ShaderProgram::setMat4(int location, const f32* values) const
+void ShaderProgram::setMat4(int location, const f32* values) const
 {
-    if (!values || !canWrite(location)) {
-        return false;
+    requireWritable(location);
+    if (!values) {
+        throw std::runtime_error("Matrix uniform update requires sixteen column-major floats.");
     }
     glUniformMatrix4fv(location, 1, GL_FALSE, values);
-    return detail::checkOpenGL("Matrix uniform update");
+    detail::checkOpenGL("Matrix uniform update");
 }
 
 } // namespace frostwind

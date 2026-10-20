@@ -21,7 +21,7 @@ engine/
         ├── Renderer.h, .cpp
         ├── VertexBuffer.h, .cpp
         ├── Image.h, .cpp
-        ├── OpenGLChecks.h, .cpp       # Private context/error checks
+        ├── GraphicsChecks.h, .cpp       # Private context/error checks
         └── StbImage.cpp
 examples/
 ├── 01-textured-quad/
@@ -48,7 +48,7 @@ examples/
 | `VertexBuffer` | Own a VBO/VAO, upload immutable vertices, define float attribute layout, bind it, and report vertex count |
 | `Renderer` | Clear the target and submit validated triangle draws using borrowed geometry and active program/textures; own no GPU resources |
 | `Image` | Decode PNG/JPEG to bottom-row-first RGBA8 pixels without graphics initialization |
-| Private `OpenGLChecks` helpers | Check current context/GLAD and report OpenGL errors; no dispatch or resource registry |
+| Private `GraphicsChecks` helpers | Check current context/GLAD and report OpenGL errors; no dispatch or resource registry |
 | `core/Types.h` | Shared primitive aliases without runtime initialization |
 | Example `main.cpp` | Supply SDL callback adapters, factory, and application configuration |
 | `QuadDemo` | Own resources and paths, initialize the quad, handle Escape, calculate scale, and draw |
@@ -73,11 +73,11 @@ Example render(renderer, width, height) → renderer.clear → program/uniforms 
 Window presents → Application waits for the remaining frame budget
 ```
 
-Minimized windows receive a 16 ms idle delay. Zero-size windows skip rendering and use the remaining configured budget, or 16 ms when uncapped. Drawable-query or presentation failures return failure. A rendering callback returning success/failure skips presentation; exceptions become callback failures. OpenGL operations already issued are not rolled back. Callers check operation results and propagate failure; there is no frame object that latches ignored errors.
+Minimized windows receive a 16 ms idle delay. Zero-size windows skip rendering and use the remaining configured budget, or 16 ms when uncapped. Drawable-query or presentation failures return failure. A rendering callback returning success/failure skips presentation; exceptions become callback failures. OpenGL operations already issued are not rolled back. Rendering calls throw `std::runtime_error` with diagnostics; the callback boundary logs once, returns `SDL_APP_FAILURE`, and skips swap. Examples call commands in sequence without per-call conditionals. Window retains checked boolean results.
 
 The default cap is 60 FPS; 0 disables software pacing. VSync defaults to true and is independent of that cap. Each callback measures render/swap time and waits only for the unused budget, without catch-up frames. See [RFC 0004](rfcs/0004-frame-pacing.md). Simulation scheduling is future work.
 
-Resource owners are non-copyable with empty constructors and fallible initialization. Partial failures clean up and permit retry; repeated successful initialization is rejected. Each GPU owner records its creating context and requires it to be current for operations and destruction. Context checks diagnose misuse; they do not switch contexts, extend context lifetime, or provide device-loss recovery. The current application uses one window/context on SDL's callback thread.
+Resource owners are non-copyable with empty constructors and fallible initialization. Initialization/use and CPU Image loading throw on failure. Partial initialization cleans up and permits retry; repeated successful initialization is rejected. Destructors never throw; an unavailable creating context is logged and deletion skipped. Promised upload bindings/unpack state and draw VAO state are restored before exceptions propagate. Each GPU owner records its creating context and requires it to be current for operations and destruction. Context checks diagnose misuse; they do not switch contexts, extend context lifetime, or provide device-loss recovery. The current application uses one window/context on SDL's callback thread.
 
 Application stores Window before Renderer, so Renderer is destroyed first. Derived example GPU members are destroyed before both. The renderer reference is borrowed for a callback and must not be retained. Application then destroys Window. Window destroys its GL context before its SDL window and video initialization. Failed startup leaves SDL's `appstate` null and cleans completed stages. Resources must not be created in constructors before Window initialization, escape the application/context lifetime, or survive context recreation. No device facade, abstract backend/surface, pipeline, resource registry, or shared frame references remain.
 
@@ -87,7 +87,7 @@ Application calls `glViewport` directly during iteration and passes its persiste
 
 The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. The current window requests RGBA8 without depth/stencil storage. Depth/culling/blending controls, indexed/instanced drawing, camera math, and richer texture options are added only when an example needs them.
 
-`ShaderProgram` owns the linked program; temporary compiled stages are released after linking. Sources/files use explicit GLSL. Cache uniform locations after linking, call `use()`, then set integer, float, vec2/3/4, or column-major mat4 values. Locations belong to the program that returned them; missing/inactive uniforms return -1. Setters reject a missing location or a different active program and report native type/update failures. No universal parameter-block layout or shader translation is imposed.
+`ShaderProgram` owns the linked program; temporary compiled stages are released after linking. Sources/files use explicit GLSL. Cache uniform locations after linking, call `use()`, then set integer, float, vec2/3/4, or column-major mat4 values. Locations belong to the program that returned them; lookup of missing/inactive required uniforms throws. Setters throw for a missing location, a different active program, or native type/update failures. No universal parameter-block layout or shader translation is imposed.
 
 `VertexBuffer` consumes interleaved vertex bytes and float attributes with explicit location/component count/offset/stride, exposes `bind()` and `vertexCount()`, and contains no draw operation. `Renderer::drawTriangles(vertices, count, first)` validates a nonempty triangle-list range and restores the previous VAO after submission, including failed bindings. Shader input/layout agreement is the caller's responsibility; geometry can be reused with several compatible programs. Draws use the active program and texture bindings. They do not reset every OpenGL state or validate a general pipeline description.
 

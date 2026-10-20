@@ -2,50 +2,63 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
-#include <SDL3/SDL.h>
 #include <glad/gl.h>
 
-#include "OpenGLChecks.h"
+#include "GraphicsChecks.h"
 #include "VertexBuffer.h"
 
 namespace frostwind {
+namespace {
 
-bool Renderer::clear(Color color) const
+struct VertexArrayBinding {
+    GLint previous = 0;
+    VertexArrayBinding()
+    {
+        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previous);
+    }
+    ~VertexArrayBinding()
+    {
+        glBindVertexArray(previous);
+    }
+};
+
+} // namespace
+
+void Renderer::clear(Color color) const
 {
-    if (!detail::requireOpenGL("Color clear") || !std::isfinite(color.r) ||
-        !std::isfinite(color.g) || !std::isfinite(color.b) || !std::isfinite(color.a)) {
-        return false;
+    detail::requireOpenGL("Color clear");
+    if (!std::isfinite(color.r) || !std::isfinite(color.g) || !std::isfinite(color.b) || !std::isfinite(color.a)) {
+        throw std::runtime_error("Color clear requires finite RGBA components.");
     }
     glDisable(GL_SCISSOR_TEST);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT);
-    return detail::checkOpenGL("Color clear");
+    detail::checkOpenGL("Color clear");
 }
 
-bool Renderer::drawTriangles(const VertexBuffer& vertices, u32 vertexCount, u32 firstVertex) const
+void Renderer::drawTriangles(const VertexBuffer& vertices, u32 vertexCount, u32 firstVertex) const
 {
+    detail::requireOpenGL("Triangle draw");
     const usize availableVertices = vertices.vertexCount();
     if (!vertexCount || vertexCount % 3 || firstVertex > availableVertices ||
         vertexCount > availableVertices - firstVertex || vertexCount > u32(std::numeric_limits<GLsizei>::max()) ||
-        firstVertex > u32(std::numeric_limits<GLint>::max()) || !detail::requireOpenGL("Triangle draw")) {
-        SDL_Log("Triangle draw requires initialized geometry and a valid triangle range.");
-        return false;
+        firstVertex > u32(std::numeric_limits<GLint>::max())) {
+        throw std::runtime_error("Triangle draw requires initialized geometry and a valid triangle range.");
     }
-    GLint program = 0, previousArray = 0;
+    GLint program = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
     if (!program) {
-        SDL_Log("Activate a shader program before drawing vertices.");
-        return false;
+        throw std::runtime_error("Activate a shader program before drawing vertices.");
     }
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousArray);
-    const bool bound = vertices.bind();
-    if (bound) {
+    {
+        const VertexArrayBinding restore;
+        vertices.bind();
         glDrawArrays(GL_TRIANGLES, firstVertex, vertexCount);
     }
-    glBindVertexArray(previousArray);
-    return detail::checkOpenGL("Triangle draw") && bound;
+    detail::checkOpenGL("Triangle draw");
 }
 
 } // namespace frostwind

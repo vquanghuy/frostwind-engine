@@ -12,9 +12,9 @@ namespace frostwind {
 class Image {
 public:
     // Inspect dimensions against maxDimension before full decode. Requires an
-    // empty image and positive limit. False logs file/decode/size failures and
-    // permits retry. Relative paths use the caller's working directory.
-    bool load(const std::filesystem::path& path, int maxDimension);
+    // empty image and positive limit. Throws std::runtime_error with file/decode/
+    // size diagnostics; permits retry. Relative paths use the working directory.
+    void load(const std::filesystem::path& path, int maxDimension);
     int width() const { return width_; }
     int height() const { return height_; }
     const std::vector<byte>& pixels() const { return pixels_; }
