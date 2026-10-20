@@ -12,7 +12,7 @@ future experiments. See [RFC 0007](../../docs/rfcs/0007-textured-cube-and-perspe
 for the engine contracts and [development](../../docs/development.md#textured-cube-validation-2026-10-20)
 for executed checks and remaining manual verification.
 
-![Frostwind textured cube](../../docs/assets/milestones/m005-frostwind-textured-cube.png)
+![Frostwind textured cube](../../docs/assets/milestones/m005-frostwind-textured-cube-updated.png)
 
 *Running on macOS Apple M1 Pro, captured manually by the owner on 2026-10-20.
 The original PNG is preserved with its [capture provenance](../../docs/assets/README.md#milestone-captures).

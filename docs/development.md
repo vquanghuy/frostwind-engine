@@ -364,3 +364,9 @@ the changelog and cube README, with provenance in the documentation image invent
 This fulfills the previously pending capture. It does not establish sustained
 120 FPS or complete the remaining interactive/platform checks. This documentation
 update captured no new screenshots and changed no rendering code.
+
+The owner later supplied `Screenshot 2026-10-20 at 15.49.58.png` as an updated
+cube capture. Its unchanged PNG is preserved as the [updated M005 image](assets/milestones/m005-frostwind-textured-cube-updated.png)
+and now appears in the root README preview, cube README, and current changelog
+image. The earlier M005 PNG and caption remain in the changelog history.
+No rendering code or verification claims changed for this image refresh.

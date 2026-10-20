@@ -18,8 +18,14 @@
 shows the running Textured Cube example on macOS Apple M1 Pro. The owner supplied
 it from Desktop `Screenshot 2026-10-20 at 15.11.17.png`, captured manually on
 2026-10-20. The PNG is preserved byte-for-byte without cropping or re-encoding
-and embedded in the changelog and [cube README](../../examples/02-textured-cube/README.md).
-It records the rendered textured cube, not a frame-rate measurement or proof of
+and retained in the changelog's earlier-capture section with its original caption.
+
+[`milestones/m005-frostwind-textured-cube-updated.png`](milestones/m005-frostwind-textured-cube-updated.png)
+is the updated capture supplied from Desktop `Screenshot 2026-10-20 at 15.49.58.png`
+on 2026-10-20, showing the running cube on macOS Apple M1 Pro. Its original PNG
+is preserved byte-for-byte and used in the root README preview, cube README,
+and current changelog image. The earlier 15:11:17 capture remains preserved.
+These images record rendered output, not frame-rate measurements or proof of
 interactive checks. M001–M004 and their captions remain unchanged.
 
 ## Example concepts and references

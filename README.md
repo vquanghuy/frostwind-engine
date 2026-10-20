@@ -12,12 +12,12 @@ The static `frostwind` library supplies reusable facilities. Examples depend on 
 
 Example directories use two-digit prefixes for a suggested learning order: Textured Quad, Textured Cube, Asteroids, then Mini Artillery. Each example builds independently; CMake targets and executable names omit the prefixes.
 
-| Example | Status |
-| --- | --- |
-| [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and an indexed quad with four vertices and six indices |
-| [Textured Cube](examples/02-textured-cube/README.md) | Implemented: rotating indexed cube, orbit camera, depth/culling, 4× MSAA, and a 120 FPS cap with VSync |
-| [Asteroids](examples/03-asteroids/README.md) | Runnable window scaffold; 2D camera/mouse aiming/sprites, lighting, and gameplay planned |
-| [Mini Artillery](examples/04-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
+| Preview | Example | Status |
+| :---: | --- | --- |
+| [<img src="docs/assets/milestones/m004-frostwind-textured-quad.png" alt="Textured Quad running on macOS" width="220">](docs/assets/milestones/m004-frostwind-textured-quad.png)<br>Screenshot | [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and an indexed quad with four vertices and six indices |
+| [<img src="docs/assets/milestones/m005-frostwind-textured-cube-updated.png" alt="Textured Cube running on macOS" width="220">](docs/assets/milestones/m005-frostwind-textured-cube-updated.png)<br>Screenshot | [Textured Cube](examples/02-textured-cube/README.md) | Implemented: rotating indexed cube, orbit camera, depth/culling, 4× MSAA, and a 120 FPS cap with VSync |
+| [<img src="examples/03-asteroids/docs/assets/asteroids-realistic-concept-v1.png" alt="Asteroids concept artwork; gameplay is not implemented" width="220">](examples/03-asteroids/docs/assets/asteroids-realistic-concept-v1.png)<br>Concept — planned | [Asteroids](examples/03-asteroids/README.md) | Runnable window scaffold; 2D camera/mouse aiming/sprites, lighting, and gameplay planned |
+| [<img src="examples/04-mini-artillery/docs/assets/mini-artillery-realistic-concept-v1.png" alt="Mini Artillery concept artwork; gameplay is not implemented" width="220">](examples/04-mini-artillery/docs/assets/mini-artillery-realistic-concept-v1.png)<br>Concept — planned | [Mini Artillery](examples/04-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
 
 Asteroids and Mini Artillery each have a minimal executable that opens a plain OpenGL window, plus planning READMEs and concept/reference artwork. Their READMEs embed the preferred concepts and link older versions and provenance. Asteroids will own ship/arena rules, bullets, asteroid behavior, and scoring. Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
 

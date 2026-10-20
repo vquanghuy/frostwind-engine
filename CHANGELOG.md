@@ -32,6 +32,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Documentation: refresh the Textured Cube previews with the owner’s latest Desktop capture, preserving the earlier PNG and caption as history.
+- Documentation: add a leftmost preview column to the README example table, using owner-supplied demo screenshots and clearly labeled concepts for planned games.
 - Examples: inserted `02-textured-cube` and moved Asteroids/Mini Artillery sources and planning artwork to `03-asteroids` / `04-mini-artillery`; retained their target names, runtime output paths, behavior, and assets. All build presets include the cube.
 - Build: simplified Textured Quad asset copying to a direct post-build step on its executable and removed the separate asset helper target. Asset-only changes use Rebuild; QuadDemo.h is listed with the example sources for IDE visibility.
 - Engine: VertexBuffer now owns bytes only; VertexArray owns VAO/layout and borrows buffers. Renderer exposes one `drawTriangles(vertexArray)` method that uses stored counts and selects indexed/sequential drawing from the optional IndexBuffer; subrange overloads and the CPU index copy are removed. Textured Quad configures its array once and destroys it before its buffers.
@@ -62,9 +64,18 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 - Engine: experimental GraphicsDevice/GraphicsBackend, WindowSurface integration hierarchy, opaque resource registries, separate Shader stages, GraphicsPipeline descriptions, and scoped RenderFrame submission. The prior experiment is preserved in Git. Static texture-support initialization remains removed.
 
+![Frostwind textured cube](docs/assets/milestones/m005-frostwind-textured-cube-updated.png)
+
+*Updated Frostwind Textured Cube capture on macOS Apple M1 Pro, supplied manually by the owner on 2026-10-20 at 15:49:58. Lighting and shadows remain planned.*
+
+<details>
+<summary>Earlier cube capture from 2026-10-20 at 15:11:17</summary>
+
 ![Frostwind textured cube](docs/assets/milestones/m005-frostwind-textured-cube.png)
 
 *Frostwind Textured Cube on macOS Apple M1 Pro, captured manually by the owner on 2026-10-20. The running example displays the textured 3D cube; lighting and shadows remain planned.*
+
+</details>
 
 ## 0.3.0 - 2026-10-14 (milestone)
 

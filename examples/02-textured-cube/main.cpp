@@ -15,7 +15,7 @@ std::unique_ptr<frostwind::Application> createApplication()
 SDL_AppResult SDLCALL SDL_AppInit(void** appstate, int, char**)
 {
     frostwind::ApplicationConfig config;
-    config.window = {"Frostwind - Textured Cube", 960, 540};
+    config.window = {"Frostwind - Textured Cube", 800, 600};
     config.window.depthBuffer = true;
     config.window.msaaSamples = 4;
     config.maxFps = 120;
