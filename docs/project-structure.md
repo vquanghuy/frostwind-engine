@@ -103,11 +103,13 @@ A complete triangle list requires a nonzero selected count divisible by three; t
 
 `Texture2D` consumes tightly packed bottom-row-first RGBA8 pixels; its upload restores the prior texture binding, pixel-unpack layout, and unpack-buffer binding. Binding selects a texture unit and the texture's nearest/clamp-to-edge sampling. It has no mipmaps. File loading queries the current context's maximum texture dimension before CPU decoding; there is no static texture-support setup. `Image` performs overflow checks and local row conversion; `StbImage.cpp` compiles the pinned PNG/JPEG decoder once.
 
-Textured Quad uses four position/UV vertices and six u32 indices, a `vec2 uScale`, a sampler on unit 0, and the original crate image. The example resolves its executable-relative assets; the engine accepts explicit paths. The build copies assets on each build, including asset-only edits. Each example's runtime assets and licenses stay in its `assets/`; planning concepts/provenance stay in its `docs/assets/` and are not packaged. Preserve historical milestone captures and captions under shared `docs/assets/`.
+Textured Quad uses four position/UV vertices and six u32 indices, a `vec2 uScale`, a sampler on unit 0, and the original crate image. The example resolves its executable-relative assets; the engine accepts explicit paths. The example copies its runtime assets after linking; rebuild it after asset-only edits. Each example's runtime assets and licenses stay in its `assets/`; planning concepts/provenance stay in its `docs/assets/` and are not packaged. Preserve historical milestone captures and captions under shared `docs/assets/`.
 
 ## CMake and runtime layout
 
 The root project owns shared local dependency setup. `engine/CMakeLists.txt` defines the static `frostwind` target; each example defines its executable. All three build presets select `frostwind-textured-quad`, `frostwind-asteroids`, and `frostwind-mini-artillery`. A build can select one with `--target <target>`. `FROSTWIND_BUILD_EXAMPLES=OFF` builds the library alone. SDL3 headers/link requirements propagate through the library target. GLAD is a private implementation dependency; CMake carries its static archive to executable links without exposing its include directories to examples. `cmake/FrostwindExample.cmake` handles example warnings, output directories, and runtime packaging.
+
+Textured Quad declares its own `POST_BUILD` asset-copy step in its CMakeLists.txt. Rebuild the example after shader/texture edits; an up-to-date incremental build does not refresh those files. The shared helper configures executable paths and SDL packaging, while example-specific asset copying stays beside the owning target. Scaffolds without runtime assets have no asset-copy step.
 
 | Preset | Executable path | Status |
 | --- | --- | --- |

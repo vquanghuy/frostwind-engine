@@ -39,7 +39,15 @@ cmake --build --preset native-debug --target frostwind-asteroids --parallel
 cmake --build --preset native-debug --target frostwind-mini-artillery --parallel
 ```
 
-Each example output directory contains `Frameworks/SDL3.framework`. Textured Quad also contains `assets/`; its asset copying runs on each example build, including shader-only edits. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The new scaffolds use no runtime assets and do not package planning artwork. Keep each entire output directory together when relocating it. Each example README describes ownership and controls.
+Each example output directory contains `Frameworks/SDL3.framework`. Textured Quad also contains `assets/`; its assets are copied after the executable is linked. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The new scaffolds use no runtime assets and do not package planning artwork. Keep each entire output directory together when relocating it. Each example README describes ownership and controls.
+
+After changing shaders or textures, use **Rebuild** on `frostwind-textured-quad` in the IDE. From the terminal, force a rebuild with:
+
+```sh
+cmake --build --preset native-debug --target frostwind-textured-quad --clean-first --parallel
+```
+
+The example's own `POST_BUILD` step copies its shaders, texture, and license file beside the executable after linking. An ordinary incremental Build with no C++ changes may do nothing, so use Rebuild for asset-only edits. Select the example executable as the build/run target.
 
 A CMake cache contains absolute checkout paths. After moving/renaming a checkout, configure a fresh output directory; preserve or remove old generated output deliberately rather than reusing its stale cache.
 
@@ -76,15 +84,15 @@ For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`
 
 ## Current implementation
 
-The static engine library contains Application, Window, Renderer, Texture2D, ShaderProgram, VertexBuffer, CPU Image, and Application-owned viewport setup. Window owns SDL video/window/context, GLAD loading, VSync, and presentation. Texture/program/vertex classes perform their own OpenGL operations with private handles; there is no device/backend/pipeline/frame/surface hierarchy. See [project structure](project-structure.md), the [rendering guide](rendering-guide.md), and [RFC 0006](rfcs/0006-opengl-focused-rendering.md).
+The static engine library contains Application, Window, Renderer, Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, VertexArray, CPU Image, and Application-owned viewport setup. Window owns SDL video/window/context, GLAD loading, VSync, and presentation. Texture/program/vertex classes perform their own OpenGL operations with private handles; there is no device/backend/pipeline/frame/surface hierarchy. See [project structure](project-structure.md), the [rendering guide](rendering-guide.md), and [RFC 0006](rfcs/0006-opengl-focused-rendering.md).
 
 Examples override `initialize()`, `handleEvent(event)`, and `render(Renderer& renderer, int width, int height)`. Application owns one persistent Renderer, makes the context current, sets the viewport from drawable pixels, passes the renderer by reference, and presents continuing callbacks. Renderer clears and submits draws; examples do not retain the callback reference or own another renderer. Resources require their creating context to remain current and outlive them. Derived members are destroyed before the base Window/context, including after failed startup. Context checks diagnose misuse without switching contexts or retaining the window. Native graphics calls stay in engine implementations; GLAD includes remain private.
 
-The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. Textured Quad uses GLSL 330, a regular `vec2 uScale`, a unit-0 sampler, six vertices, and the packaged crate image. ShaderProgram provides activation, cached uniform lookup, integer/float/vec2/3/4 and column-major mat4 writes. VertexBuffer owns its VBO/VAO storage/layout and exposes binding/count access. Renderer validates/submits triangle ranges using borrowed geometry and active program/textures, restoring the previous VAO. Texture2D validates/upload RGBA8 bytes or composes CPU PNG/JPEG decoding and upload, preserving unpack state. No static texture-support setup or padded quad parameter block is needed.
+The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. Textured Quad uses GLSL 330, a regular `vec2 uScale`, a unit-0 sampler, four vertices/six indices, and the packaged crate image. ShaderProgram provides activation, cached uniform lookup, integer/float/vec2/3/4 and column-major mat4 writes. VertexBuffer owns vertex bytes; IndexBuffer owns u32 indices and cached bounds; VertexArray owns the layout/buffer associations and stores vertex/index counts. Renderer draws the whole array through one `drawTriangles(vertexArray)` method, selecting indexed or sequential drawing automatically and restoring the prior VAO. Texture2D validates/upload RGBA8 bytes or composes CPU PNG/JPEG decoding and upload, preserving unpack state. No static texture-support setup or padded quad parameter block is needed.
 
 All examples default to a 60 FPS software cap with VSync requested. `ApplicationConfig::maxFps` chooses another cap; 0 disables software pacing. Set `config.window.vsync = false` too when measuring uncapped rendering. Render/swap time counts toward the callback budget and slow frames do not create catch-up work. Minimized windows use a separate idle delay; zero-sized targets use the remaining budget or a 16 ms uncapped fallback. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
-Camera, audio, physics, terrain destruction, and depth/index/instancing features remain planned. Multi-backend work is deferred; the prior implementation is archived at `e9cf616` on `archive/multi-backend-experiment`, with research in RFC 9999. Windows/Linux and browser support remain unverified. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
+Camera, audio, physics, terrain destruction, and depth/instancing features remain planned. Multi-backend work is deferred; the prior implementation is archived at `e9cf616` on `archive/multi-backend-experiment`, with research in RFC 9999. Windows/Linux and browser support remain unverified. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
 
 ## Verification record
 
@@ -240,3 +248,7 @@ Lifecycle checks added injected VAO creation failure, verified failed startup le
 The native preset built all three examples, and the temporary engine-only verification project under `build/opengl-focus-check/` built against the single `Renderer::drawTriangles(VertexArray)` API. Focused native checks ran from `/private/tmp` with approved display access. Indexed arrays used their stored index counts automatically; arrays without indices used their stored vertex counts. The checks verified expected pixels for both paths, geometry/program sharing, cached count/maximum metadata after caller index data changed, invalid referenced vertices, incomplete/uninitialized geometry, and foreign-context rejection. Buffer/VAO layout failures, initialization retry, binding preservation, and injected native draw errors passed after removing count/offset arguments and the CPU index copy.
 
 Resource/lifecycle checks passed, including frame failure without presentation and VAO/buffer/texture cleanup before context/window/video teardown. The actual quad rendered three frames in two runs, handled synthetic Escape/close exits, and retained framebuffer hash `1129920399774065595`. No screenshots were captured. Local links/images/anchors, fences, source boundaries, and whitespace checks passed. Earlier validation sections describe prior APIs; indexed/sequential selection is now automatic and public subranges are absent. Existing manual/platform limitations remain unchanged.
+
+### Post-build asset copying validation (2026-10-20)
+
+The native preset configured and built all three examples after removing the separate asset target. An incremental quad build left a deliberately stale copied shader untouched; a clean rebuild relinked the example and restored all four runtime assets to their source bytes. The asset helper was absent from CMake's target list, all three executables were rebuilt, and SDL framework symlinks remained intact. Documentation links and whitespace checks passed. No rendering code changed; runtime/visual checks were not repeated.

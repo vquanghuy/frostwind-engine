@@ -6,7 +6,7 @@ function(frostwind_enable_warnings target)
     endif()
 endfunction()
 
-# An optional second argument selects the example's runtime asset directory.
+# Configure the example output directory and package the official SDL SDK.
 function(frostwind_configure_example target)
     set_target_properties(${target} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${target}"
@@ -44,14 +44,4 @@ function(frostwind_configure_example target)
         )
     endif()
 
-    if(ARGC GREATER 1)
-        # Runs on every example build, including asset-only changes.
-        add_custom_target(${target}-assets
-            COMMAND "${CMAKE_COMMAND}" -E copy_directory
-                "${ARGV1}" "$<TARGET_FILE_DIR:${target}>/assets"
-            COMMENT "Copying runtime assets for ${target}"
-            VERBATIM
-        )
-        add_dependencies(${target} ${target}-assets)
-    endif()
 endfunction()
