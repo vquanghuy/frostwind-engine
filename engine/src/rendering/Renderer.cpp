@@ -7,7 +7,8 @@
 #include <glad/gl.h>
 
 #include "GraphicsChecks.h"
-#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
 
 namespace frostwind {
 namespace {
@@ -39,14 +40,16 @@ void Renderer::clear(Color color) const
     detail::checkOpenGL("Color clear");
 }
 
-void Renderer::drawTriangles(const VertexBuffer& vertices, u32 vertexCount, u32 firstVertex) const
+void Renderer::drawTriangles(const VertexArray& vertexArray) const
 {
     detail::requireOpenGL("Triangle draw");
-    const usize availableVertices = vertices.vertexCount();
-    if (!vertexCount || vertexCount % 3 || firstVertex > availableVertices ||
-        vertexCount > availableVertices - firstVertex || vertexCount > u32(std::numeric_limits<GLsizei>::max()) ||
-        firstVertex > u32(std::numeric_limits<GLint>::max())) {
-        throw std::runtime_error("Triangle draw requires initialized geometry and a valid triangle range.");
+    const auto* indices = vertexArray.indexBuffer();
+    const usize count = indices ? vertexArray.indexCount() : vertexArray.vertexCount();
+    if (!count || count % 3 || count > usize(std::numeric_limits<GLsizei>::max())) {
+        throw std::runtime_error("Triangle draw requires a nonempty complete triangle list within the GL count limit.");
+    }
+    if (indices && indices->maxIndex() >= vertexArray.vertexCount()) {
+        throw std::runtime_error("Triangle draw references a vertex outside the vertex buffer.");
     }
     GLint program = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
@@ -55,10 +58,15 @@ void Renderer::drawTriangles(const VertexBuffer& vertices, u32 vertexCount, u32 
     }
     {
         const VertexArrayBinding restore;
-        vertices.bind();
-        glDrawArrays(GL_TRIANGLES, firstVertex, vertexCount);
+        vertexArray.bind();
+        const GLsizei drawCount = count;
+        if (indices) {
+            glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, nullptr);
+        } else {
+            glDrawArrays(GL_TRIANGLES, 0, drawCount);
+        }
     }
-    detail::checkOpenGL("Triangle draw");
+    detail::checkOpenGL(indices ? "Indexed triangle draw" : "Triangle draw");
 }
 
 } // namespace frostwind

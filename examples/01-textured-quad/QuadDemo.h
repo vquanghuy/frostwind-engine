@@ -1,9 +1,11 @@
 #pragma once
 
 #include <app/Application.h>
+#include <rendering/IndexBuffer.h>
 #include <rendering/Renderer.h>
 #include <rendering/ShaderProgram.h>
 #include <rendering/Texture2D.h>
+#include <rendering/VertexArray.h>
 #include <rendering/VertexBuffer.h>
 
 // Derived GPU owners are destroyed before Application's Window/context.
@@ -15,6 +17,8 @@ protected:
 
 private:
     frostwind::VertexBuffer vertices_;
+    frostwind::IndexBuffer indices_;
+    frostwind::VertexArray vertexArray_;
     frostwind::Texture2D texture_;
     frostwind::ShaderProgram program_;
     int scaleLocation_ = -1;

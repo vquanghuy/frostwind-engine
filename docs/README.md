@@ -4,6 +4,7 @@
 - [Engine roadmap and learning direction](../ROADMAP.md)
 - [Changelog and progress screenshots](../CHANGELOG.md)
 - [Rendering usage guide, class reference, and lifecycle diagrams](rendering-guide.md)
+- [Indexed drawing, buffer size units, and shared quad vertices](rendering-guide.md#indexed-and-non-indexed-draws)
 - [Native build and development instructions](development.md)
 - [Project structure and platform SDK layout](project-structure.md)
 - [C++ coding conventions and resource ownership](coding-conventions.md)

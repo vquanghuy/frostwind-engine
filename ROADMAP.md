@@ -2,7 +2,7 @@
 
 Frostwind grows through practical examples, with OpenGL as the current learning focus. Metal on macOS and Vulkan on Windows/Linux remain deferred future directions. The phases below group the intended work by theme and suggested learning order. They have no delivery dates or release commitments, and later priorities can change as examples reveal requirements.
 
-The current baseline is native macOS window/application management, frame pacing, direct OpenGL texture/program/vertex owners, CPU image loading, Textured Quad, and the Asteroids/Mini Artillery window scaffolds. Windows/Linux SDK verification and browser builds remain pending. See the [README](README.md) for current capabilities, [RFCs](docs/rfcs/README.md) for detailed proposals, and the [changelog](CHANGELOG.md) for completed work and owner-supplied captures.
+The current baseline is native macOS window/application management, frame pacing, direct OpenGL texture/program/buffer/vertex-array owners, CPU image loading, Textured Quad, and the Asteroids/Mini Artillery window scaffolds. Windows/Linux SDK verification and browser builds remain pending. See the [README](README.md) for current capabilities, [RFCs](docs/rfcs/README.md) for detailed proposals, and the [changelog](CHANGELOG.md) for completed work and owner-supplied captures.
 
 Phase numbers describe intended sequencing; they are separate from historical development milestone identifiers. Each phase describes its target scope; see the changelog for implemented increments. A roadmap phase does not accept its detailed RFC, establish platform support, or authorize a release or tag.
 
@@ -29,7 +29,7 @@ Phase numbers remain thematic guidance. The 2D Asteroids proposal can be selecte
 Use the existing OpenGL renderer to learn resource ownership and rendering. [RFC 0006](docs/rfcs/0006-opengl-focused-rendering.md) records the direct implementation; the [structure guide](docs/project-structure.md) documents the code. Completed work and validation stay in the changelog. The intended capabilities are:
 
 - Window owns SDL/OpenGL context setup, GLAD, VSync, and presentation.
-- Texture2D uploads/binds textures, ShaderProgram links/activates/writes uniforms, VertexBuffer owns vertex storage/layout, and Renderer submits draws using those resources.
+- Texture2D uploads/binds textures, ShaderProgram links/activates/writes uniforms, VertexBuffer owns vertex bytes, IndexBuffer owns indices, VertexArray configures layout/buffer associations, and Renderer submits sequential/indexed draws from VertexArray.
 - CPU images and geometry remain independent of GL where practical.
 - All three examples use current engine operations, preserving assets, controls, backgrounds, and packaging.
 - Native and engine-only builds, failure recovery, callbacks, pacing, and resource teardown are checked.

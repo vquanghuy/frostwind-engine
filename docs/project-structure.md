@@ -20,8 +20,10 @@ engine/
         ├── ShaderProgram.h, .cpp
         ├── Renderer.h, .cpp
         ├── VertexBuffer.h, .cpp
+        ├── VertexArray.h, .cpp
+        ├── IndexBuffer.h, .cpp
         ├── Image.h, .cpp
-        ├── GraphicsChecks.h, .cpp       # Private context/error checks
+        ├── GraphicsChecks.h, .cpp   # Private context/error checks
         └── StbImage.cpp
 examples/
 ├── 01-textured-quad/
@@ -45,10 +47,12 @@ examples/
 | `Window` | Own SDL video/window/context, set context attributes, load GLAD, request VSync, query drawable size, and present |
 | `Texture2D` | Own a GL texture, validate/upload RGBA8 pixels, compose CPU image loading, and bind a texture unit |
 | `ShaderProgram` | Compile/link vertex and fragment sources, activate the program, find uniforms, and write typed values |
-| `VertexBuffer` | Own a VBO/VAO, upload immutable vertices, define float attribute layout, bind it, and report vertex count |
-| `Renderer` | Clear the target and submit validated triangle draws using borrowed geometry and active program/textures; own no GPU resources |
+| `VertexBuffer` | Own immutable VBO bytes, upload/bind them, and report byte count |
+| `VertexArray` | Own the VAO, configure VertexLayout, borrow initialized buffers, and report vertex/index counts and optional indices |
+| `IndexBuffer` | Own immutable u32 index storage, bind it to a VAO, report count, and query the cached maximum index |
+| `Renderer` | Clear the target and draw a borrowed VertexArray with active program/textures; own no GPU resources |
 | `Image` | Decode PNG/JPEG to bottom-row-first RGBA8 pixels without graphics initialization |
-| Private `GraphicsChecks` helpers | Check current context/GLAD and report OpenGL errors; no dispatch or resource registry |
+| Private `GraphicsChecks` helpers | Validate context/GLAD, turn GL errors into exceptions, and guard destruction without throwing |
 | `core/Types.h` | Shared primitive aliases without runtime initialization |
 | Example `main.cpp` | Supply SDL callback adapters, factory, and application configuration |
 | `QuadDemo` | Own resources and paths, initialize the quad, handle Escape, calculate scale, and draw |
@@ -79,21 +83,27 @@ The default cap is 60 FPS; 0 disables software pacing. VSync defaults to true an
 
 Resource owners are non-copyable with empty constructors and fallible initialization. Initialization/use and CPU Image loading throw on failure. Partial initialization cleans up and permits retry; repeated successful initialization is rejected. Destructors never throw; an unavailable creating context is logged and deletion skipped. Promised upload bindings/unpack state and draw VAO state are restored before exceptions propagate. Each GPU owner records its creating context and requires it to be current for operations and destruction. Context checks diagnose misuse; they do not switch contexts, extend context lifetime, or provide device-loss recovery. The current application uses one window/context on SDL's callback thread.
 
-Application stores Window before Renderer, so Renderer is destroyed first. Derived example GPU members are destroyed before both. The renderer reference is borrowed for a callback and must not be retained. Application then destroys Window. Window destroys its GL context before its SDL window and video initialization. Failed startup leaves SDL's `appstate` null and cleans completed stages. Resources must not be created in constructors before Window initialization, escape the application/context lifetime, or survive context recreation. No device facade, abstract backend/surface, pipeline, resource registry, or shared frame references remain.
+Application stores Window before Renderer, so Renderer is destroyed first. Derived example GPU members are destroyed before both. Within the example, declare VertexBuffer and IndexBuffer before their borrowing VertexArray so the array is destroyed first. Buffers must remain alive while their VertexArray is used; the array owns neither buffer. The renderer reference is borrowed for a callback and must not be retained. Application then destroys Window. Window destroys its GL context before its SDL window and video initialization. Failed startup leaves SDL's `appstate` null and cleans completed stages. Resources must not be created in constructors before Window initialization, escape the application/context lifetime, or survive context recreation. No device facade, abstract backend/surface, pipeline, resource registry, or shared frame references remain.
 
 ## Rendering and assets
 
-Application calls `glViewport` directly during iteration and passes its persistent Renderer by reference. Renderer owns clear and draw submission; VertexBuffer owns only storage/layout/binding. No per-frame renderer allocation or separate render-command module is needed.
+Application calls `glViewport` directly during iteration and passes its persistent Renderer by reference. Renderer owns clear and draw submission; VertexBuffer and IndexBuffer own data; VertexArray owns vertex layout and buffer associations. No per-frame renderer allocation or separate render-command module is needed.
 
-The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. The current window requests RGBA8 without depth/stencil storage. Depth/culling/blending controls, indexed/instanced drawing, camera math, and richer texture options are added only when an example needs them.
+The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. The current window requests RGBA8 without depth/stencil storage. Depth/culling/blending controls, instanced drawing, camera math, and richer texture options are added only when an example needs them.
 
 `ShaderProgram` owns the linked program; temporary compiled stages are released after linking. Sources/files use explicit GLSL. Cache uniform locations after linking, call `use()`, then set integer, float, vec2/3/4, or column-major mat4 values. Locations belong to the program that returned them; lookup of missing/inactive required uniforms throws. Setters throw for a missing location, a different active program, or native type/update failures. No universal parameter-block layout or shader translation is imposed.
 
-`VertexBuffer` consumes interleaved vertex bytes and float attributes with explicit location/component count/offset/stride, exposes `bind()` and `vertexCount()`, and contains no draw operation. `Renderer::drawTriangles(vertices, count, first)` validates a nonempty triangle-list range and restores the previous VAO after submission, including failed bindings. Shader input/layout agreement is the caller's responsibility; geometry can be reused with several compatible programs. Draws use the active program and texture bindings. They do not reset every OpenGL state or validate a general pipeline description.
+`VertexBuffer::initialize(data, byteCount)` uploads immutable bytes without a stride or attributes. It exposes array-buffer binding and byte count. `IndexBuffer` stores u32 elements on the GPU and provides binding, count, and a cached maximum index for vertex-bound validation. It retains no CPU index copy. Neither buffer owns a VAO or submits draws.
+
+`VertexArray` owns one VAO and borrows an initialized VertexBuffer and optional IndexBuffer. `VertexLayout` supplies a byte stride and float attributes with location/component count/byte offset. The array computes vertex count from buffer bytes divided by stride and stores the associated index count (zero without indices). Its two initialization overloads accept `(vertices, layout)` or `(vertices, indices, layout)`; an explicitly supplied uninitialized buffer is rejected. The layout descriptor is consumed during configuration and need not persist. Initialization preserves prior VAO/array-buffer state, including failures; the optional element-buffer association is captured once in the new VAO.
+
+`Renderer::drawTriangles(vertexArray)` draws the entire configured geometry. With associated indices it uses the stored index count and validates the cached maximum index against vertex count; without indices it uses the stored vertex count. It validates a nonempty complete triangle list and the native signed count limit before conversion, then binds the array, submits the selected draw, and restores the previous VAO even on failure. Configured buffer associations remain unchanged. Renderer retains no resource references, and arrays can be reused with compatible programs. There are no separate indexed methods or subrange parameters.
+
+A complete triangle list requires a nonzero selected count divisible by three; this is engine policy. Four shared vertices and six indices are valid. A sequential two-triangle quad needs six vertex records. Draws use the active program and texture bindings without resetting every OpenGL state. See the [usage guide](rendering-guide.md#indexed-and-non-indexed-draws) for automatic draw selection and buffer-size units.
 
 `Texture2D` consumes tightly packed bottom-row-first RGBA8 pixels; its upload restores the prior texture binding, pixel-unpack layout, and unpack-buffer binding. Binding selects a texture unit and the texture's nearest/clamp-to-edge sampling. It has no mipmaps. File loading queries the current context's maximum texture dimension before CPU decoding; there is no static texture-support setup. `Image` performs overflow checks and local row conversion; `StbImage.cpp` compiles the pinned PNG/JPEG decoder once.
 
-Textured Quad uses six position/UV vertices, a `vec2 uScale`, a sampler on unit 0, and the original crate image. The example resolves its executable-relative assets; the engine accepts explicit paths. The build copies assets on each build, including asset-only edits. Each example's runtime assets and licenses stay in its `assets/`; planning concepts/provenance stay in its `docs/assets/` and are not packaged. Preserve historical milestone captures and captions under shared `docs/assets/`.
+Textured Quad uses four position/UV vertices and six u32 indices, a `vec2 uScale`, a sampler on unit 0, and the original crate image. The example resolves its executable-relative assets; the engine accepts explicit paths. The build copies assets on each build, including asset-only edits. Each example's runtime assets and licenses stay in its `assets/`; planning concepts/provenance stay in its `docs/assets/` and are not packaged. Preserve historical milestone captures and captions under shared `docs/assets/`.
 
 ## CMake and runtime layout
 

@@ -14,6 +14,8 @@ See [development](development.md#configure-build-and-run) for commands, [project
 ```text
 QuadDemo : Application
 ├── VertexBuffer
+├── IndexBuffer
+├── VertexArray → borrows both buffers
 ├── Texture2D
 ├── ShaderProgram
 ├── initialize() → create resources and cache uniform locations
@@ -30,15 +32,15 @@ sequenceDiagram
     participant Window
     participant Demo as QuadDemo
     participant Renderer
-    participant Resources as ShaderProgram / Texture2D / VertexBuffer
+    participant Resources as ShaderProgram / Texture2D / VertexArray
     SDL->>App: onIterate
     App->>Window: size and makeCurrent
     App->>App: viewport setup
     App->>Demo: render(renderer, width, height)
     Demo->>Renderer: clear
     Demo->>Resources: use, uniforms, texture bind
-    Demo->>Renderer: drawTriangles(vertices, 6)
-    Renderer->>Resources: bind vertex layout
+    Demo->>Renderer: drawTriangles(vertexArray)
+    Renderer->>Resources: bind configured VertexArray
     Renderer->>Renderer: issue OpenGL draw
     Demo-->>App: SDL_APP_CONTINUE
     App->>Window: present
@@ -55,7 +57,9 @@ Returning success or failure skips presentation. Rendering operations and resour
 | [Window](../engine/src/platform/Window.h) | Own the SDL window and current GL context; normally Application handles it | `initialize`, `pixelSize`, `makeCurrent`, `present` |
 | [ShaderProgram](../engine/src/rendering/ShaderProgram.h) | Link and activate vertex/fragment shaders and update uniforms | `initializeFromFiles`, `use`, `uniformLocation`, `setInt`, `setFloat`, `setVec2/3/4`, `setMat4` |
 | [Texture2D](../engine/src/rendering/Texture2D.h) | Upload RGBA8 or load PNG/JPEG and select a texture unit | `initializeRGBA8`, `initializeFromFile`, `bind` |
-| [VertexBuffer](../engine/src/rendering/VertexBuffer.h) | Upload vertex storage/layout; select it when needed | `initialize`, `bind`, `vertexCount` |
+| [VertexBuffer](../engine/src/rendering/VertexBuffer.h) | Upload immutable vertex bytes | `initialize`, `bind`, `byteCount` |
+| [VertexArray](../engine/src/rendering/VertexArray.h) | Configure vertex layout and optional indices from initialized buffers | `initialize`, `bind`, `vertexCount`, `indexCount`, `indexBuffer` |
+| [IndexBuffer](../engine/src/rendering/IndexBuffer.h) | Store immutable u32 indices and query their cached maximum | `initialize`, `bind`, `indexCount`, `maxIndex` |
 | [Renderer](../engine/src/rendering/Renderer.h) | Borrow during the callback to clear and submit draws | `clear`, `drawTriangles` |
 | [Image](../engine/src/rendering/Image.h) | Decode pixels independently of OpenGL | `load(path, maxDimension)`, `width`, `height`, `pixels` |
 
@@ -64,7 +68,9 @@ Returning success or failure skips presentation. Rendering operations and resour
 ```text
 initialize():
     resolve this example's asset paths
-    vertices.initialize(vertex bytes, stride, float attribute layout)
+    vertices.initialize(vertex data, byte count)
+    indices.initialize(index data, 6)  // 0, 1, 2, 2, 3, 0
+    vertexArray.initialize(vertices, indices, layout)  // stride and float attributes
     texture.initializeFromFile(crate path)
     program.initializeFromFiles(vertex shader path, fragment shader path)
     cache uScale and uTexture locations; fail if required uniforms are missing
@@ -74,6 +80,8 @@ initialize():
 
 Constructors do not create GL objects. `initialize()` runs after context creation and GLAD loading. Successful resource initialization is one-time; failure cleans partial objects and permits retry. File paths are supplied by the example, relative to the executable's copied `assets/`, rather than selected by the engine.
 
+These resources remain members of QuadDemo and are reused each frame. See its [initialization code](../examples/01-textured-quad/QuadDemo.cpp) for the four position/UV records, attribute layout, and file paths.
+
 ## Draw each frame
 
 ```text
@@ -82,28 +90,70 @@ render(renderer, width, height):
     calculate square scale from drawable pixels
     activate the shader program and set uScale
     bind the texture on unit 0
-    renderer.drawTriangles(vertices, 6)
+    renderer.drawTriangles(vertexArray)
     return continue if all operations succeeded
 ```
 
 The actual draw portion uses these ordinary engine operations:
 
 ```cpp
+renderer.clear({24.0f / 255.0f, 28.0f / 255.0f, 34.0f / 255.0f, 1.0f});
 program_.use();
 program_.setVec2(scaleLocation_, scaleX, scaleY);
 texture_.bind(0);
-renderer.drawTriangles(vertices_, 6);
+renderer.drawTriangles(vertexArray_);
 ```
 
-This is the same straight-line error-handling style used by the example: a failed call throws and prevents later calls. The application callback boundary handles the exception. `Renderer::clear(Color)` changes the target's pixels; `Renderer::drawTriangles` submits geometry. VertexBuffer owns storage/layout and never draws itself. Program and texture bindings remain active until changed. There is no pipeline object or opaque parameter-byte block. The quad's two scale values map directly to GLSL `uniform vec2 uScale`.
+This is the same straight-line error-handling style used by the example: a failed call throws and prevents later calls. The application callback boundary handles the exception. `Renderer::clear(Color)` changes the target's pixels; `Renderer::drawTriangles` submits the indexed geometry. VertexBuffer owns bytes, IndexBuffer owns indices, and VertexArray owns layout/associations; Renderer submits draws. Program and texture bindings remain active until changed. There is no pipeline object or opaque parameter-byte block. The quad's two scale values map directly to GLSL `uniform vec2 uScale`.
+
+## Indexed and non-indexed draws
+
+The quad shares four vertex records between two triangles using six indices. The draw count describes index elements, independently of the number of stored vertices.
+
+```text
+3 ───── 2
+│     ╱ │   Triangle 1: 0, 1, 2
+│   ╱   │   Triangle 2: 2, 3, 0
+│ ╱     │
+0 ───── 1
+```
+
+| Operation | Size/count units | Meaning |
+| --- | --- | --- |
+| `VertexBuffer::initialize(data, byteCount)` | Bytes | Upload vertex records |
+| `VertexArray::initialize(vertices, layout)` or `(vertices, indices, layout)` | Bytes for layout stride and attribute offsets | Configure buffer associations and derive vertex count |
+| `IndexBuffer::initialize(data, indexCount)` | u32 index elements | Upload indices that refer to vertex records |
+| `Renderer::drawTriangles(vertexArray)` | Uses the array's stored counts | Draw all indices if associated, otherwise all vertices |
+
+Renderer chooses the path from the VertexArray's optional IndexBuffer. An indexed quad uses its stored index count of six, even though it has only four vertex records. Without indices, the same method draws the entire stored vertex count. There are no draw-count or offset arguments.
+
+The selected count must be nonzero and divisible by three; this is engine policy for complete triangle lists. Renderer checks native count limits before conversion. For indexed geometry, it also checks that the cached maximum index is below vertex count.
+
+IndexBuffer initialization consumes u32 elements, not bytes. It caches count and maximum index during upload, then keeps no CPU copy. VertexArray associates the buffers once, and Renderer binds the configured array for each draw; examples need no manual buffer binding. Additional index widths, subranges, base-vertex offsets, primitive restart, and instancing remain future work.
+
+## VertexArray with or without indices
+
+Create the buffers first, then configure a VertexArray. `VertexLayout` contains the byte stride and attributes; each attribute specifies a location, float component count, and byte offset. Vertex count belongs to the array because the same bytes can be interpreted using different layouts. It also stores the optional index count (zero when indices are omitted), so ordinary draws need only the array. The descriptor can be temporary; VertexArray consumes it during initialization.
+
+```text
+without indices:
+    vertexArray.initialize(vertices, layout)
+    renderer.drawTriangles(vertexArray)
+
+with indices:
+    vertexArray.initialize(vertices, indices, layout)
+    renderer.drawTriangles(vertexArray)
+```
+
+Omitting indices is valid: Renderer uses sequential drawing automatically. Supplying an uninitialized vertex/index buffer fails during array initialization. Both configurations use `renderer.drawTriangles(vertexArray)`; the example does not select the native draw operation. A non-indexed quad needs six vertex records for the current triangle-list API; four shared vertices require the six indices used by this example.
 
 ## Use more than one shader program
 
 Geometry does not own a shader. Two objects can share the same vertex buffer and use compatible programs:
 
 ```text
-object A → program A.use() → A uniforms/textures → renderer.drawTriangles(shared vertices, count)
-object B → program B.use() → B uniforms/textures → renderer.drawTriangles(shared vertices, count)
+object A → program A.use() → A uniforms/textures → renderer.drawTriangles(shared vertexArray)
+object B → program B.use() → B uniforms/textures → renderer.drawTriangles(shared vertexArray)
 ```
 
 Cache uniform locations separately for each linked program, even when names match. Call that program's `use()` before its setters. `uniformLocation` treats the named uniform as required and throws if missing or optimized out; setters also reject negative locations. An integer location is local to its program and must not be reused with another program. The active-program guard does not prove that a supplied integer originated from that program.
@@ -114,13 +164,17 @@ Match vertex attribute locations/components to each shader's inputs. Match unifo
 
 Let rendering exceptions reach Application unless the example can recover from a specific failure. For example, an optional texture can be loaded in a local `try`/`catch (const std::runtime_error&)` and replaced with a fallback. Do not catch a required draw failure and return continue: earlier GL operations have already changed the target, and no rollback occurs. Standard allocation/filesystem exceptions also reach the callback boundary.
 
-Failed initialization keeps an owner empty and retryable; previously initialized owners remain intact when repeated initialization is rejected. Texture uploads restore unpack state and bindings, vertex uploads restore VAO/VBO bindings, and triangle submission restores the prior VAO even when binding or drawing throws. Program activation, uniform writes, texture selection, and clears intentionally change active rendering state.
+Failed initialization keeps an owner empty and retryable; previously initialized owners remain intact when repeated initialization is rejected. Texture uploads restore unpack state and bindings; vertex/index uploads preserve their buffer bindings and VAO state. VertexArray initialization restores the previous VAO/array-buffer binding even when a borrowed buffer fails to bind. Draw submission restores the previous VAO on success or exception and keeps the configured index association unchanged. Program activation, uniform writes, texture selection, and clears intentionally change active rendering state.
 
 ## Resource lifetime
 
 ```mermaid
 flowchart TD
-    Demo[QuadDemo] --> Vertices[VertexBuffer: VBO and VAO]
+    Demo[QuadDemo] --> Vertices[VertexBuffer: VBO bytes]
+    Demo --> Indices[IndexBuffer: u32 indices and cached bounds]
+    Demo --> Array[VertexArray: VAO]
+    Array -. borrows .-> Vertices
+    Array -. optional borrow .-> Indices
     Demo --> Texture[Texture2D: texture]
     Demo --> Program[ShaderProgram: linked program]
     Demo --> Base[base Application]
@@ -128,7 +182,7 @@ flowchart TD
     Base --> Window[Window: SDL and GL context]
 ```
 
-Application supplies the same Renderer instance each callback; it needs no initialization, has no GPU resources, and does not retain geometry or frame references. Do not retain the borrowed callback reference. Derived members are destroyed before the base Renderer and Window. GPU destruction must happen with the creating context still current. Outside Application, declare Window before GPU owners and keep them in a scope that ends first. Each resource checks its recorded context; it does not switch contexts or keep Window alive. Cross-context operations throw. Destructors never throw, including during stack unwinding; if the required context is unavailable they log a lifetime violation and skip deletion. This cannot reclaim resources through another context. Using resources after context destruction is a lifetime error, not a supported recovery path.
+Application supplies the same Renderer instance each callback; it needs no initialization, has no GPU resources, and does not retain geometry or frame references. Do not retain the borrowed callback reference. Declare buffers before their VertexArray member, so the array is destroyed first. The borrowed buffers must stay alive through array use/destruction. Derived members are destroyed before the base Renderer and Window. GPU destruction must happen with the creating context still current. Outside Application, declare Window before GPU owners and keep them in a scope that ends first. Each resource checks its recorded context; it does not switch contexts or keep Window alive. Cross-context operations throw. Destructors never throw, including during stack unwinding; if the required context is unavailable they log a lifetime violation and skip deletion. This cannot reclaim resources through another context. Using resources after context destruction is a lifetime error, not a supported recovery path.
 
 CPU `Image` loading needs no context. GPU uploads and shader compilation require both the current context and loaded GLAD. All current operations run on SDL's callback thread.
 
@@ -142,7 +196,8 @@ CPU `Image` loading needs no context. GPU uploads and shader compilation require
 | Texture is wrong | Match sampler integer to the bound texture unit; pixels use RGBA8 and a bottom-left UV origin |
 | Quad stretches | Compute scale from current drawable pixels, not logical window size |
 | Vertex draw fails | Count must be nonzero, divisible by three, and within initialized vertex storage |
+| Indexed draw fails | Check that every index refers to an existing vertex and that the full index count forms complete triangles |
 | Cleanup reports the wrong context | Destroy resources before Window and keep that context current |
-| Need depth, indices, instancing, or other sampling | These are not implemented yet; add them for a concrete example |
+| Need depth, instancing, or other sampling | These are not implemented yet; add them for a concrete example |
 
-PNG/JPEG decoding, nearest/clamp-to-edge RGBA8 textures, float vertex attributes, triangle lists, and vertex/fragment GLSL programs are implemented. Camera, lighting systems, depth/stencil storage, indexed/instanced geometry, other backends, and browser builds remain future work. Continue with the small 3D scene in the roadmap; preserve Textured Quad and both scaffolds as the engine grows.
+PNG/JPEG decoding, nearest/clamp-to-edge RGBA8 textures, float vertex attributes, u32 indexed and non-indexed triangle lists, and vertex/fragment GLSL programs are implemented. Camera, lighting systems, depth/stencil storage, instanced geometry, other backends, and browser builds remain future work. Continue with the small 3D scene in the roadmap; preserve Textured Quad and both scaffolds as the engine grows.

@@ -19,12 +19,14 @@ bool QuadDemo::initialize()
     // Local coordinates: x right, y up; UV origin at the bottom left.
     struct Vertex { frostwind::f32 x, y, u, v; };
     constexpr Vertex vertices[] = {
-        {-1, -1, 0, 0}, {1, -1, 1, 0}, {1, 1, 1, 1},
-        {-1, -1, 0, 0}, {1, 1, 1, 1}, {-1, 1, 0, 1},
+        {-1, -1, 0, 0}, {1, -1, 1, 0}, {1, 1, 1, 1}, {-1, 1, 0, 1},
     };
-    vertices_.initialize(vertices, sizeof(vertices), sizeof(Vertex), {
+    constexpr frostwind::u32 indices[] = {0, 1, 2, 2, 3, 0};
+    vertices_.initialize(vertices, sizeof(vertices));
+    indices_.initialize(indices, 6);
+    vertexArray_.initialize(vertices_, indices_, {sizeof(Vertex), {
         {0, 2, offsetof(Vertex, x)}, {1, 2, offsetof(Vertex, u)},
-    });
+    }});
     texture_.initializeFromFile(assetDirectory / "textures" / "crate.png");
     program_.initializeFromFiles(assetDirectory / "shaders" / "quad.vert", assetDirectory / "shaders" / "quad.frag");
     scaleLocation_ = program_.uniformLocation("uScale");
@@ -50,6 +52,6 @@ SDL_AppResult QuadDemo::render(frostwind::Renderer& renderer, int width, int hei
     program_.use();
     program_.setVec2(scaleLocation_, side / width, side / height);
     texture_.bind(0);
-    renderer.drawTriangles(vertices_, 6);
+    renderer.drawTriangles(vertexArray_);
     return SDL_APP_CONTINUE;
 }

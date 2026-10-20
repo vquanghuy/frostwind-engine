@@ -2,7 +2,7 @@
 
 An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Current rendering focuses on OpenGL; 2D/3D physics integrations are planned.
 
-> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/vertex owners, CPU image loading, and the Textured Quad example are implemented. Asteroids and Mini Artillery remain window scaffolds. Camera, audio, physics, terrain destruction, and 3D systems are planned; other graphics APIs are deferred research.
+> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/buffer/vertex-array owners, CPU image loading, and the Textured Quad example are implemented. Asteroids and Mini Artillery remain window scaffolds. Camera, audio, physics, terrain destruction, and 3D systems are planned; other graphics APIs are deferred research.
 
 Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was initially named Toybox. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-frostwind-engine-and-examples.md).
 
@@ -14,7 +14,7 @@ Example directories use two-digit prefixes for a suggested learning order: Textu
 
 | Example | Status |
 | --- | --- |
-| [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and quad rendering |
+| [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and an indexed quad with four vertices and six indices |
 | [Asteroids](examples/02-asteroids/README.md) | Runnable window scaffold; 2D camera/input/sprites, lighting, and gameplay planned |
 | [Mini Artillery](examples/03-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
 
@@ -28,7 +28,7 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 | Native development | macOS on Apple Silicon; Windows x64 and Linux x86_64 scaffolds remain unverified |
 | Graphics | OpenGL 3.3 Core baseline, GLAD 2.0.8; SDL3 window/context integration |
 | SDL | 3.4.18 official macOS universal dynamic framework |
-| Rendering resources | Direct OpenGL Texture2D, ShaderProgram, and VertexBuffer owners; CPU Image loading; Renderer clear/draw operations and Application viewport handling |
+| Rendering resources | Direct OpenGL Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray owners; CPU Image loading; Renderer clears and sequential/indexed triangle draws; Application viewport handling |
 | Math and debug UI | GLM and Dear ImGui planned |
 | Image loading | stb_image 2.28; PNG/JPEG decoding |
 | Audio | SDL3 built-in audio planned; SDL3_mixer if richer playback is needed |
@@ -61,7 +61,7 @@ frostwind-engine/
 │       ├── core/               # Primitive type aliases
 │       ├── app/                # Application lifecycle and frame coordination
 │       ├── platform/           # SDL window, OpenGL context/loading/presentation
-│       └── rendering/          # Shader programs, textures, vertex buffers, images
+│       └── rendering/          # Rendering resources, clear/draw, CPU image loading
 ├── examples/
 │   ├── 01-textured-quad/       # Implemented code, CMake target, and runtime assets
 │   ├── 02-asteroids/           # Window scaffold, CMake target, and planning artwork
@@ -88,15 +88,26 @@ engine/src/
     ├── Texture2D.h, .cpp       # Direct RGBA8 upload, file loading, texture binding
     ├── ShaderProgram.h, .cpp   # Vertex/fragment linking, use, typed uniform setters
     ├── Renderer.h, .cpp        # Clear and draw submission
-    ├── VertexBuffer.h, .cpp    # Vertex upload and attribute layout
+    ├── VertexBuffer.h, .cpp    # Immutable vertex bytes
+    ├── VertexArray.h, .cpp     # Attribute layout and buffer associations
+    ├── IndexBuffer.h, .cpp     # Immutable u32 indices and bounds metadata
     ├── Image.h, .cpp           # CPU PNG/JPEG loading
-    ├── GraphicsChecks.h, .cpp          # Private context/error checks
+    ├── GraphicsChecks.h, .cpp  # Private context/error checks
     └── StbImage.cpp
 ```
 
-Examples implement `initialize()` and `render(renderer, width, height)`, borrowing Application's persistent Renderer and owning resource members that are destroyed before the base Window/context. Shader programs are activated explicitly, uniforms use cached locations, and textures and vertex buffers manage their bindings while Renderer submits draws. Rendering failures throw diagnostic exceptions, caught and logged once by Application at SDL callback boundaries; examples call commands in sequence. Native calls stay inside engine implementations; GLAD remains private to the engine target.
+Examples implement `initialize()` and `render(renderer, width, height)`, borrowing Application's persistent Renderer and owning resource members that are destroyed before the base Window/context. Shader programs are activated explicitly, uniforms use cached locations, and VertexArray configures the vertex layout and associates buffers once, while Renderer submits sequential or indexed triangle draws from it. Textured Quad reuses four vertices through six indices. Rendering failures throw diagnostic exceptions, caught and logged once by Application at SDL callback boundaries; examples call commands in sequence. Native calls stay inside engine implementations; GLAD remains private to the engine target.
 
 The [structure guide](docs/project-structure.md) explains lifetime and packaging; the [rendering guide](docs/rendering-guide.md) demonstrates the actual example. There is no abstract backend/surface, device facade, pipeline description, or per-frame submission object.
+
+The quad's flow is:
+
+```text
+initialize() → upload 4 vertices and 6 indices → configure VertexArray → load texture/program → cache uniforms
+render()     → clear → activate program → update uniforms → bind texture → draw indexed triangles
+```
+
+VertexBuffer and IndexBuffer own data; VertexArray owns the layout, borrows the buffers, and stores vertex/index counts. Use `renderer.drawTriangles(vertexArray)` for the entire configured geometry: Renderer selects indexed drawing when an IndexBuffer is attached and sequential drawing otherwise. Follow the [indexed drawing usage](docs/rendering-guide.md#indexed-and-non-indexed-draws) and [working QuadDemo](examples/01-textured-quad/QuadDemo.cpp) for the exact calls.
 
 ## Build and run
 
@@ -141,6 +152,6 @@ These are optional asset-authoring tools. Record runtime asset sources, tools, m
 
 ## Documentation and license
 
-Start with the [rendering usage guide](docs/rendering-guide.md) for task-based examples and call-flow, lifetime, and pipeline-sharing diagrams. The [documentation index](docs/README.md) links the other guides. Follow the [coding conventions](docs/coding-conventions.md), and record significant decisions in [RFCs](docs/rfcs/README.md).
+Start with the [rendering usage guide](docs/rendering-guide.md) for task-based examples and call-flow, lifetime, and program/geometry-sharing diagrams. The [documentation index](docs/README.md) links the other guides. Follow the [coding conventions](docs/coding-conventions.md), and record significant decisions in [RFCs](docs/rfcs/README.md).
 
 Project code is licensed under the [MIT License](LICENSE). Third-party libraries and assets retain their own licenses. Examples keep asset attribution with their assets; the [textured-quad record](examples/01-textured-quad/assets/LICENSES.md) covers its original shaders. Each planned example records concept/reference provenance under its `docs/assets/`; [shared branding and historical milestone captures](docs/assets/README.md) stay in central documentation.

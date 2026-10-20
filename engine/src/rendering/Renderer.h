@@ -4,7 +4,7 @@
 
 namespace frostwind {
 
-class VertexBuffer;
+class VertexArray;
 
 struct Color {
     f32 r = 0;
@@ -21,10 +21,11 @@ public:
     // Clears the full color target, independently of scissor/color write masks.
     // Requires a current initialized context.
     void clear(Color color) const;
-    // Borrows geometry and uses the active shader and texture bindings.
-    // Validates a nonempty triangle-list range and the buffer's creating context;
-    // restores the previous VAO after drawing. No native handles are exposed.
-    void drawTriangles(const VertexBuffer& vertices, u32 vertexCount, u32 firstVertex = 0) const;
+    // Draws the entire configured geometry using stored counts: indexed when
+    // an IndexBuffer is associated, sequential otherwise. Requires a nonempty
+    // complete triangle list and an active shader program. Borrows the array,
+    // validates bounds/context, and restores the previous VAO on failure too.
+    void drawTriangles(const VertexArray& vertexArray) const;
 };
 
 } // namespace frostwind

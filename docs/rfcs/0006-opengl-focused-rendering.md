@@ -22,7 +22,7 @@ The prior experiment is saved at commit `e9cf616` on `archive/multi-backend-expe
 - Restore Window ownership of SDL video/window/context, GLAD, VSync, and presentation.
 - Preserve the existing examples' images, filtering, orientation, scaling, controls, assets, and teardown.
 
-This change adds only a concrete clear/triangle Renderer, not a model/material system, GLM, cameras, lighting, depth/stencil storage, indices, instancing, another graphics API, or browser support. OpenGL 3.3 Core remains the baseline. Multi-backend compatibility does not constrain these interfaces.
+The current implementation includes a concrete clear/triangle Renderer with sequential and indexed drawing. Model/material systems, GLM, cameras, lighting, depth/stencil storage, instancing, other graphics APIs, and browser support remain outside this scope. OpenGL 3.3 Core remains the baseline. Multi-backend compatibility does not constrain these interfaces.
 
 ## Proposed design
 
@@ -30,7 +30,9 @@ This change adds only a concrete clear/triangle Renderer, not a model/material s
 
 ```text
 QuadDemo : Application
-├── VertexBuffer → owns VBO and VAO
+├── VertexBuffer → owns VBO bytes
+├── IndexBuffer → owns u32 index storage and cached count/maximum metadata
+├── VertexArray → owns VAO/layout; borrows buffers
 ├── Texture2D → owns GL texture
 ├── ShaderProgram → owns linked GL program
 └── base Application
@@ -72,25 +74,27 @@ ShaderProgram compiles vertex/fragment sources, links one program, and releases 
 
 The quad uses `uniform vec2 uScale` and an integer texture-unit sampler. It no longer needs a padded std140 block or uniform-buffer allocation. Uniform blocks may be added for a demonstrated use; they are not required for ordinary parameters. Future camera matrices and light values can use the typed methods without adding a math library to this change.
 
-### VertexBuffer and Renderer
+### VertexBuffer, IndexBuffer, VertexArray, and Renderer
 
-VertexBuffer owns a VBO and VAO with explicit interleaved float attribute location/component count/offset/stride. Initialization validates bounds, duplicate locations, and GL limits and consumes input bytes before returning. It restores previous VAO/array-buffer bindings. Scoped failure cleans partially created storage/layout.
+VertexBuffer owns an immutable VBO with source-byte upload, binding, and byte-count queries. It has no stride, attributes, vertex count, VAO, or drawing methods. Upload validates byte-size limits, preserves the previous array-buffer binding, and permits retry after partial failure.
 
-VertexBuffer exposes `bind()` and `vertexCount()`; it does not issue draw commands. Binding validates the creating context without exposing its native handles. The program's vertex input interface must match the caller's layout; no general reflection or resource-binding metadata is required. One geometry owner can be used by several compatible programs.
+IndexBuffer owns immutable u32 elements. Initialization consumes elements rather than bytes, caches count and maximum index, and uploads through the copy-write target while preserving VAO/buffer state. It retains no CPU copy because Renderer draws complete buffers. Buffer classes never draw or expose native handles.
 
-Renderer owns no GPU resources, needs no initialization, and operates immediately on the current context. `drawTriangles(vertices, count, first)` borrows geometry, validates a nonempty triangle-list range and active program, binds the buffer layout, issues the native draw, and restores the prior VAO even when binding fails. Shader programs, uniforms, and textures are explicitly selected by the example. The renderer retains no geometry or callback references.
+VertexArray owns one VAO and borrows an initialized VertexBuffer and optional IndexBuffer. `VertexLayout` supplies byte stride and float attributes with explicit location/component count/byte offset. VertexArray computes vertex count from byte count divided by stride and stores index count from the immutable associated buffer (zero when omitted); the layout descriptor need not outlive initialization. Public overloads accept `(vertices, layout)` and `(vertices, indices, layout)`. Omitted indices are valid; explicitly supplied uninitialized buffers fail. Initialization rejects invalid stride/attributes, duplicate locations, and foreign contexts; scoped candidates and binding guards clean up and restore prior VAO/array-buffer state on failure. Declare buffers before their borrowing VertexArray so they outlive it. Buffers can be reused by multiple arrays/layouts and compatible programs.
 
-`Renderer::clear(Color)` covers the full color target independently of scissor/color masks. Application iteration sets the viewport directly before calling `render(renderer, width, height)`; Window owns context management and presentation. Failures throw to the callback boundary; drawing does not implicitly reset all GL state. Future depth/blend/culling controls and indexed/instanced drawing arrive when an example needs them.
+Renderer exposes one draw method: `drawTriangles(vertexArray)`. It borrows the configured array and uses the active shader/uniforms/textures. If indices are associated, it validates the stored index count and maximum referenced vertex, then calls `glDrawElements` from offset zero. Otherwise it validates the stored vertex count and calls `glDrawArrays` from vertex zero. Both branches require nonempty complete triangle lists as engine policy, validate the native signed count limit before conversion, and restore the previous VAO on success or exception without changing attachments. Six indices can reference four vertices; sequential quad storage requires six vertex records. There is no public indexed variant or subrange overload.
+
+`Renderer::clear(Color)` covers the full color target independently of scissor/color masks. Application sets the viewport and passes its persistent renderer to callbacks; Window owns context management and presentation. Additional index widths, base-vertex drawing, primitive restart, depth/blend/culling controls, instancing, and high-level model APIs arrive through demonstrated examples.
 
 Application supplies the same Renderer instance by reference on every callback. Examples do not own another renderer, copy it per frame, or retain the borrowed reference. Mesh/Material/Model loading and high-level model drawing remain a possible later extension, not implemented capabilities. Renderer is named for that broader responsibility without adding speculative model APIs now.
 
 ### Lifetime and failure handling
 
-Operations throw diagnostic `std::runtime_error` exceptions rather than returning success flags. Standard allocation/filesystem exceptions also propagate. Required uniform lookup throws for an absent/optimized-out name; valid lookup still returns an integer. Destructors and binding-restoration guards never throw. Destruction with an unavailable creating context logs the lifetime violation and skips deletion. Scoped candidates release partial GPU objects during unwinding; texture/vertex uploads restore their promised state before checking GL errors, and a scoped guard restores the prior draw VAO even on binding failure. Owners remain retryable after failed initialization.
+Operations throw diagnostic `std::runtime_error` exceptions rather than returning success flags. Standard allocation/filesystem exceptions also propagate. Required uniform lookup throws for an absent/optimized-out name; valid lookup still returns an integer. Destructors and binding-restoration guards never throw. Destruction with an unavailable creating context logs the lifetime violation and skips deletion. Scoped candidates release partial GPU objects during unwinding; texture/vertex/index uploads restore their promised state before checking GL errors; array initialization restores VAO/array-buffer state through a scoped guard; draws restore the prior VAO even on binding failure. Owners remain retryable after failed initialization.
 
 GPU owners are non-copyable. They record the creating context and require it to remain current and outlive initialization/use/destruction. Context checks diagnose foreign-context use but do not switch contexts, retain Window, or implement context-loss recovery. Resources cannot survive context recreation.
 
-Application stores Window before Renderer so the renderer dies first; derived GPU members die before both. The base Window destroys its context, SDL window, and video initialization. This order also applies after partial example startup. The current scope is one window/context on SDL's callback thread. Native GL object deletion semantics protect outstanding work; no engine resource registry, shared frame references, or speculative retirement queue is required.
+Application stores Window before Renderer so the renderer dies first; derived GPU members die before both. Borrowed buffers must outlive VertexArray; declare them first so the array is destroyed before storage. The base Window destroys its context, SDL window, and video initialization. This order also applies after partial example startup. The current scope is one window/context on SDL's callback thread. Native GL object deletion semantics protect outstanding work; no engine resource registry, shared frame references, or speculative retirement queue is required.
 
 ## Alternatives
 
@@ -118,13 +122,13 @@ Inject Window/GLAD/startup/presentation failures, check callback results/excepti
 1. Preserve the previous experiment in Git and deferred RFC 9999.
 2. Move SDL/context/GLAD/presentation into Window and restore dimension-based Application callbacks.
 3. Implement direct Texture2D and ShaderProgram ownership; keep CPU Image loading.
-4. Replace device-backed geometry/pipeline submission with storage/layout-only VertexBuffer and concrete Renderer clear/draw operations, passed by reference by Application. Keep viewport setup in Application.
+4. Replace device-backed geometry/pipeline submission with storage-only vertex/index buffers, separate VertexArray layouts, and concrete Renderer clear/draw operations, passed by reference by Application. Keep viewport setup in Application.
 5. Migrate all three examples together, simplify the quad uniforms, and delete obsolete abstraction files.
 6. Validate output/failure/lifetime behavior and align usage/architecture documentation.
 
 ## Open questions
 
-Choose depth formats/testing, indexed meshes, math/camera support, and richer sampling when the small 3D example needs them. Choose higher-level renderer conveniences through demonstrated reuse. Additional backends remain deferred research.
+Choose depth formats/testing, richer mesh support, math/camera support, and richer sampling when the small 3D example needs them. Choose higher-level renderer conveniences through demonstrated reuse. Additional backends remain deferred research.
 
 ## Decision
 
@@ -135,3 +139,11 @@ Native example and fresh engine-only builds passed. Actual example callbacks ret
 Clarified that day after the owner's review: drawing belongs to Renderer rather than VertexBuffer, and clearing belongs alongside drawing. The persistent renderer is owned by Application and borrowed as an explicit callback parameter. No model loader, material hierarchy, or universal backend interface was added.
 
 Revised that day to use exception-based rendering failures: direct command sequences replace boolean checks in examples, with reporting at existing SDL callback boundaries. Window boolean integration and callback control-flow results remain unchanged. See the [exception validation record](../development.md#exception-based-rendering-validation-2026-10-20) for executed checks.
+
+Extended on 2026-10-20 with direct IndexBuffer ownership and indexed triangle submission, exercised by Textured Quad using four vertices and six indices. The sequential draw API remains available.
+
+Indexed drawing follows the [OpenGL 3.3 Core specification](https://registry.khronos.org/OpenGL/specs/gl/glspec33.core.pdf), particularly drawing commands (§2.8.3), index buffers (§2.9.7), and VAO ownership (§2.10). See the [indexed validation record](../development.md#indexed-triangle-drawing-validation-2026-10-20) for executed checks.
+
+Revised on 2026-10-20 to separate VAO ownership into VertexArray, move layout/count interpretation out of VertexBuffer, and submit both draw paths through VertexArray with optional indices.
+
+VertexArray stores vertex/index counts. Following the owner's simplification review, one `drawTriangles(vertexArray)` consumes those counts and selects indexed/sequential drawing automatically. Subrange support was removed from the public API and index metadata; introduce it only when an example needs it.

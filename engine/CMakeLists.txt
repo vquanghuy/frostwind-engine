@@ -3,7 +3,9 @@ add_library(frostwind STATIC
     src/platform/Window.cpp
     src/rendering/Renderer.cpp
     src/rendering/GraphicsChecks.cpp
+    src/rendering/VertexArray.cpp
     src/rendering/VertexBuffer.cpp
+    src/rendering/IndexBuffer.cpp
     src/rendering/ShaderProgram.cpp
     src/rendering/Image.cpp
     src/rendering/Texture2D.cpp

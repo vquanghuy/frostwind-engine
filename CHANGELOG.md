@@ -6,9 +6,11 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Added
 
+- Engine: separate `VertexArray` owner with `VertexLayout` stride/attributes, optional initialized IndexBuffer association, stored vertex/index counts, and scoped initialization cleanup/state restoration.
+- Engine: immutable u32 `IndexBuffer` storage with cached count/maximum metadata and indexed submission through `Renderer::drawTriangles`, including vertex-bound validation, context guards, and exception-safe VAO restoration.
 - Documentation: task-based rendering guide using textured-quad pseudocode, concise clear/draw explanations, and direct links to the working example, example-facing class reference, program/geometry sharing, call/ownership/lifecycle diagrams, current limits, and troubleshooting; public header comments clarify initialization, borrowing, and failure contracts.
 - Documentation: README references to LearnOpenGL and Rastertek's OpenGL tutorials, with guidance for adapting examples to the engine and its OpenGL 3.3 baseline.
-- Engine: direct OpenGL `VertexBuffer` owning interleaved float attributes/VBO/VAO and a concrete `Renderer` for color clears and triangle-range draws; `Application` owns viewport setup.
+- Engine: direct OpenGL `VertexBuffer` owning immutable vertex bytes and a concrete `Renderer` for color clears and complete triangle draws; `Application` owns viewport setup.
 - Engine: CPU-only `Image` PNG/JPEG loading with explicit dimension limits and local bottom-left row conversion, independent of graphics initialization.
 - Documentation: root `ROADMAP.md` using Dovyski's themed template; RFC 0006 records direct OpenGL rendering ownership, while RFC 9999 preserves the deferred multi-backend and advanced-feature research.
 - Documentation: roadmap ideas for grass/vegetation, water/fluid simulation, and a physics sandbox, with initial scopes, prerequisites, and guidance for turning ideas into example experiments.
@@ -24,9 +26,12 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Engine: VertexBuffer now owns bytes only; VertexArray owns VAO/layout and borrows buffers. Renderer exposes one `drawTriangles(vertexArray)` method that uses stored counts and selects indexed/sequential drawing from the optional IndexBuffer; subrange overloads and the CPU index copy are removed. Textured Quad configures its array once and destroys it before its buffers.
+- Documentation: refreshed the project structure, root README, and rendering usage guide with IndexBuffer ownership, the indexed quad flow/layout, byte-versus-element initialization units, automatic draw selection, and direct example links.
+- Textured Quad: draws two indexed triangles from four shared position/UV vertices and six indices through engine calls.
 - Engine: rendering/resource commands and CPU image loading now throw diagnostic exceptions instead of returning success flags; required uniform lookup throws for missing/inactive names. Application reports exceptions at SDL callback boundaries and skips failed-frame presentation. Destructors remain non-throwing; failed initialization cleans up for retry and promised upload/draw state is restored.
 - Examples: simplified quad initialization/rendering and scaffold clears to direct engine calls, removing per-operation boolean checks and duplicate failure logs.
-- Engine: Application owns and passes a persistent concrete Renderer to `render(Renderer&, width, height)`; Renderer handles clearing and triangle draw submission, while VertexBuffer handles storage/layout/binding without drawing itself. All examples use the renderer reference.
+- Engine: Application owns and passes a persistent concrete Renderer to `render(Renderer&, width, height)`; Renderer handles clearing and triangle draw submission, while VertexBuffer owns bytes and VertexArray owns layout/buffer associations without drawing itself. All examples use the renderer reference.
 - Engine: removed the separate RenderCommands module and named the shared private context/error helpers `GraphicsChecks`. Application sets the viewport directly; Renderer handles clearing and drawing.
 - Engine: simplified OpenGL ownership: Window now owns context creation, GLAD, VSync, and presentation; Texture2D performs its own GL uploads/binding; linked ShaderProgram provides activation, uniform lookup, and integer/float/vec2/3/4/mat4 setters. GPU owners retain creating-context checks and automatic cleanup.
 - Engine: supplied Renderer and drawable dimensions to rendering callbacks and restored `WindowConfig::vsync`; retained callback failures/exceptions, initialization retry, resource-before-context teardown, drawable viewport sizing, and software pacing.
@@ -34,7 +39,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 - Documentation: renamed the former RFC 0006 to `9999-multi-backend-rendering-research.md`, reserved the last-sorting number for deferred research, and updated references/status. Preserved the architecture, ownership, OpenGL/Metal/Vulkan pipeline comparison, shader-variant and attachment analysis; the implemented OpenGL setup remains documented separately and detailed scene/grass learning steps live in the roadmap.
 - Textured Quad: folded the example-owned `QuadRenderer` into `QuadDemo`, keeping resource creation, Escape handling, and clear/scale/draw callbacks together; added an ownership diagram to the example README and aligned the rendering guide/structure notes.
 - Documentation: recorded the OpenGL-first learning plan in RFC 9999 and aligned the roadmap/current guidance: retain the provisional rendering boundary, develop a small 3D scene and bounded grass experiment, and defer additional backends and shader-portability infrastructure.
-- Textured Quad: uses VertexBuffer, ShaderProgram, Texture2D, and the borrowed Renderer through engine methods, with a regular vec2 scale uniform; retained crate pixels, orientation, sampling, and square scaling. Asteroids and Mini Artillery use the engine color-clear function.
+- Textured Quad: uses VertexBuffer, IndexBuffer, VertexArray, ShaderProgram, Texture2D, and the borrowed Renderer through engine methods, with a regular vec2 scale uniform; retained crate pixels, orientation, sampling, and square scaling. Asteroids and Mini Artillery use the engine color-clear function.
 - Engine: kept GLAD as a private implementation dependency; public rendering headers and examples require no native graphics calls or GLAD headers.
 - Documentation: accepted RFC 9999 for staged implementation and recorded its initial ownership refactor; completed the shared frame/resource migration through all three examples.
 - Documentation: aligned the README technical approach and project structure guide with draft RFC 9999, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
