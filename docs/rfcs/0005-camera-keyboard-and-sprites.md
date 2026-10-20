@@ -5,6 +5,17 @@
 - **Supersedes:** None
 - **Superseded by:** None
 
+## Foundation update (2026-10-20)
+
+[Textured Cube / RFC 0007](0007-textured-cube-and-perspective-camera.md) now
+implements pinned GLM 1.0.3, Keyboard state, and elapsed-time Application updates.
+ShaderProgram already provides matrix/color uniforms, Application owns viewport
+setup, and the Asteroids window/CMake target already exists. The original draft
+below retains earlier assumptions; reconcile them with the implemented API before
+starting Camera2D, mouse state/aiming, SpriteRenderer, parallax, and lighting.
+Reuse the existing timing/input foundation instead of introducing another loop.
+Asteroids itself remains a window scaffold and this RFC remains Draft.
+
 ## Problem
 
 The textured-quad example renders directly in clip space using a viewport-dependent scale. It has no world-space camera, reusable sprite drawing, held-key state, or elapsed-time update callback. Escape handling demonstrates individual keyboard events, but smooth movement needs input state and frame timing.
@@ -26,7 +37,7 @@ This sprint does not implement thrust/inertia simulation, asteroid motion or spl
 
 ## Proposed design
 
-The [Asteroids README](../../examples/02-asteroids/README.md) is the example’s concept/status entry point; its planning artwork and provenance live under `examples/02-asteroids/docs/assets/`, separate from future runtime assets.
+The [Asteroids README](../../examples/03-asteroids/README.md) is the example’s concept/status entry point; its planning artwork and provenance live under `examples/03-asteroids/docs/assets/`, separate from future runtime assets.
 
 ### Ownership and dependencies
 
@@ -38,7 +49,7 @@ The [Asteroids README](../../examples/02-asteroids/README.md) is the example’s
 | `engine/src/app/Application.h`, `.cpp` | Input coordination, monotonic update timing, and existing frame pacing |
 | `engine/src/rendering/SpriteRenderer.h`, `.cpp` | Shared quad geometry, shader ownership, transforms, and sprite draws |
 | `engine/src/rendering/ShaderProgram.h`, `.cpp` | Matrix and color uniform setters needed by sprites |
-| `examples/02-asteroids/` | Camera instance, controls, ship/asteroid placement, texture ownership, shader assets, and scene clear; future Asteroids gameplay |
+| `examples/03-asteroids/` | Camera instance, controls, ship/asteroid placement, texture ownership, shader assets, and scene clear; future Asteroids gameplay |
 | `external/glm/`, `cmake/GLM.cmake` | Pinned local GLM headers and a shared interface target |
 
 The Asteroids directory currently contains its planning README and documentation artwork only. Code, runtime assets, and CMake target paths above remain proposed; create them as implementation needs them. Engine types use namespace `frostwind` and primitive aliases where appropriate. Use GLM vectors/matrices directly rather than wrapping them in another math library.
@@ -134,7 +145,7 @@ Build the model matrix as `translate(position) * rotateZ(rotation) * scale(size)
 
 Use straight-alpha source-over blending with separate color/alpha factors so transparent RGBA textures compose correctly. Disable depth testing and face culling for this initial 2D pass. Sprites draw in submission order, with later sprites appearing over earlier ones. The renderer establishes and documents the GL state/bindings needed for its pass; it is not a general state-preserving wrapper. No batching or sorting is required.
 
-The new example owns viewport setup, background clearing, textures, and camera state. Add a derived `AsteroidsDemo` that calls `SpriteRenderer` in `examples/02-asteroids/`. Give it a separate `frostwind-asteroids` executable using the existing example packaging helper. Its shader and texture assets live in its own `assets/` directory with an `assets/LICENSES.md` record. Derived GPU members continue to be destroyed before the base window/context. Keep `QuadDemo`, `QuadRenderer`, the crate texture, and their existing executable as the minimal shader/texture example; shared application API changes must retain its behavior.
+The new example owns viewport setup, background clearing, textures, and camera state. Add a derived `AsteroidsDemo` that calls `SpriteRenderer` in `examples/03-asteroids/`. Give it a separate `frostwind-asteroids` executable using the existing example packaging helper. Its shader and texture assets live in its own `assets/` directory with an `assets/LICENSES.md` record. Derived GPU members continue to be destroyed before the base window/context. Keep `QuadDemo`, `QuadRenderer`, the crate texture, and their existing executable as the minimal shader/texture example; shared application API changes must retain its behavior.
 
 ### Example controls and visible behavior
 
@@ -146,9 +157,9 @@ For the initial unlit foundation, use a small selection of standalone transparen
 
 The owner supplied the following pack example as the visual reference on 2026-10-14:
 
-![Owner-supplied Space Shooter pack scene reference](../../examples/02-asteroids/docs/assets/kenney-space-shooter-reference.png)
+![Owner-supplied Space Shooter pack scene reference](../../examples/03-asteroids/docs/assets/kenney-space-shooter-reference.png)
 
-*Third-party pack example supplied by the owner, associated with Kenney’s Space Shooter artwork. This is a design reference, not a screenshot of Frostwind or an implemented Asteroids example. Attribution is recorded in the [Asteroids image inventory](../../examples/02-asteroids/docs/assets/README.md).*
+*Third-party pack example supplied by the owner, associated with Kenney’s Space Shooter artwork. This is a design reference, not a screenshot of Frostwind or an implemented Asteroids example. Attribution is recorded in the [Asteroids image inventory](../../examples/03-asteroids/docs/assets/README.md).*
 
 The original unlit art plan remains below as a baseline reference. The preferred visual exploration is now the detailed normal-mapped approach in the next section. The baseline uses the pack’s top-down, flat geometric style: angular light ship hulls with colored panels and dark cockpits, faceted brown rocks, and a muted plum space background. Source the individual sprites from the pack rather than extracting them from this reference image. The intended first scene is:
 
@@ -160,7 +171,7 @@ The original unlit art plan remains below as a baseline reference. The preferred
 Asset preparation during implementation:
 
 1. Retrieve the upstream archive, inspect the individual PNGs and included license, and select one ship plus two or three rocks. Record the source URL, archive identity/checksum, pack version if supplied, and original filenames.
-2. Import only the selected textures and license under `examples/02-asteroids/assets/`. Record exact original-to-local filename mapping and all modifications in `assets/LICENSES.md`, keeping third-party licensing separate from the project code license.
+2. Import only the selected textures and license under `examples/03-asteroids/assets/`. Record exact original-to-local filename mapping and all modifications in `assets/LICENSES.md`, keeping third-party licensing separate from the project code license.
 3. Preserve the supplied RGBA artwork, dimensions, and transparent padding initially. Choose the sprite's world size explicitly from its texture dimensions/aspect ratio. If the supplied ship faces a different axis, apply a documented example-owned visual rotation offset so its logical forward direction remains +Y; do not change the engine's UV convention.
 4. Reuse the existing bottom-left decoding convention and nearest texture sampling. Validate ship orientation, transparent edges, tint, and native-size rendering in the new example. Do not add sprite sheets, generate mipmaps, or import unused pack files.
 
@@ -199,19 +210,19 @@ Retain all three visual references, without overwriting the original pack scene:
 | Realistic concept v1 below | Preferred material/detail target: metal panels, dark cockpit glass, rocky craters, and restrained emissive accents |
 | Softer concept v2 below | Preserved comparison: softer baked shading was explored but did not meet the owner’s visual preference |
 
-![Asteroids realistic material concept v1](../../examples/02-asteroids/docs/assets/asteroids-realistic-concept-v1.png)
+![Asteroids realistic material concept v1](../../examples/03-asteroids/docs/assets/asteroids-realistic-concept-v1.png)
 
 *Generated concept v1, 2026-10-14: detailed ships and rocky asteroids based on the owner-supplied pack scene. Retained as a material and composition reference. This image is not a Frostwind screenshot or a set of usable runtime sprites.*
 
-![Asteroids softer lighting concept v2](../../examples/02-asteroids/docs/assets/asteroids-soft-concept-v2.png)
+![Asteroids softer lighting concept v2](../../examples/03-asteroids/docs/assets/asteroids-soft-concept-v2.png)
 
 *Generated concept v2, 2026-10-14: softer overhead lighting and simplified shading. Preserved as an explored alternative; it is not the selected final art style or a rendered normal-map test.*
 
-The current direction is to retain v1’s richer surfaces while making lighting controllable at runtime. Neither generated scene contains a usable aligned normal-map set. [Individual transparent ship and meteor prototypes](../../examples/02-asteroids/docs/assets/asteroids-sprites/README.md) were subsequently generated and preserved with their prompts; they retain baked shading and do not supply matching normals. Do not extract already lit sprites from these scene images and treat them as lighting-neutral base color.
+The current direction is to retain v1’s richer surfaces while making lighting controllable at runtime. Neither generated scene contains a usable aligned normal-map set. [Individual transparent ship and meteor prototypes](../../examples/03-asteroids/docs/assets/asteroids-sprites/README.md) were subsequently generated and preserved with their prompts; they retain baked shading and do not supply matching normals. Do not extract already lit sprites from these scene images and treat them as lighting-neutral base color.
 
 ### Detailed sprite art style
 
-Use the [generated player ship](../../examples/02-asteroids/docs/assets/asteroids-sprites/player-ship-v1.png) and [generated meteor](../../examples/02-asteroids/docs/assets/asteroids-sprites/meteor-v1.png) as the latest individual art references. Preserve these prototypes and the older pack/scene versions unchanged; new asset revisions get separate filenames.
+Use the [generated player ship](../../examples/03-asteroids/docs/assets/asteroids-sprites/player-ship-v1.png) and [generated meteor](../../examples/03-asteroids/docs/assets/asteroids-sprites/meteor-v1.png) as the latest individual art references. Preserve these prototypes and the older pack/scene versions unchanged; new asset revisions get separate filenames.
 
 The target is detailed, semi-realistic science fiction rendered as 2D sprites, with a strict overhead orthographic view. Ship design uses an off-white central fuselage, burnt-orange wings, a dark blue-charcoal cockpit, shallow beveled panels, restrained wear, and readable engine housings. Rocks use asymmetrical chipped silhouettes, warm gray-brown stone, broad surface plates, fissures, and craters. Keep strong large shapes readable at gameplay size rather than relying on fine surface noise. Blue/teal accents may distinguish later secondary ships.
 
@@ -287,13 +298,13 @@ Document only these bindings in the example README. Manual camera pan/rotation/z
 
 ### Optional follow-up experiments
 
-The example’s purpose and technical success criteria are recorded in the [Asteroids README](../../examples/02-asteroids/README.md#technical-purpose-and-scope). A complete playable game is not required. After the foundation is validated, optional experiments may extend the same example when they answer another concrete engine question:
+The example’s purpose and technical success criteria are recorded in the [Asteroids README](../../examples/03-asteroids/README.md#technical-purpose-and-scope). A complete playable game is not required. After the foundation is validated, optional experiments may extend the same example when they answer another concrete engine question:
 
 1. Introduce fixed-step simulation scheduling as needed, thrust acceleration and inertia, and an example-owned arena with screen wrapping. Define arena bounds independently of camera zoom and viewport size.
 2. Add moving asteroids, bullets, and simple circle-based collision checks, followed by asteroid splitting. Keep geometry/simulation independent of the graphics context. A physics library is not required for the initial collision rules.
 3. Add score, lives, waves, restart behavior, and optional visual/audio feedback as separate work.
 
-The engine supplies reusable timing, input, camera, texture, and sprite facilities. Ship controls, arena/wrapping rules, asteroid sizes and splitting, bullets, collision responses, scoring, and match state belong in `examples/02-asteroids/`. Asteroids uses automatic following; a separate example can explore alternate camera behavior and manual manipulation. This draft specifies only the foundation sprint, not the follow-up gameplay contracts.
+The engine supplies reusable timing, input, camera, texture, and sprite facilities. Ship controls, arena/wrapping rules, asteroid sizes and splitting, bullets, collision responses, scoring, and match state belong in `examples/03-asteroids/`. Asteroids uses automatic following; a separate example can explore alternate camera behavior and manual manipulation. This draft specifies only the foundation sprint, not the follow-up gameplay contracts.
 
 ## Alternatives
 

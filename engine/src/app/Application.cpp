@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include <algorithm>
 #include <exception>
 #include <memory>
 
@@ -44,7 +45,22 @@ SDL_AppResult SDLCALL Application::onEvent(void* appstate, SDL_Event* event)
         if (event->type == SDL_EVENT_QUIT || event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
             return SDL_APP_SUCCESS;
         }
-        return static_cast<Application*>(appstate)->handleEvent(*event);
+        auto& application = *static_cast<Application*>(appstate);
+        if (event->type == SDL_EVENT_WINDOW_FOCUS_LOST || event->type == SDL_EVENT_WINDOW_MINIMIZED) {
+            application.active_ = false;
+            application.hasUpdateTimestamp_ = false;
+            application.keyboard_.releaseAll();
+            application.keyboard_.clearTransitions();
+        } else if (event->type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
+            application.active_ = true;
+            application.hasUpdateTimestamp_ = false;
+            application.keyboard_.releaseAll();
+            application.keyboard_.clearTransitions();
+        }
+        if (application.active_) {
+            application.keyboard_.handleEvent(*event);
+        }
+        return application.handleEvent(*event);
     } catch (const std::exception& error) {
         SDL_Log("Application event failed: %s", error.what());
     } catch (...) {
@@ -75,10 +91,18 @@ SDL_AppResult Application::handleEvent(const SDL_Event&)
     return SDL_APP_CONTINUE;
 }
 
+SDL_AppResult Application::update(f32)
+{
+    return SDL_APP_CONTINUE;
+}
+
 SDL_AppResult Application::iterate()
 {
     const u64 frameStart = SDL_GetTicksNS();
     if (window_.minimized()) {
+        hasUpdateTimestamp_ = false;
+        keyboard_.releaseAll();
+        keyboard_.clearTransitions();
         SDL_Delay(16);
         return SDL_APP_CONTINUE;
     }
@@ -88,6 +112,9 @@ SDL_AppResult Application::iterate()
         return SDL_APP_FAILURE;
     }
     if (width <= 0 || height <= 0) {
+        hasUpdateTimestamp_ = false;
+        keyboard_.releaseAll();
+        keyboard_.clearTransitions();
         const u64 budget = frameIntervalNs_ ? frameIntervalNs_ : 16 * SDL_NS_PER_MS;
         const u64 elapsed = SDL_GetTicksNS() - frameStart;
         if (elapsed < budget) {
@@ -102,6 +129,18 @@ SDL_AppResult Application::iterate()
     detail::requireOpenGL("Viewport");
     glViewport(0, 0, width, height);
     detail::checkOpenGL("Viewport");
+    if (active_) {
+        const f32 elapsedNs = frameStart - previousUpdateNs_;
+        const f32 deltaSeconds = hasUpdateTimestamp_ ?
+            std::min(elapsedNs / SDL_NS_PER_SECOND, 0.1f) : 0.0f;
+        previousUpdateNs_ = frameStart;
+        hasUpdateTimestamp_ = true;
+        const SDL_AppResult updateResult = update(deltaSeconds);
+        keyboard_.clearTransitions();
+        if (updateResult != SDL_APP_CONTINUE) {
+            return updateResult;
+        }
+    }
     const SDL_AppResult result = render(renderer_, width, height);
     if (result != SDL_APP_CONTINUE) {
         return result;

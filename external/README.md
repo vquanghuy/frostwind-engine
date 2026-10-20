@@ -7,6 +7,7 @@ Frostwind stores third-party dependencies locally in this directory.
 | [SDL3](sdl3/README.integration.md) | 3.4.18 | Official macOS universal dynamic framework with packaged headers |
 | [GLAD](glad/README.integration.md) | 2.0.8 | Generated OpenGL 3.3 Core C loader; local static target for native builds |
 | [stb_image](stb/README.integration.md) | 2.28 | Pinned local header; PNG/JPEG implementation compiled once into the engine |
+| [GLM](glm/README.integration.md) | 1.0.3 | Pinned local headers; transitive interface target for camera/math types |
 
 ## Layout
 

@@ -2,7 +2,7 @@
 
 An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Current rendering focuses on OpenGL; 2D/3D physics integrations are planned.
 
-> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/buffer/vertex-array owners, CPU image loading, and the Textured Quad example are implemented. Asteroids and Mini Artillery remain window scaffolds. Camera, audio, physics, terrain destruction, and 3D systems are planned; other graphics APIs are deferred research.
+> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/buffer/vertex-array owners, CPU image loading, elapsed-time updates, keyboard state, a perspective camera, and the Textured Quad/Textured Cube examples are implemented. Asteroids and Mini Artillery remain window scaffolds. Audio, physics, terrain destruction, 2D sprites/camera, and lighting are planned; other graphics APIs are deferred research.
 
 Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was initially named Toybox. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-frostwind-engine-and-examples.md).
 
@@ -10,13 +10,14 @@ Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was
 
 The static `frostwind` library supplies reusable facilities. Examples depend on the engine and own their application behavior and runtime assets; the engine never depends on an example.
 
-Example directories use two-digit prefixes for a suggested learning order: Textured Quad, Asteroids, then Mini Artillery. Each example builds independently; CMake targets and executable names omit the prefixes.
+Example directories use two-digit prefixes for a suggested learning order: Textured Quad, Textured Cube, Asteroids, then Mini Artillery. Each example builds independently; CMake targets and executable names omit the prefixes.
 
 | Example | Status |
 | --- | --- |
 | [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and an indexed quad with four vertices and six indices |
-| [Asteroids](examples/02-asteroids/README.md) | Runnable window scaffold; 2D camera/input/sprites, lighting, and gameplay planned |
-| [Mini Artillery](examples/03-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
+| [Textured Cube](examples/02-textured-cube/README.md) | Implemented: rotating indexed cube, orbit camera, depth/culling, 4× MSAA, and a 120 FPS cap with VSync |
+| [Asteroids](examples/03-asteroids/README.md) | Runnable window scaffold; 2D camera/mouse aiming/sprites, lighting, and gameplay planned |
+| [Mini Artillery](examples/04-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
 
 Asteroids and Mini Artillery each have a minimal executable that opens a plain OpenGL window, plus planning READMEs and concept/reference artwork. Their READMEs embed the preferred concepts and link older versions and provenance. Asteroids will own ship/arena rules, bullets, asteroid behavior, and scoring. Mini Artillery will own aiming, weapons, damage, turns, match rules, and game UI. Reusable terrain carving and collision rebuilding can belong to the engine. Other 2D/3D examples will be added as features need them; no gameplay is implemented yet.
 
@@ -28,8 +29,8 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 | Native development | macOS on Apple Silicon; Windows x64 and Linux x86_64 scaffolds remain unverified |
 | Graphics | OpenGL 3.3 Core baseline, GLAD 2.0.8; SDL3 window/context integration |
 | SDL | 3.4.18 official macOS universal dynamic framework |
-| Rendering resources | Direct OpenGL Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray owners; CPU Image loading; Renderer clears and sequential/indexed triangle draws; Application viewport handling |
-| Math and debug UI | GLM and Dear ImGui planned |
+| Rendering resources | Direct OpenGL Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray owners; CPU Image loading; Renderer clears, depth/culling controls, and sequential/indexed triangle draws; Application viewport handling |
+| Math and debug UI | GLM 1.0.3 integrated; Dear ImGui planned |
 | Image loading | stb_image 2.28; PNG/JPEG decoding |
 | Audio | SDL3 built-in audio planned; SDL3_mixer if richer playback is needed |
 | 2D physics and terrain | Box2D 3.x and Clipper2 planned |
@@ -40,9 +41,9 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 
 OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.
 
-The [engine roadmap](ROADMAP.md) records intended learning phases. Our [current focus](ROADMAP.md#current-focus---opengl-scenes) is a small OpenGL 3D scene followed by a bounded grass experiment, adding reusable rendering facilities as those scenes need them.
+The [engine roadmap](ROADMAP.md) records intended learning phases. Our [current focus](ROADMAP.md#current-focus---opengl-scenes) starts with [Textured Cube](examples/02-textured-cube/README.md) for matrices and camera experiments, then basic lighting before returning to Asteroids. Grass remains a later bounded experiment.
 
-[RFC 0006](docs/rfcs/0006-opengl-focused-rendering.md) records the current direct OpenGL design. All three examples use engine operations; resources manage their GL objects without a device, pipeline, or backend hierarchy. The prior multi-backend experiment is preserved at commit `e9cf616` on `archive/multi-backend-experiment` and in deferred [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md).
+[RFC 0006](docs/rfcs/0006-opengl-focused-rendering.md) records the current direct OpenGL design. All four examples use engine operations; resources manage their GL objects without a device, pipeline, or backend hierarchy. The prior multi-backend experiment is preserved at commit `e9cf616` on `archive/multi-backend-experiment` and in deferred [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md).
 
 ## Project structure
 
@@ -60,12 +61,15 @@ frostwind-engine/
 │   └── src/
 │       ├── core/               # Primitive type aliases
 │       ├── app/                # Application lifecycle and frame coordination
+│       ├── camera/             # CPU-only perspective camera and orbit controller
+│       ├── input/              # Keyboard state
 │       ├── platform/           # SDL window, OpenGL context/loading/presentation
 │       └── rendering/          # Rendering resources, clear/draw, CPU image loading
 ├── examples/
 │   ├── 01-textured-quad/       # Implemented code, CMake target, and runtime assets
-│   ├── 02-asteroids/           # Window scaffold, CMake target, and planning artwork
-│   └── 03-mini-artillery/      # Window scaffold, CMake target, and planning artwork
+│   ├── 02-textured-cube/       # Rotating 3D cube, orbit camera, runtime assets
+│   ├── 03-asteroids/           # Window scaffold, CMake target, and planning artwork
+│   └── 04-mini-artillery/      # Window scaffold, CMake target, and planning artwork
 ├── external/                   # Pinned dependencies and license records
 ├── docs/                       # Structure, development, conventions, and RFCs
 ├── ROADMAP.md                  # Learning phases and future experiments
@@ -74,16 +78,19 @@ frostwind-engine/
 └── build/                      # Ignored generated outputs
 ```
 
-Engine code uses namespace `frostwind`; example code stays outside it. Headers live beside their `.cpp` files. Add camera, input, audio, terrain, physics, further examples, and tests when needed. The [structure guide](docs/project-structure.md) records ownership, callbacks, runtime assets, and platform SDK layout.
+Engine code uses namespace `frostwind`; example code stays outside it. Headers live beside their `.cpp` files. Add further input, camera, audio, terrain, and physics facilities as examples need them. Opt-in camera/input/update checks live under `tests/`. The [structure guide](docs/project-structure.md) records ownership, callbacks, runtime assets, and platform SDK layout.
 
 ### Rendering layout
 
-[Window](engine/src/platform/Window.h) owns SDL video/window/context, GLAD initialization, VSync, and presentation. [Application](engine/src/app/Application.h) owns a persistent Renderer and coordinates callbacks, viewport sizing, and software frame pacing.
+[Window](engine/src/platform/Window.h) owns SDL video/window/context, GLAD initialization, VSync, and presentation. [Application](engine/src/app/Application.h) owns a persistent Renderer and coordinates callbacks, keyboard state, elapsed-time updates, viewport sizing, and software frame pacing.
 
 ```text
 engine/src/
 ├── app/Application.h, .cpp
 ├── platform/Window.h, .cpp
+├── camera/PerspectiveCamera.h, .cpp
+├── camera/OrbitCameraController.h, .cpp
+├── input/Keyboard.h, .cpp
 └── rendering/
     ├── Texture2D.h, .cpp       # Direct RGBA8 upload, file loading, texture binding
     ├── ShaderProgram.h, .cpp   # Vertex/fragment linking, use, typed uniform setters
@@ -119,16 +126,17 @@ cmake --build --preset native-debug --parallel
 ./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
-The preset builds all three examples. Textured Quad opens a resizable window with a centered quad displaying a generated crate texture. Its assets are resolved relative to the executable, independently of the working directory.
+The preset builds all four examples. Textured Quad opens a resizable window with a centered quad displaying a generated crate texture. Its assets are resolved relative to the executable, independently of the working directory.
 
-Run either window scaffold separately:
+Run the cube or either window scaffold separately:
 
 ```sh
+./build/native/bin/frostwind-textured-cube/frostwind-textured-cube
 ./build/native/bin/frostwind-asteroids/frostwind-asteroids
 ./build/native/bin/frostwind-mini-artillery/frostwind-mini-artillery
 ```
 
-Asteroids and Mini Artillery currently display plain backgrounds. Press Escape or close any example window to exit.
+Textured Cube uses arrow keys to orbit, W/S to change camera distance, Space to pause rotation, and R to reset. It requests 4× MSAA and caps at 120 FPS with VSync; the other examples retain their 60 FPS defaults. Asteroids and Mini Artillery currently display plain backgrounds. Press Escape or close any example window to exit.
 
 Each example's output directory contains its SDL framework and any runtime assets it uses. The two new scaffolds have no runtime assets; planning artwork is not packaged. Keep each output directory together when moving a build. CMake compiles the engine and GLAD from local source and copies the official SDL3 framework; it does not rebuild SDL3 or download dependencies. See [development instructions](docs/development.md) for individual targets, engine-only builds, IDE setup, and remaining platform checks.
 

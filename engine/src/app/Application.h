@@ -6,6 +6,7 @@
 #include <core/Types.h>
 
 #include "../platform/Window.h"
+#include "../input/Keyboard.h"
 #include "../rendering/Renderer.h"
 
 namespace frostwind {
@@ -36,6 +37,10 @@ protected:
     // Resource exceptions propagate to onInit, which logs and returns failure.
     virtual bool initialize() = 0;
     virtual SDL_AppResult handleEvent(const SDL_Event& event);
+    // Monotonic seconds between active frame starts, first/resumed update 0,
+    // clamped to 0.1 seconds. Returning exit/failure skips render/presentation.
+    virtual SDL_AppResult update(f32 deltaSeconds);
+    const Keyboard& keyboard() const { return keyboard_; }
     // Borrow the persistent renderer during this callback; do not retain it.
     // Dimensions are drawable pixels. Continue presents; exit/failure skips swap.
     // Rendering exceptions propagate to onIterate; no local catch is required.
@@ -45,7 +50,11 @@ private:
     SDL_AppResult iterate();
     Window window_;
     Renderer renderer_;
+    Keyboard keyboard_;
     u64 frameIntervalNs_ = 0;
+    u64 previousUpdateNs_ = 0;
+    bool hasUpdateTimestamp_ = false;
+    bool active_ = true;
 };
 
 } // namespace frostwind

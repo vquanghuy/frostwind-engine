@@ -38,7 +38,7 @@ frostwind-engine/
 │       └── rendering/          # ShaderProgram, Texture2D, future rendering tools
 ├── examples/
 │   ├── 01-textured-quad/        # Existing demo and its shader assets
-│   └── 03-mini-artillery/       # Game example, added when implementation starts
+│   └── 04-mini-artillery/       # Game example, added when implementation starts
 ├── external/                   # Shared pinned dependencies and licenses
 ├── docs/
 ├── CHANGELOG.md
@@ -98,7 +98,7 @@ Configure and build the engine and textured-quad executable with the native pres
 3. Remove the demo dependency from engine application coordination and update CMake targets, asset copying, and presets.
 4. Revise project documentation and guidance, then validate the native example and resource lifetimes.
 5. Rename GitHub to `frostwind-engine`, update the remote and repository links, and preserve existing history.
-6. Develop Mini Artillery under `examples/03-mini-artillery/`, introducing engine features as that game or focused examples need them.
+6. Develop Mini Artillery under `examples/04-mini-artillery/`, introducing engine features as that game or focused examples need them.
 
 ## Open questions
 

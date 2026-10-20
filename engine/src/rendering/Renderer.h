@@ -21,6 +21,13 @@ public:
     // Clears the full color target, independently of scissor/color write masks.
     // Requires a current initialized context.
     void clear(Color color) const;
+    // Clear depth to 1 with writes enabled, independently of scissor state.
+    // The window must have requested a depth buffer.
+    void clearDepth() const;
+    // Establish conventional 3D state: LESS depth comparison and depth writes;
+    // back-face culling uses counterclockwise front faces. State persists.
+    void setDepthTest(bool enabled) const;
+    void setBackFaceCulling(bool enabled) const;
     // Draws the entire configured geometry using stored counts: indexed when
     // an IndexBuffer is associated, sequential otherwise. Requires a nonempty
     // complete triangle list and an active shader program. Borrows the array,

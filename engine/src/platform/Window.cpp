@@ -23,8 +23,8 @@ Window::~Window()
 
 bool Window::initialize(const WindowConfig& config)
 {
-    if (window_ || config.width <= 0 || config.height <= 0) {
-        SDL_Log("Window initialization requires an empty owner and positive dimensions.");
+    if (window_ || config.width <= 0 || config.height <= 0 || config.msaaSamples < 0 || config.msaaSamples == 1) {
+        SDL_Log("Window initialization requires an empty owner, positive dimensions, and MSAA samples of 0 or at least 2.");
         return false;
     }
     Window candidate;
@@ -43,8 +43,10 @@ bool Window::initialize(const WindowConfig& config)
         !SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8) ||
         !SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8) ||
         !SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8) ||
-        !SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0) ||
-        !SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0)) {
+        !SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, config.depthBuffer ? 24 : 0) ||
+        !SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0) ||
+        !SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, config.msaaSamples > 0 ? 1 : 0) ||
+        !SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, config.msaaSamples)) {
         SDL_Log("OpenGL attributes failed: %s", SDL_GetError());
         return false;
     }
@@ -63,6 +65,29 @@ bool Window::initialize(const WindowConfig& config)
     if (version == 0 || !GLAD_GL_VERSION_3_3) {
         SDL_Log("GLAD could not load the required OpenGL 3.3 Core functions.");
         return false;
+    }
+    if (config.depthBuffer) {
+        int depthBits = 0;
+        if (!SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthBits) || depthBits < 24) {
+            SDL_Log("The 3D window requires at least 24 depth bits: %s", SDL_GetError());
+            return false;
+        }
+    }
+    if (config.msaaSamples > 0) {
+        int sampleBuffers = 0, samples = 0;
+        if (!SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &sampleBuffers) ||
+            !SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &samples) ||
+            sampleBuffers < 1 || samples < config.msaaSamples) {
+            SDL_Log("The window requires at least %d MSAA samples; obtained %d: %s",
+                config.msaaSamples, samples, SDL_GetError());
+            return false;
+        }
+        glEnable(GL_MULTISAMPLE);
+        if (glGetError() != GL_NO_ERROR) {
+            SDL_Log("Could not enable OpenGL multisampling.");
+            return false;
+        }
+        SDL_Log("MSAA requested %d samples; actual framebuffer has %d samples.", config.msaaSamples, samples);
     }
     SDL_Log("OpenGL target 3.3 Core; actual context %s; renderer: %s; detected %d.%d",
         reinterpret_cast<const char*>(glGetString(GL_VERSION)),

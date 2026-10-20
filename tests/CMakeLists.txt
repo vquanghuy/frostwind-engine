@@ -1,0 +1,16 @@
+add_executable(frostwind-camera-input-tests CameraInputTests.cpp)
+target_link_libraries(frostwind-camera-input-tests PRIVATE frostwind)
+frostwind_enable_warnings(frostwind-camera-input-tests)
+add_test(NAME camera-input COMMAND frostwind-camera-input-tests)
+
+add_executable(frostwind-orbit-camera-tests OrbitCameraTests.cpp)
+target_link_libraries(frostwind-orbit-camera-tests PRIVATE frostwind)
+frostwind_enable_warnings(frostwind-orbit-camera-tests)
+add_test(NAME orbit-camera COMMAND frostwind-orbit-camera-tests)
+
+if(NOT EMSCRIPTEN AND NOT WIN32)
+    add_executable(frostwind-update-tests ApplicationUpdateTests.cpp)
+    target_link_libraries(frostwind-update-tests PRIVATE frostwind GLAD::GLAD)
+    frostwind_enable_warnings(frostwind-update-tests)
+    add_test(NAME application-update COMMAND frostwind-update-tests)
+endif()

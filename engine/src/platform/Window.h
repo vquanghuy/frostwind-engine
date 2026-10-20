@@ -12,6 +12,10 @@ struct WindowConfig {
     int width = 960;
     int height = 540;
     bool vsync = true;
+    // Request a depth attachment for 3D examples; 2D keeps its existing format.
+    bool depthBuffer = false;
+    // Zero disables MSAA; an explicit request of at least 2 must be supported.
+    int msaaSamples = 0;
 };
 
 // Owns SDL video, its window, and an OpenGL context. GPU owners must die first.

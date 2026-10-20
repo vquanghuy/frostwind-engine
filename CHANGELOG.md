@@ -6,6 +6,12 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Added
 
+- Engine: reusable CPU-only `OrbitCameraController` composed with PerspectiveCamera, with configurable target, angular/distance speeds, pitch/distance limits, and validated movement inputs. PerspectiveCamera exposes its validated pose; Textured Cube delegates orbit movement to the controller while retaining key bindings, camera setup, and cube animation.
+- Engine: per-texture sampling options for trilinear filtering with generated mipmaps and capability-checked anisotropy. Textured Cube requests 16× anisotropy, clamped to the supported limit with a logged fallback; Textured Quad retains nearest filtering.
+- Textured Cube: second learning example with indexed 3D cube geometry, explicit model/view/projection matrices, keyboard orbit/distance controls, elapsed-time rotation, pause/reset, depth testing/back-face culling, 4× MSAA, and a 120 FPS cap with VSync. Owner-supplied capture preserved below; lighting/shadows/skyboxes remain planned.
+- Engine: CPU-only GLM-backed `PerspectiveCamera`, pinned local GLM 1.0.3 with provenance, Keyboard scancode state, and optional monotonic `update(deltaSeconds)` with focus handling, stall clamping, and callback result/exception propagation. Opt-in context-free camera/input/update CTest checks accompany the foundation.
+- Engine: optional 24-bit depth and verified MSAA requests in WindowConfig, plus direct Renderer depth clear/test and back-face culling controls. Existing 2D defaults remain unchanged.
+- Documentation: RFC 0007 records cube/camera/input/update contracts; RFC 0005 identifies the now-shared foundation. Cube transforms/camera and basic lighting precede the return to Asteroids; grass remains a later experiment.
 - Engine: separate `VertexArray` owner with `VertexLayout` stride/attributes, optional initialized IndexBuffer association, stored vertex/index counts, and scoped initialization cleanup/state restoration.
 - Engine: immutable u32 `IndexBuffer` storage with cached count/maximum metadata and indexed submission through `Renderer::drawTriangles`, including vertex-bound validation, context guards, and exception-safe VAO restoration.
 - Documentation: task-based rendering guide using textured-quad pseudocode, concise clear/draw explanations, and direct links to the working example, example-facing class reference, program/geometry sharing, call/ownership/lifecycle diagrams, current limits, and troubleshooting; public header comments clarify initialization, borrowing, and failure contracts.
@@ -26,6 +32,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Examples: inserted `02-textured-cube` and moved Asteroids/Mini Artillery sources and planning artwork to `03-asteroids` / `04-mini-artillery`; retained their target names, runtime output paths, behavior, and assets. All build presets include the cube.
 - Build: simplified Textured Quad asset copying to a direct post-build step on its executable and removed the separate asset helper target. Asset-only changes use Rebuild; QuadDemo.h is listed with the example sources for IDE visibility.
 - Engine: VertexBuffer now owns bytes only; VertexArray owns VAO/layout and borrows buffers. Renderer exposes one `drawTriangles(vertexArray)` method that uses stored counts and selects indexed/sequential drawing from the optional IndexBuffer; subrange overloads and the CPU index copy are removed. Textured Quad configures its array once and destroys it before its buffers.
 - Documentation: refreshed the project structure, root README, and rendering usage guide with IndexBuffer ownership, the indexed quad flow/layout, byte-versus-element initialization units, automatic draw selection, and direct example links.
@@ -45,7 +52,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 - Documentation: accepted RFC 9999 for staged implementation and recorded its initial ownership refactor; completed the shared frame/resource migration through all three examples.
 - Documentation: aligned the README technical approach and project structure guide with draft RFC 9999, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
 - Documentation: expanded draft RFC 9999 with concrete window/device composition, private backend inheritance and surface integration, resource/frame contracts, and staged example migration criteria.
-- Examples: numbered source directories as `01-textured-quad`, `02-asteroids`, and `03-mini-artillery` for suggested learning order; updated build and documentation paths while retaining target names and executable output paths.
+- Examples: numbered source directories as `01-textured-quad`, `03-asteroids`, and `04-mini-artillery` for suggested learning order; updated build and documentation paths while retaining target names and executable output paths.
 - Asteroids: placed the selected concept first in its README and specified mouse heading, heading-relative WASD movement, and Escape to quit; camera follows automatically at fixed rotation/zoom, while manual camera controls are deferred to another example.
 - Asteroids: documented its purpose as a focused engine experiment, planned technical challenges and validation evidence, and completion criteria independent of a fully functional game.
 - Examples: organized planned Asteroids and Mini Artillery around their own READMEs with embedded concepts, the Asteroids art progression and selected style, preserved older artwork, and example-owned `docs/assets/` provenance; historical milestone captures remain central. RFC 0005 also records NormalMap-Online as a candidate offline height-to-normal tool.
@@ -54,6 +61,10 @@ All notable changes to Frostwind and its examples are documented in this file.
 ### Removed
 
 - Engine: experimental GraphicsDevice/GraphicsBackend, WindowSurface integration hierarchy, opaque resource registries, separate Shader stages, GraphicsPipeline descriptions, and scoped RenderFrame submission. The prior experiment is preserved in Git. Static texture-support initialization remains removed.
+
+![Frostwind textured cube](docs/assets/milestones/m005-frostwind-textured-cube.png)
+
+*Frostwind Textured Cube on macOS Apple M1 Pro, captured manually by the owner on 2026-10-20. The running example displays the textured 3D cube; lighting and shadows remain planned.*
 
 ## 0.3.0 - 2026-10-14 (milestone)
 

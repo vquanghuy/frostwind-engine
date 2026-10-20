@@ -40,6 +40,42 @@ void Renderer::clear(Color color) const
     detail::checkOpenGL("Color clear");
 }
 
+void Renderer::clearDepth() const
+{
+    detail::requireOpenGL("Depth clear");
+    glDisable(GL_SCISSOR_TEST);
+    glDepthMask(GL_TRUE);
+    glClearDepth(1.0);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    detail::checkOpenGL("Depth clear");
+}
+
+void Renderer::setDepthTest(bool enabled) const
+{
+    detail::requireOpenGL("Depth test");
+    if (enabled) {
+        glEnable(GL_DEPTH_TEST);
+    } else {
+        glDisable(GL_DEPTH_TEST);
+    }
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    detail::checkOpenGL("Depth test");
+}
+
+void Renderer::setBackFaceCulling(bool enabled) const
+{
+    detail::requireOpenGL("Back-face culling");
+    if (enabled) {
+        glEnable(GL_CULL_FACE);
+    } else {
+        glDisable(GL_CULL_FACE);
+    }
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+    detail::checkOpenGL("Back-face culling");
+}
+
 void Renderer::drawTriangles(const VertexArray& vertexArray) const
 {
     detail::requireOpenGL("Triangle draw");

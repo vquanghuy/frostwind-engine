@@ -56,6 +56,7 @@
       "configurePreset": "native-debug",
       "targets": [
         "frostwind-textured-quad",
+        "frostwind-textured-cube",
         "frostwind-asteroids",
         "frostwind-mini-artillery"
       ]
@@ -66,6 +67,7 @@
       "configuration": "Debug",
       "targets": [
         "frostwind-textured-quad",
+        "frostwind-textured-cube",
         "frostwind-asteroids",
         "frostwind-mini-artillery"
       ]
@@ -75,6 +77,7 @@
       "configurePreset": "linux-debug",
       "targets": [
         "frostwind-textured-quad",
+        "frostwind-textured-cube",
         "frostwind-asteroids",
         "frostwind-mini-artillery"
       ]

@@ -54,16 +54,40 @@ Returning success or failure skips presentation. Rendering operations and resour
 | Class or functions | When to use | Main operations |
 | --- | --- | --- |
 | [Application](../engine/src/app/Application.h) | Host an example with SDL callbacks | Override `initialize`, `handleEvent`, `render(renderer, width, height)` |
+| [PerspectiveCamera](../engine/src/camera/PerspectiveCamera.h) | Calculate CPU-only 3D view/projection matrices | `setView`, `setPerspective`, `view`, `projection`, `viewProjection` |
+| [OrbitCameraController](../engine/src/camera/OrbitCameraController.h) | Move a perspective camera around a target without device bindings | `reset(camera, config)`, `update(camera, input, deltaSeconds)` |
+| [Keyboard](../engine/src/input/Keyboard.h) | Read state through Application's protected `keyboard()` accessor | `isDown`, `wasPressed`, `wasReleased` |
 | [Window](../engine/src/platform/Window.h) | Own the SDL window and current GL context; normally Application handles it | `initialize`, `pixelSize`, `makeCurrent`, `present` |
 | [ShaderProgram](../engine/src/rendering/ShaderProgram.h) | Link and activate vertex/fragment shaders and update uniforms | `initializeFromFiles`, `use`, `uniformLocation`, `setInt`, `setFloat`, `setVec2/3/4`, `setMat4` |
 | [Texture2D](../engine/src/rendering/Texture2D.h) | Upload RGBA8 or load PNG/JPEG and select a texture unit | `initializeRGBA8`, `initializeFromFile`, `bind` |
 | [VertexBuffer](../engine/src/rendering/VertexBuffer.h) | Upload immutable vertex bytes | `initialize`, `bind`, `byteCount` |
 | [VertexArray](../engine/src/rendering/VertexArray.h) | Configure vertex layout and optional indices from initialized buffers | `initialize`, `bind`, `vertexCount`, `indexCount`, `indexBuffer` |
 | [IndexBuffer](../engine/src/rendering/IndexBuffer.h) | Store immutable u32 indices and query their cached maximum | `initialize`, `bind`, `indexCount`, `maxIndex` |
-| [Renderer](../engine/src/rendering/Renderer.h) | Borrow during the callback to clear and submit draws | `clear`, `drawTriangles` |
+| [Renderer](../engine/src/rendering/Renderer.h) | Borrow during the callback to clear, configure depth/culling, and submit draws | `clear`, `clearDepth`, `setDepthTest`, `setBackFaceCulling`, `drawTriangles` |
 | [Image](../engine/src/rendering/Image.h) | Decode pixels independently of OpenGL | `load(path, maxDimension)`, `width`, `height`, `pixels` |
 
 ## Create resources once
+
+For 3D usage, see [Textured Cube](../examples/02-textured-cube/README.md) and
+[CubeDemo.cpp](../examples/02-textured-cube/CubeDemo.cpp). Its WindowConfig opts
+into depth storage and 4× MSAA before window creation. The example sets depth
+testing/back-face culling, clears color and depth each frame, uploads explicit
+model/view/projection matrices through the existing `setMat4`, and draws the
+indexed cube. Depth uses LESS/writes and back-face culling uses BACK/CCW;
+state persists until changed. `clearDepth` disables scissor, enables depth
+writes, and clears to 1. MSAA is configured and verified by Window. The cube initializes its texture
+with `{TextureFilter::Trilinear, 16}`: generated mipmaps, linear magnification,
+trilinear minification, and up to 16× anisotropy. Support/limits are checked and
+the applied anisotropy is logged; unavailable anisotropy falls back to
+trilinear filtering. Textured Quad retains nearest sampling. The cube uses a
+120 FPS cap with VSync.
+
+Animation and controls belong in `update(f32 deltaSeconds)` before rendering.
+Application exposes accumulated keyboard state, consumes edge flags after the
+update, and pauses updates/clears held keys on focus loss. First/resumed delta
+is zero, and stalls clamp to 0.1 seconds. Update results/exceptions stop the
+frame before rendering/presentation. Textured Quad keeps its default no-op
+update and existing drawing behavior.
 
 ```text
 initialize():
@@ -198,6 +222,7 @@ CPU `Image` loading needs no context. GPU uploads and shader compilation require
 | Vertex draw fails | Count must be nonzero, divisible by three, and within initialized vertex storage |
 | Indexed draw fails | Check that every index refers to an existing vertex and that the full index count forms complete triangles |
 | Cleanup reports the wrong context | Destroy resources before Window and keep that context current |
-| Need depth, instancing, or other sampling | These are not implemented yet; add them for a concrete example |
+| Aliased texture detail on angled faces | Use trilinear mipmaps and capability-checked anisotropy; MSAA addresses geometric edges |
+| Need instancing or richer sampling | Add further operations for a concrete example |
 
-PNG/JPEG decoding, nearest/clamp-to-edge RGBA8 textures, float vertex attributes, u32 indexed and non-indexed triangle lists, and vertex/fragment GLSL programs are implemented. Camera, lighting systems, depth/stencil storage, instanced geometry, other backends, and browser builds remain future work. Continue with the small 3D scene in the roadmap; preserve Textured Quad and both scaffolds as the engine grows.
+PNG/JPEG decoding, RGBA8 textures with nearest or trilinear/mipmap sampling and optional anisotropy, float vertex attributes, u32 indexed and non-indexed triangle lists, perspective camera math, optional depth/MSAA, depth/culling controls, and vertex/fragment GLSL programs are implemented. Lighting systems, stencil operations, instanced geometry, other backends, and browser builds remain future work. Continue with Textured Cube in the roadmap; preserve Textured Quad and both scaffolds as the engine grows.

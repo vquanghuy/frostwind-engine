@@ -8,7 +8,16 @@ struct SDL_GLContextState;
 
 namespace frostwind {
 
-// Direct OpenGL RGBA8 owner: nearest filtering, clamp-to-edge, no mipmaps.
+enum class TextureFilter { Nearest, Trilinear };
+
+struct TextureSampling {
+    TextureFilter filter = TextureFilter::Nearest;
+    // Finite and >= 1. Clamp to the context's limit; unsupported falls back to 1.
+    f32 anisotropy = 1;
+};
+
+// Direct OpenGL RGBA8 owner with clamp-to-edge wrapping. Default sampling is
+// nearest/no mipmaps; Trilinear generates mipmaps and uses linear magnification.
 // Its creating context must be current for use and destruction, and outlive it.
 // Initialization/use throw std::runtime_error with operation diagnostics.
 // Destruction never throws.
@@ -22,8 +31,9 @@ public:
     // Positive dimensions within GL_MAX_TEXTURE_SIZE; exactly width*height*4
     // bytes, bottom row first. Upload preserves binding and pixel-unpack state.
     // One-time after success; failed initialization cleans up and permits retry.
-    void initializeRGBA8(int width, int height, const byte* pixels, usize byteCount);
-    void initializeFromFile(const std::filesystem::path& path);
+    void initializeRGBA8(int width, int height, const byte* pixels, usize byteCount,
+        const TextureSampling& sampling = {});
+    void initializeFromFile(const std::filesystem::path& path, const TextureSampling& sampling = {});
     // Sets the active unit, binds this texture, and selects its own sampling.
     void bind(u32 unit = 0) const;
 

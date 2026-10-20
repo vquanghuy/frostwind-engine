@@ -17,17 +17,19 @@ cmake --build --preset native-debug --parallel
 ./build/native/bin/frostwind-textured-quad/frostwind-textured-quad
 ```
 
-The preset configures Debug for macOS arm64 using Unix Makefiles and builds all three example targets, each linked to the static `frostwind` library:
+The preset configures Debug for macOS arm64 using Unix Makefiles and builds all four example targets, each linked to the static `frostwind` library:
 
 | Target | Window title | Current behavior |
 | --- | --- | --- |
 | `frostwind-textured-quad` | Frostwind - Textured Quad | 800 × 600 window with a centered crate texture |
+| `frostwind-textured-cube` | Frostwind - Textured Cube | Rotating textured cube, orbit controls, 4× MSAA, 120 FPS cap with VSync |
 | `frostwind-asteroids` | Frostwind - Asteroids | 960 × 540 window with a plain dark-blue background |
 | `frostwind-mini-artillery` | Frostwind - Mini Artillery | 960 × 540 window with a plain dark-green background |
 
-Run the scaffolds separately:
+Run the cube or scaffolds separately:
 
 ```sh
+./build/native/bin/frostwind-textured-cube/frostwind-textured-cube
 ./build/native/bin/frostwind-asteroids/frostwind-asteroids
 ./build/native/bin/frostwind-mini-artillery/frostwind-mini-artillery
 ```
@@ -39,7 +41,7 @@ cmake --build --preset native-debug --target frostwind-asteroids --parallel
 cmake --build --preset native-debug --target frostwind-mini-artillery --parallel
 ```
 
-Each example output directory contains `Frameworks/SDL3.framework`. Textured Quad also contains `assets/`; its assets are copied after the executable is linked. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The new scaffolds use no runtime assets and do not package planning artwork. Keep each entire output directory together when relocating it. Each example README describes ownership and controls.
+Each example output directory contains `Frameworks/SDL3.framework`. Textured Quad and Textured Cube also contain their own `assets/`; each copies its assets after linking. Shader lookup is executable-relative, so launches from an IDE or another working directory use the same assets. The new scaffolds use no runtime assets and do not package planning artwork. Keep each entire output directory together when relocating it. Each example README describes ownership and controls.
 
 After changing shaders or textures, use **Rebuild** on `frostwind-textured-quad` in the IDE. From the terminal, force a rebuild with:
 
@@ -62,9 +64,24 @@ cmake --build build/engine-only --parallel
 
 This produces `build/engine-only/engine/libfrostwind.a` and the local GLAD archive. Runtime dependencies are packaged when an executable is built; the library alone opens no window.
 
+### Context-free checks
+
+Configure an engine-only test build without opening a window:
+
+```sh
+cmake -S . -B build/cube-tests -DFROSTWIND_BUILD_EXAMPLES=OFF -DFROSTWIND_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES=arm64
+cmake --build build/cube-tests --parallel
+ctest --test-dir build/cube-tests --output-on-failure
+```
+
+Tests are disabled by default. The camera/input check needs no graphics context;
+Application callback checks replace platform time/window operations on native
+non-Windows builds. These do not replace interactive rendering/platform checks.
+Keep generated outputs under `build/`. Windows/Linux/browser remain unverified.
+
 ## IDE setup
 
-CLion can open the root `CMakeLists.txt` and use the native preset. Select `frostwind-textured-quad`, `frostwind-asteroids`, or `frostwind-mini-artillery` as the executable target. CMake supplies the C++17, GLAD, and SDL framework settings; no separate include paths are needed.
+CLion can open the root `CMakeLists.txt` and use the native preset. Select `frostwind-textured-quad`, `frostwind-textured-cube`, `frostwind-asteroids`, or `frostwind-mini-artillery` as the executable target. CMake supplies the C++17, GLAD, and SDL framework settings; no separate include paths are needed.
 
 For VS Code, install Microsoft's C/C++ and CMake Tools extensions, select `native-debug` with **CMake: Select Configure Preset**, then run **CMake: Configure**. The preset exports `build/native/compile_commands.json`.
 
@@ -86,13 +103,13 @@ For local macOS debugging, use `type: cppdbg`, `request: launch`, `MIMode: lldb`
 
 The static engine library contains Application, Window, Renderer, Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, VertexArray, CPU Image, and Application-owned viewport setup. Window owns SDL video/window/context, GLAD loading, VSync, and presentation. Texture/program/vertex classes perform their own OpenGL operations with private handles; there is no device/backend/pipeline/frame/surface hierarchy. See [project structure](project-structure.md), the [rendering guide](rendering-guide.md), and [RFC 0006](rfcs/0006-opengl-focused-rendering.md).
 
-Examples override `initialize()`, `handleEvent(event)`, and `render(Renderer& renderer, int width, int height)`. Application owns one persistent Renderer, makes the context current, sets the viewport from drawable pixels, passes the renderer by reference, and presents continuing callbacks. Renderer clears and submits draws; examples do not retain the callback reference or own another renderer. Resources require their creating context to remain current and outlive them. Derived members are destroyed before the base Window/context, including after failed startup. Context checks diagnose misuse without switching contexts or retaining the window. Native graphics calls stay in engine implementations; GLAD includes remain private.
+Examples override `initialize()`, `handleEvent(event)`, and `render(Renderer& renderer, int width, int height)`, with an optional `update(f32 deltaSeconds)` before rendering. Update delta uses monotonic callback starts, first/resumed 0 and a 0.1-second stall clamp. Focus loss pauses updates/clears keys; update exit/failure skips render/present. This is separate from fixed-step simulation. Application owns one persistent Renderer, makes the context current, sets the viewport from drawable pixels, passes the renderer by reference, and presents continuing callbacks. Renderer clears color/depth, controls depth testing/back-face culling, and submits draws; examples do not retain the callback reference or own another renderer. Resources require their creating context to remain current and outlive them. Derived members are destroyed before the base Window/context, including after failed startup. Context checks diagnose misuse without switching contexts or retaining the window. Native graphics calls stay in engine implementations; GLAD includes remain private.
 
 The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. Textured Quad uses GLSL 330, a regular `vec2 uScale`, a unit-0 sampler, four vertices/six indices, and the packaged crate image. ShaderProgram provides activation, cached uniform lookup, integer/float/vec2/3/4 and column-major mat4 writes. VertexBuffer owns vertex bytes; IndexBuffer owns u32 indices and cached bounds; VertexArray owns the layout/buffer associations and stores vertex/index counts. Renderer draws the whole array through one `drawTriangles(vertexArray)` method, selecting indexed or sequential drawing automatically and restoring the prior VAO. Texture2D validates/upload RGBA8 bytes or composes CPU PNG/JPEG decoding and upload, preserving unpack state. No static texture-support setup or padded quad parameter block is needed.
 
-All examples default to a 60 FPS software cap with VSync requested. `ApplicationConfig::maxFps` chooses another cap; 0 disables software pacing. Set `config.window.vsync = false` too when measuring uncapped rendering. Render/swap time counts toward the callback budget and slow frames do not create catch-up work. Minimized windows use a separate idle delay; zero-sized targets use the remaining budget or a 16 ms uncapped fallback. See [RFC 0004](rfcs/0004-frame-pacing.md).
+Textured Cube uses a 120 FPS software cap and 4× MSAA with VSync requested. The other examples retain a 60 FPS cap with VSync requested. MSAA sample count is checked and logged at initialization; an explicit unsupported request fails rather than silently disabling anti-aliasing. `ApplicationConfig::maxFps` chooses another cap; 0 disables software pacing. Set `config.window.vsync = false` too when measuring uncapped rendering. Render/swap time counts toward the callback budget and slow frames do not create catch-up work. Minimized windows use a separate idle delay; zero-sized targets use the remaining budget or a 16 ms uncapped fallback. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
-Camera, audio, physics, terrain destruction, and depth/instancing features remain planned. Multi-backend work is deferred; the prior implementation is archived at `e9cf616` on `archive/multi-backend-experiment`, with research in RFC 9999. Windows/Linux and browser support remain unverified. No automated test suite is established; temporary validation artifacts remain under ignored `build/`.
+PerspectiveCamera with a composed OrbitCameraController, keyboard state, elapsed-time updates, optional depth/MSAA, and depth/culling controls are implemented for Textured Cube. Camera2D, mouse state, audio, physics, terrain destruction, lighting, and instancing remain planned. Multi-backend work is deferred; the prior implementation is archived at `e9cf616` on `archive/multi-backend-experiment`, with research in RFC 9999. Windows/Linux and browser support remain unverified. Opt-in CTest checks cover camera/input math and update coordination; additional native validation artifacts remain under ignored `build/`.
 
 ## Verification record
 
@@ -195,7 +212,7 @@ The executable should reference `@rpath/SDL3.framework/Versions/A/SDL3`, with th
 
 ## Other platforms (prepared, unverified)
 
-Windows MSVC x64 and Linux x86_64 presets select all three example targets, but their SDKs are not supplied. The expected SDL3 layouts are recorded in [project structure](project-structure.md#platform-sdks-and-header-lookup). Each platform must validate compilation, dynamic loading, rendering, input, and cleanup before being described as supported.
+Windows MSVC x64 and Linux x86_64 presets select all four example targets, but their SDKs are not supplied. The expected SDL3 layouts are recorded in [project structure](project-structure.md#platform-sdks-and-header-lookup). Each platform must validate compilation, dynamic loading, rendering, input, and cleanup before being described as supported.
 
 Windows needs Visual Studio 2022 with C++ desktop tools, a Windows SDK, and matching SDL3 3.4.18 MSVC headers/import library/DLL:
 
@@ -252,3 +269,98 @@ Resource/lifecycle checks passed, including frame failure without presentation a
 ### Post-build asset copying validation (2026-10-20)
 
 The native preset configured and built all three examples after removing the separate asset target. An incremental quad build left a deliberately stale copied shader untouched; a clean rebuild relinked the example and restored all four runtime assets to their source bytes. The asset helper was absent from CMake's target list, all three executables were rebuilt, and SDL framework symlinks remained intact. Documentation links and whitespace checks passed. No rendering code changed; runtime/visual checks were not repeated.
+
+### Textured Cube validation (2026-10-20)
+
+The native preset configured and built all four examples. A fresh engine-only
+configuration with `FROSTWIND_BUILD_TESTS=ON` under `build/cube-tests/` built
+successfully; both CTest checks passed. They cover perspective near/far depth
+and frustum corners, view/orbit translation, aspect changes, invalid setters
+retaining state, keyboard edges/repeats/invalid scancodes, first/resumed and
+clamped update deltas, focus/minimized/zero-size handling, callback results/
+exceptions, initialization cleanup, and controlled 30/60/120 FPS schedules.
+
+Temporary native checks under `build/cube-check/` compiled the actual cube
+entry point and ran from `/private/tmp` with approved display access. Apple M1
+Pro supplied OpenGL 4.1, **4 MSAA samples and 32 depth bits** for the requested
+4× MSAA/24-bit-depth configuration. With the scene paused, MSAA-on versus
+MSAA-off readback differed at 1,567 edge pixels, then returned to the original
+output when re-enabled. Pause stability, orbit, distance changes, rotation,
+reset, synthetic focus loss/regain, drawable viewport resize, Escape/close
+exit, missing-asset startup cleanup, and fresh startup retry passed. These were
+in-memory readbacks; no screenshots were captured.
+
+Focused native graphics checks verified near geometry occluding later far
+geometry, disabling depth testing, clearing depth despite prior write/scissor
+masks, and CCW/back-face culling versus disabled culling. Invalid MSAA counts
+and injected unfulfilled depth/sample requests failed cleanly and allowed a
+Window initialization retry. Existing lifecycle checks passed for startup
+faults, callback failures/exceptions, presentation failure, and VAO/buffer/
+texture destruction before context/window/video teardown.
+
+All three earlier examples retained their exact prior framebuffer hashes in
+two three-frame runs each, with synthetic Escape/close exits. Moved source and
+artwork bytes, packaged cube assets, preset target lists, SDL framework
+symlinks, source boundaries, and local documentation links were checked.
+
+The cube is configured for a **120 FPS cap with VSync**, not a measured sustained
+120 FPS claim. Interactive smoothness on the owner's 120 Hz display, manual
+Retina/window resizing, focus switching/minimize/restore, and IDE use remain
+manual checks. Native automated minimization again did not synchronize, so
+its real transition remains unverified. Windows/Linux/browser remain pending.
+The owner subsequently supplied the cube milestone screenshot; see the
+[capture record](#textured-cube-owner-capture-2026-10-20). Camera controller
+extraction/FPS movement, lighting, shadows, and skyboxes are future increments.
+
+### Cube texture filtering validation (2026-10-20)
+
+After adding optional TextureSampling, the native preset built all four examples.
+Native checks under `build/cube-check/` ran from `/private/tmp` with approved
+window access. Apple M1 Pro's OpenGL 4.1 context supported and applied **16×
+anisotropic filtering**. The actual cube used linear magnification, trilinear
+minification, and all **11 mip levels** from its 1254 × 1254 source down to 1 × 1.
+Cube controls, resize, startup cleanup/retry, and MSAA checks passed again.
+
+Focused checks verified known checkerboard mip averages, preserved texture-unit/
+binding and pixel-unpack state, an injected 4× capability limit, unsupported
+extension fallback to 1× anisotropy, invalid requests, and a mip-generation error
+restoring state and allowing retry. Textured Quad retained its previous exact
+framebuffer hash `1129920399774065595` in both runs. No screenshots were captured;
+visual smoothness during rotation remains an owner check. Existing 4× MSAA and
+120 FPS cap/VSync settings are unchanged.
+
+### Orbit camera controller validation (2026-10-20)
+
+Extracted device-independent orbit movement into the engine's composed
+OrbitCameraController. PerspectiveCamera now retains/exposes its validated
+position, target, and normalized up vector. CubeDemo supplies key bindings and
+initial camera settings, delegates movement, and keeps model animation separate.
+Neither camera class requires SDL or an OpenGL context; FPS movement remains
+a future controller rather than a new camera inheritance hierarchy.
+
+The native preset rebuilt all four examples. The engine-only test build passed
+all three CTest checks, including new numerical orbit checks for yaw direction,
+target translation, pitch/distance clamps, reset, zero input/delta, projection
+independence, equivalent 30/60/120 update schedules, and invalid/overflowing
+requests preserving camera/controller state. Pose updates borrowing the camera's
+own getters were also verified.
+
+Temporary native cube/quad checks ran from `/private/tmp` with approved window
+access. Cube orbit/distance controls, pause/reset/rotation, synthetic focus
+loss/regain, drawable resize, Escape/close, and missing-asset cleanup/retry passed.
+Texture settings remained trilinear with 16× anisotropy and 11 mip levels, with
+4× MSAA; the example retains its 120 FPS cap and VSync request. Textured Quad
+again matched framebuffer hash `1129920399774065595` in both runs. No screenshots
+were captured. Interactive smoothness, real focus/minimize/Retina transitions,
+and other platforms remain manual checks. The owner-supplied milestone capture
+is recorded below.
+
+### Textured Cube owner capture (2026-10-20)
+
+The owner supplied Desktop `Screenshot 2026-10-20 at 15.11.17.png`, showing the
+running Textured Cube window on macOS Apple M1 Pro. Its original PNG is preserved
+unchanged as [M005](assets/milestones/m005-frostwind-textured-cube.png), embedded in
+the changelog and cube README, with provenance in the documentation image inventory.
+This fulfills the previously pending capture. It does not establish sustained
+120 FPS or complete the remaining interactive/platform checks. This documentation
+update captured no new screenshots and changed no rendering code.
