@@ -2,13 +2,13 @@
 
 Frostwind grows through practical examples, with OpenGL as the current learning focus. Metal on macOS and Vulkan on Windows/Linux remain deferred future directions. The phases below group the intended work by theme and suggested learning order. They have no delivery dates or release commitments, and later priorities can change as examples reveal requirements.
 
-The current baseline is native macOS window/application management, frame pacing, shared frame/resource/pipeline operations backed by OpenGL, CPU image loading, Textured Quad, and the Asteroids/Mini Artillery window scaffolds. Windows/Linux SDK verification and browser builds remain pending. See the [README](README.md) for current capabilities, [RFCs](docs/rfcs/README.md) for detailed proposals, and the [changelog](CHANGELOG.md) for completed work and owner-supplied captures.
+The current baseline is native macOS window/application management, frame pacing, direct OpenGL texture/program/vertex owners, CPU image loading, Textured Quad, and the Asteroids/Mini Artillery window scaffolds. Windows/Linux SDK verification and browser builds remain pending. See the [README](README.md) for current capabilities, [RFCs](docs/rfcs/README.md) for detailed proposals, and the [changelog](CHANGELOG.md) for completed work and owner-supplied captures.
 
 Phase numbers describe intended sequencing; they are separate from historical development milestone identifiers. Each phase describes its target scope; see the changelog for implemented increments. A roadmap phase does not accept its detailed RFC, establish platform support, or authorize a release or tag.
 
 ## Current focus - OpenGL scenes
 
-Keep one active learning objective: first a small conventional 3D scene, then a bounded grass experiment on OpenGL. This roadmap owns the learning sequence; [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md) preserves the multi-backend analysis as deferred research, not a requirement for current OpenGL changes. Retain the implemented boundary as provisional and extend it only when the selected example needs an operation. Grass appearance and controls belong to its example; reusable rendering operations belong in the engine.
+Keep one active learning objective: first a small conventional 3D scene, then a bounded grass experiment on OpenGL. This roadmap owns the learning sequence; [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md) preserves the multi-backend analysis as deferred research, not a requirement for current OpenGL changes. Keep the current OpenGL classes focused on their responsibilities and extend them only when the selected example needs an operation. Grass appearance and controls belong to its example; reusable rendering operations belong in the engine.
 
 1. **Small conventional 3D scene:** render a simple textured object or cube with a movable perspective camera. Add the input/math support, vertex formats, matrix parameters, depth testing, and any indexed drawing/culling actually needed by that scene. Verify transforms, aspect ratio, occlusion, texture orientation, resizing, and existing examples before expanding it.
 2. **Small grass patch:** build a bounded example on a simple ground plane with a camera and reusable blade/clump geometry. Introduce instance data and instanced drawing when the patch needs many copies; keep placement, variation, controls, and grass appearance in the example.
@@ -24,21 +24,21 @@ Asteroids' camera/input/sprite proposal, Mini Artillery, water/fluid work, and p
 
 Phase numbers remain thematic guidance. The 2D Asteroids proposal can be selected separately; it is not a prerequisite for the current 3D-to-grass direction. Metal/Vulkan implementation, shader cross-compilation, runtime backend selection, and further portability infrastructure are deferred. Choose a new active objective explicitly before pursuing them. Completed progress remains in the changelog.
 
-## Phase 1 - Rendering boundary
+## Phase 1 - OpenGL rendering owners
 
-The first phase uses the existing OpenGL renderer to learn graphics ownership and establish a small interface that future backends can improve. The [structure guide](docs/project-structure.md) documents the implemented OpenGL foundation; [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md) retains the broader multi-backend investigation as deferred research. The changelog records verification and remaining manual/platform checks. The intended capabilities are:
+Use the existing OpenGL renderer to learn resource ownership and rendering. [RFC 0006](docs/rfcs/0006-opengl-focused-rendering.md) records the direct implementation; the [structure guide](docs/project-structure.md) documents the code. Completed work and validation stay in the changelog. The intended capabilities are:
 
-- An OpenGL implementation behind shared engine resource and drawing operations.
-- Separate ownership for the SDL window and graphics context/device, including presentation.
-- CPU image and geometry data that can be used independently of GPU resources.
-- Textured Quad, Asteroids, and Mini Artillery using the same current interface, preserving their assets, controls, backgrounds, and packaging.
-- Verified native and engine-only builds, initialization failures, callbacks, frame pacing, and resource teardown.
+- Window owns SDL/OpenGL context setup, GLAD, VSync, and presentation.
+- Texture2D uploads/binds textures, ShaderProgram links/activates/writes uniforms, VertexBuffer owns vertex storage/layout, and Renderer submits draws using those resources.
+- CPU images and geometry remain independent of GL where practical.
+- All three examples use current engine operations, preserving assets, controls, backgrounds, and packaging.
+- Native and engine-only builds, failure recovery, callbacks, pacing, and resource teardown are checked.
 
-Add only the abstractions exercised by these examples. Metal/Vulkan directories and configuration choices arrive with working implementations.
+The previous device/frame/pipeline/backend experiment is preserved in `archive/multi-backend-experiment` and [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md). Additional backend structure is deferred, not a prerequisite for learning OpenGL scenes.
 
 ## Phase 2 - Input, cameras, and sprites
 
-With the rendering boundary in place, Asteroids introduces reusable 2D fundamentals. Reconcile [draft RFC 0005](docs/rfcs/0005-camera-keyboard-and-sprites.md)'s drawing assumptions with the [current rendering interface](docs/rendering-guide.md) before implementing the renderer. Input state and camera math can be developed independently where useful. The intended capabilities are:
+With OpenGL resource ownership in place, Asteroids introduces reusable 2D fundamentals. Reconcile [draft RFC 0005](docs/rfcs/0005-camera-keyboard-and-sprites.md)'s drawing assumptions with the [current rendering interface](docs/rendering-guide.md) before implementing the renderer. Input state and camera math can be developed independently where useful. The intended capabilities are:
 
 - A GLM-backed camera using explicit world and drawable-pixel coordinates.
 - Keyboard state, cursor-to-world conversion, and elapsed-time updates.
@@ -63,7 +63,7 @@ Extend the rendering interface through the needs of this small scene before purs
 
 ## Phase 4 - Metal backend
 
-Use the working OpenGL 2D/3D scenes to learn Metal and test the rendering boundary against another API. This phase is deferred while OpenGL scenes are the active objective; reconsider it when native API learning is explicitly selected. A dedicated RFC will establish API/OS baselines, shader tooling, and lifetime rules. The intended capabilities are:
+If native API learning is selected later, use the working OpenGL 2D/3D scenes as a baseline for a Metal experiment. Reconsider architecture at that time; the current direct wrappers do not promise backend portability. This phase is deferred while OpenGL scenes are the active objective; reconsider it when native API learning is explicitly selected. A dedicated RFC will establish API/OS baselines, shader tooling, and lifetime rules. The intended capabilities are:
 
 - Metal rendering on the development Mac, beginning with Textured Quad and the small 3D scene.
 - Backend shader artifacts, resource bindings, command submission, and presentation.

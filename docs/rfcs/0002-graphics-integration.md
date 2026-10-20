@@ -5,7 +5,9 @@
 - **Supersedes:** None
 - **Superseded by:** None
 
-**Evolution (2026-10-19):** The shared rendering extraction established the boundary investigated in what is now deferred [RFC 9999](9999-multi-backend-rendering-research.md). `Window` now owns only SDL window/video state; graphics initialization, resources, frames, and presentation live behind `GraphicsDevice`. `Shader`/`GraphicsPipeline` replace the public `ShaderProgram` uniform API, and `Image` handles CPU decoding. The sections below retain the original integration decisions; [project structure](../project-structure.md) describes current APIs.
+**Evolution (2026-10-19):** The shared rendering extraction established the boundary investigated in what is now deferred [RFC 9999](9999-multi-backend-rendering-research.md). At that stage, `Window` owned only SDL window/video state; graphics initialization, resources, frames, and presentation lived behind `GraphicsDevice`. `Shader`/`GraphicsPipeline` replaced the public `ShaderProgram` uniform API, and `Image` handled CPU decoding. The sections below retain the original integration decisions; [project structure](../project-structure.md) describes current APIs.
+
+**Evolution (2026-10-20):** [RFC 0006](0006-opengl-focused-rendering.md) restores direct OpenGL ownership in Window, Texture2D, and ShaderProgram, with VertexBuffer for geometry and CPU Image for decoding. It removes the experimental device/backend/frame/pipeline/surface layers. Static texture-support setup and global decoder flipping described historically below remain removed. The structure and rendering guides describe the current API.
 
 ## Problem
 

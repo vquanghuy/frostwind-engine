@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 
 #include <app/Application.h>
+#include <rendering/Renderer.h>
 
 namespace {
 class AsteroidsApp final : public frostwind::Application {
@@ -24,9 +25,9 @@ protected:
         return SDL_APP_CONTINUE;
     }
 
-    SDL_AppResult render(frostwind::RenderFrame& frame) override
+    SDL_AppResult render(frostwind::Renderer& renderer, int, int) override
     {
-        return frame.clear({0.02f, 0.03f, 0.06f, 1.0f}) ? SDL_APP_CONTINUE : SDL_APP_FAILURE;
+        return renderer.clear({0.02f, 0.03f, 0.06f, 1.0f}) ? SDL_APP_CONTINUE : SDL_APP_FAILURE;
     }
 };
 

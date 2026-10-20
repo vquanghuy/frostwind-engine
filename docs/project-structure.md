@@ -1,111 +1,99 @@
 # Project structure
 
-Frostwind contains a reusable engine library and independent example executables in one CMake project. [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md) records this boundary. Only native macOS Apple Silicon has been built and exercised; Windows/Linux SDKs are pending and browser compilation is not configured.
+Frostwind contains a reusable C++17 engine library and independent examples in one CMake project. [RFC 0003](rfcs/0003-frostwind-engine-and-examples.md) records that boundary; [RFC 0006](rfcs/0006-opengl-focused-rendering.md) records the current OpenGL-focused design. Only native macOS Apple Silicon has been built and exercised. Windows/Linux SDKs and browser integration remain pending.
 
-The layout, ownership, and callback descriptions below document the current implementation. The [remaining rendering boundary work](#remaining-rendering-boundary-work) at the end summarizes extensions following the implemented OpenGL extraction. The root [roadmap](../ROADMAP.md) records intended sequencing and future experiments.
-
-For task-based rendering examples, class usage, and lifecycle diagrams, see the [rendering guide](rendering-guide.md). This document describes source organization and ownership.
+The [rendering guide](rendering-guide.md) explains class usage. The root [roadmap](../ROADMAP.md) records learning priorities; multi-backend architecture is preserved separately as [deferred research](rfcs/9999-multi-backend-rendering-research.md).
 
 ## Repository layout
 
-Example directories use two-digit prefixes to sort by suggested learning progression. The prefixes apply to source directories; CMake targets, executable names, and runtime output paths retain names such as `frostwind-asteroids`.
+Headers live beside implementations. Example prefixes specify suggested learning order; target names and executable output directories remain unnumbered.
 
 ```text
 engine/
 ├── CMakeLists.txt
 └── src/
     ├── core/Types.h
-    ├── app/Application.h, Application.cpp
-    ├── platform/
-    │   ├── Window.h, Window.cpp
-    │   ├── internal/WindowGraphicsSetup.h
-    │   ├── internal/WindowSurface.h, WindowSurface.cpp
-    │   └── opengl/OpenGLWindowSurface.h, OpenGLWindowSurface.cpp
+    ├── app/Application.h, .cpp
+    ├── platform/Window.h, .cpp
     └── rendering/
-        ├── GraphicsDevice.h, GraphicsDevice.cpp
-        ├── GraphicsTypes.h
-        ├── RenderFrame.h, RenderFrame.cpp
-        ├── Buffer.h, Buffer.cpp
-        ├── Shader.h, Shader.cpp
-        ├── GraphicsPipeline.h, GraphicsPipeline.cpp
-        ├── Texture2D.h, Texture2D.cpp
-        ├── Image.h, Image.cpp
-        ├── StbImage.cpp
-        ├── internal/GraphicsBackend.h, GraphicsBackendFactory.h, ResourceHandle.h
-        └── backends/opengl/
-            ├── OpenGLBackend.h, OpenGLBackend.cpp
-            ├── OpenGLResources.h, OpenGLResources.cpp
-            └── OpenGLCommands.cpp
+        ├── Texture2D.h, .cpp
+        ├── ShaderProgram.h, .cpp
+        ├── Renderer.h, .cpp
+        ├── VertexBuffer.h, .cpp
+        ├── Image.h, .cpp
+        ├── OpenGLChecks.h, .cpp       # Private context/error checks
+        └── StbImage.cpp
 examples/
 ├── 01-textured-quad/
 │   ├── CMakeLists.txt
 │   ├── README.md
 │   ├── main.cpp
-│   ├── QuadDemo.h, QuadDemo.cpp
+│   ├── QuadDemo.h, .cpp
 │   └── assets/
 │       ├── LICENSES.md
 │       ├── shaders/quad.vert, quad.frag
 │       └── textures/crate.png
-├── 02-asteroids/               # Minimal window scaffold; scene/gameplay planned
-│   ├── CMakeLists.txt
-│   ├── main.cpp
-│   ├── README.md
-│   └── docs/assets/            # Concepts, references, prototypes, provenance
-└── 03-mini-artillery/          # Minimal window scaffold; terrain/gameplay planned
-    ├── CMakeLists.txt
-    ├── main.cpp
-    ├── README.md
-    └── docs/assets/            # Concept/reference images and provenance
+├── 02-asteroids/                # Window scaffold, README, docs/assets/
+└── 03-mini-artillery/           # Window scaffold, README, docs/assets/
 ```
 
-Headers stay beside implementations. CMake explicitly lists source files. `frostwind` exposes `engine/src/` as its include directory, allowing includes such as `<rendering/RenderFrame.h>`; engine types use namespace `frostwind`. Examples link to `frostwind`, while the engine neither includes nor links example code. No separate public-header tree or installation/export package exists yet.
+`frostwind` exports `engine/src/` as its include root, allowing `<rendering/ShaderProgram.h>`. Engine code uses namespace `frostwind`. Examples depend on the engine; the engine never includes example behavior or chooses example assets. No installation/export package exists yet. CMake explicitly lists implementation sources.
 
 | Component | Responsibility |
 | --- | --- |
-| `core/Types.h` | Shared primitive aliases; no runtime initialization or ownership |
-| `frostwind::Application` | Own the window and graphics device, create the selected application through a factory, coordinate events/frames and FPS pacing, and translate callback exceptions into failures |
-| `frostwind::Window` | Own SDL video/window lifetime and report drawable size/state; call the compiled private setup hook before window creation |
-| `frostwind::GraphicsDevice` | Own the compiled backend, validate device/resource/frame identity and descriptions, expose limits, and acquire/submit frames |
-| `frostwind::RenderFrame` | Borrow the device for one frame; expose target extent/format, clear, and draw; abandon unfinished work on destruction |
-| Private `OpenGLBackend` | Initialize the context, GLAD, VSync, and limits; own native resource registries, apply drawing state, retain frame resources, and present |
-| Private `OpenGLWindowSurface` | Prepare OpenGL attributes/flags, own the SDL OpenGL context, and access the private window for context creation and swapping |
-| Private abstract `WindowSurface` | Define surface initialization and provide protected SDL window access through the window's single graphics friend |
-| `frostwind::Buffer` | Own an opaque identity for immutable vertex bytes uploaded through a device |
-| `frostwind::Shader` | Own an opaque identity for a compiled vertex or fragment stage; load explicit source/files |
-| `frostwind::GraphicsPipeline` | Own validated shader, vertex layout, resource-binding, and drawing-state configuration |
-| `frostwind::Texture2D` | Own an opaque RGBA8 texture identity; compose CPU image loading with device upload |
-| `frostwind::Image` | Decode PNG/JPEG into bottom-row-first RGBA8 pixels without a graphics context |
-| Example `main.cpp` | Supply SDL's global callbacks, application factory, and window configuration |
-| `QuadDemo` | Own engine buffer/texture/pipeline resources, select assets, initialize geometry/shaders, handle Escape, and clear/scale/draw the quad each frame |
-| `AsteroidsApp`, `MiniArtilleryApp` | Clear the scaffold window and handle Escape; scene/gameplay implementation remains planned |
+| `Application` | Own Window, coordinate SDL callbacks/rendering/FPS pacing, set the viewport, supply a persistent Renderer, and translate callback exceptions |
+| `Window` | Own SDL video/window/context, set context attributes, load GLAD, request VSync, query drawable size, and present |
+| `Texture2D` | Own a GL texture, validate/upload RGBA8 pixels, compose CPU image loading, and bind a texture unit |
+| `ShaderProgram` | Compile/link vertex and fragment sources, activate the program, find uniforms, and write typed values |
+| `VertexBuffer` | Own a VBO/VAO, upload immutable vertices, define float attribute layout, bind it, and report vertex count |
+| `Renderer` | Clear the target and submit validated triangle draws using borrowed geometry and active program/textures; own no GPU resources |
+| `Image` | Decode PNG/JPEG to bottom-row-first RGBA8 pixels without graphics initialization |
+| Private `OpenGLChecks` helpers | Check current context/GLAD and report OpenGL errors; no dispatch or resource registry |
+| `core/Types.h` | Shared primitive aliases without runtime initialization |
+| Example `main.cpp` | Supply SDL callback adapters, factory, and application configuration |
+| `QuadDemo` | Own resources and paths, initialize the quad, handle Escape, calculate scale, and draw |
 
-Camera, audio, input systems, physics, terrain, and further example code are added only as implementation requires them. [Asteroids](../examples/02-asteroids/README.md) and [Mini Artillery](../examples/03-mini-artillery/README.md) each have a separate CMake target and a minimal OpenGL window scaffold alongside their planning documentation/artwork. Scene rendering and gameplay remain planned; their game rules will stay outside the engine.
+Native graphics calls live in engine `.cpp` files. GLAD remains a private dependency and public resource headers require no native GL types or handle getters. SDL remains the application/event API. Camera, input systems, audio, physics, and terrain facilities arrive through examples that need them.
 
 ## Application flow and resource lifetime
 
-An example derives from `frostwind::Application` and implements `initialize()` and `render(RenderFrame&)`, with optional `handleEvent(event)`. Its factory returns `std::unique_ptr<frostwind::Application>`. SDL's named C callbacks remain global in the example entry point and delegate to the engine's static callbacks.
+Examples derive from `Application`, implement `initialize()` and `render(Renderer& renderer, int width, int height)`, and optionally override `handleEvent(event)`. Global SDL adapters delegate to the engine's callback methods. `ApplicationConfig` contains `WindowConfig window` and `maxFps`; VSync is `config.window.vsync`.
 
-`Application::onInit` creates the derived instance and initializes its window, then graphics device, then example resources. `Window` calls the compiled setup hook after SDL video initialization and before window creation. `GraphicsDevice` creates the private OpenGL backend, whose surface owns the context; the backend loads GLAD and queries device limits before example initialization. The protected `graphics()` accessor supplies that device for resource initialization. Ownership transfers to SDL's opaque state only after success; failed startup cleans up automatically and leaves null state. The factory, startup, event, and frame boundaries handle exceptions so they cannot unwind through SDL. `onQuit` takes ownership back with `unique_ptr`.
+```text
+Factory → derived Application
+              ↓
+Window initializes SDL → attributes → window → GL context → GLAD → VSync
+              ↓
+Example initialize() → GPU resources and shader uniforms
+              ↓
+SDL iteration → current drawable size → current context → viewport
+              ↓
+Example render(renderer, width, height) → renderer.clear → program/uniforms → texture → renderer.drawTriangles
+              ↓ continue
+Window presents → Application waits for the remaining frame budget
+```
 
-SDL owns the loop, delivering events and repeatedly invoking one frame callback. The engine skips minimized windows and acquires a stack-scoped `RenderFrame` through `GraphicsDevice`. The backend reports ready, temporarily unavailable, or failed, with the latest drawable extent for a ready frame. The example borrows that frame and requests clears/draws; continuing callbacks submit/present once. Early success/failure or exceptions abandon without presenting. Unavailable frames receive a budgeted wait, with a 16 ms fallback when software pacing is disabled. Example return values can continue, finish, or fail the application. Quit/close events are handled by the engine; Escape is a demo-specific action. There is no duplicate event polling or blocking application loop. Application-owned frame pacing measures each callback with SDL’s monotonic nanosecond clock and waits only for the unused frame budget after presentation. `ApplicationConfig` contains `window` and `graphics` settings plus `maxFps` (60 by default, 0 disables software pacing). `GraphicsConfig::vsync` defaults to true; VSync may lower the achieved rate below the cap. Minimized windows retain a separate 16 ms idle delay; zero-sized/unavailable targets follow the unavailable-frame budget. Slow frames do not accumulate catch-up work. This is a rendering limit; fixed-step simulation is future work. See [RFC 0004](rfcs/0004-frame-pacing.md).
+Minimized windows receive a 16 ms idle delay. Zero-size windows skip rendering and use the remaining configured budget, or 16 ms when uncapped. Drawable-query or presentation failures return failure. A rendering callback returning success/failure skips presentation; exceptions become callback failures. OpenGL operations already issued are not rolled back. Callers check operation results and propagate failure; there is no frame object that latches ignored errors.
 
-The virtual application destructor ensures derived example members are destroyed before the base `GraphicsDevice`, then `Window`. The device/backend releases its context through `OpenGLWindowSurface`; `Window` subsequently releases the SDL window and video subsystem. Native handles are private. `Window` grants graphics friendship once to the abstract `WindowSurface` base; derived surfaces use its protected SDL access instead of gaining their own friendship or a public handle getter. Failed window/device initialization cleans up scoped candidates, and a successful second initialization is rejected. Example constructors must not allocate GPU resources before graphics initialization; destructors must tolerate partial startup. SDL's callback framework performs the final SDL_Quit.
+The default cap is 60 FPS; 0 disables software pacing. VSync defaults to true and is independent of that cap. Each callback measures render/swap time and waits only for the unused budget, without catch-up frames. See [RFC 0004](rfcs/0004-frame-pacing.md). Simulation scheduling is future work.
+
+Resource owners are non-copyable with empty constructors and fallible initialization. Partial failures clean up and permit retry; repeated successful initialization is rejected. Each GPU owner records its creating context and requires it to be current for operations and destruction. Context checks diagnose misuse; they do not switch contexts, extend context lifetime, or provide device-loss recovery. The current application uses one window/context on SDL's callback thread.
+
+Application stores Window before Renderer, so Renderer is destroyed first. Derived example GPU members are destroyed before both. The renderer reference is borrowed for a callback and must not be retained. Application then destroys Window. Window destroys its GL context before its SDL window and video initialization. Failed startup leaves SDL's `appstate` null and cleans completed stages. Resources must not be created in constructors before Window initialization, escape the application/context lifetime, or survive context recreation. No device facade, abstract backend/surface, pipeline, resource registry, or shared frame references remain.
 
 ## Rendering and assets
 
-Rendering targets OpenGL 3.3 Core; the development Mac supplies a compatible 4.1 context. GLAD 2.0.8 is generated for functions through 3.3 and is private to the engine target. There is one compiled `GraphicsBackend` implementation, `OpenGLBackend`. Examples and public rendering headers contain no native graphics calls or types. Alternate APIs and browser builds remain planned.
+Application calls `glViewport` directly during iteration and passes its persistent Renderer by reference. Renderer owns clear and draw submission; VertexBuffer owns only storage/layout/binding. No per-frame renderer allocation or separate render-command module is needed.
 
-`Buffer`, `Shader`, `Texture2D`, and `GraphicsPipeline` are non-copyable scoped owners borrowing their creating device and holding typed, opaque identities. Successful initialization is one-time; failed initialization cleans up and permits retry. Identity values are never reused during a device's lifetime; backend registries reject stale identities. The facade rejects resources from a different device. Uploads consume caller bytes before returning. Native resource records are privately shared by registries, pipeline dependencies, and active frames; public resource owners do not share ownership of the device. OpenGL deletion occurs with the creating context current, and its native deletion semantics protect outstanding GPU work. Shutdown drains work before destroying the context.
+The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. The current window requests RGBA8 without depth/stencil storage. Depth/culling/blending controls, indexed/instanced drawing, camera math, and richer texture options are added only when an example needs them.
 
-`RenderFrame::draw` takes complete bindings: pipeline, vertex buffer, vertex count/first vertex, optional texture, and optional parameter bytes. The initial contract supports non-indexed triangle lists, Float2 attributes, one RGBA8 window target, opaque drawing without depth/culling, and an optional vertex parameter block plus fragment texture at engine slot 0. Pipeline descriptions map shader declaration names to those slots; the backend resolves native locations, verifies active vertex attributes and resource layout, and keeps native lookups private. Parameter size must match the shader block and be a multiple of 16 bytes. Parameter bytes are copied/consumed by each draw. The quad uses six position/UV vertices and a 16-byte scale block. An untextured triangle can use the same draw operation without parameter/texture bindings.
+`ShaderProgram` owns the linked program; temporary compiled stages are released after linking. Sources/files use explicit GLSL. Cache uniform locations after linking, call `use()`, then set integer, float, vec2/3/4, or column-major mat4 values. Locations belong to the program that returned them; missing/inactive uniforms return -1. Setters reject a missing location or a different active program and report native type/update failures. No universal parameter-block layout or shader translation is imposed.
 
-A `RenderFrame` is non-copyable and non-movable. It is acquired once and becomes inactive after submission or scope abandonment; nested acquisition, reuse, drawing after completion, and submitting through another device fail. A failed clear/draw prevents presentation even if its result is ignored. Examples must not retain frame references. OpenGL executes commands immediately, so abandonment skips presentation and releases references without undoing issued commands; future explicit backends must implement their own safe abandonment and retirement.
+`VertexBuffer` consumes interleaved vertex bytes and float attributes with explicit location/component count/offset/stride, exposes `bind()` and `vertexCount()`, and contains no draw operation. `Renderer::drawTriangles(vertices, count, first)` validates a nonempty triangle-list range and restores the previous VAO after submission, including failed bindings. Shader input/layout agreement is the caller's responsibility; geometry can be reused with several compatible programs. Draws use the active program and texture bindings. They do not reset every OpenGL state or validate a general pipeline description.
 
-`Image` owns CPU pixels independently of a graphics device. It inspects PNG/JPEG dimensions against a caller-supplied limit before decoding, checks sizes for overflow, and preserves bottom-left UV orientation through local row conversion. `Texture2D::initializeFromFile` supplies its device's maximum texture dimension, then uploads RGBA8. Nearest filtering, clamp-to-edge sampling, and no mipmaps preserve the existing quad appearance. The private `StbImage.cpp` compiles the pinned decoder once. No static texture-support initialization or public uniform-location API remains. Shader assets still use explicit GLSL source; native shader tooling for other backends is future work.
+`Texture2D` consumes tightly packed bottom-row-first RGBA8 pixels; its upload restores the prior texture binding, pixel-unpack layout, and unpack-buffer binding. Binding selects a texture unit and the texture's nearest/clamp-to-edge sampling. It has no mipmaps. File loading queries the current context's maximum texture dimension before CPU decoding; there is no static texture-support setup. `Image` performs overflow checks and local row conversion; `StbImage.cpp` compiles the pinned PNG/JPEG decoder once.
 
-Each example README introduces its current status and embeds its preferred concept or implemented capture. Planning artwork, older concept versions, sprite prototypes, prompts, and third-party reference attribution live in that example’s `docs/assets/`. They are separate from runtime `assets/` and are not copied beside executables. Shared branding and historical milestone images remain under `docs/assets/`; preserve their captions and bytes. Add runtime asset folders and `assets/LICENSES.md` when assets are actually imported.
-
-Examples select and license their own runtime assets when imported. `QuadDemo` resolves the executable-relative asset directory and passes explicit paths to engine shader/texture initialization. The engine never selects a demo asset. When passed an asset directory, `frostwind_configure_example` copies those assets beside the executable on every build, including asset-only changes. The Asteroids and Mini Artillery scaffolds omit that argument and have no runtime assets. Separate output directories prevent examples' files from colliding.
+Textured Quad uses six position/UV vertices, a `vec2 uScale`, a sampler on unit 0, and the original crate image. The example resolves its executable-relative assets; the engine accepts explicit paths. The build copies assets on each build, including asset-only edits. Each example's runtime assets and licenses stay in its `assets/`; planning concepts/provenance stay in its `docs/assets/` and are not packaged. Preserve historical milestone captures and captions under shared `docs/assets/`.
 
 ## CMake and runtime layout
 
@@ -134,26 +122,8 @@ The framework's headers are supplied through its framework search path; Windows/
 
 Preserve exact versions, licenses, provenance, framework symlinks, and header/binary matching. The official macOS universal SDL3 framework is the explicit dynamic-linking exception. Browser builds will need a separate WASM-compatible SDL3 library and GLES3 integration. See [dependency policy](../external/README.md) and [development](development.md).
 
-## Remaining rendering boundary work
+## Remaining rendering work
 
-[RFC 9999](rfcs/9999-multi-backend-rendering-research.md) retains the multi-backend architecture and pipeline comparison as deferred research. The existing OpenGL foundation remains implemented: window/device/surface ownership, scoped frames, resource identities, CPU images, shaders/pipelines, and migration of all three examples. The [README rendering tree](../README.md#rendering-layout) shows the current source organization.
+Follow the [current roadmap](../ROADMAP.md#current-focus---opengl-scenes): a small OpenGL 3D scene, then a bounded grass experiment. Add vertex/index formats, depth storage/testing, camera matrices, lighting, and instancing as concrete examples require them. Keep resource responsibilities direct and context ownership explicit. Multi-backend compatibility is not a current design requirement.
 
-```text
-Example application : Application
-├── Buffer / Texture2D / GraphicsPipeline owners
-└── base Application
-    ├── Window
-    └── GraphicsDevice
-        └── unique_ptr<GraphicsBackend>
-            └── OpenGLBackend
-                ├── OpenGLWindowSurface : WindowSurface
-                └── native resource registries and frame references
-
-Drawing: example → RenderFrame → GraphicsDevice → GraphicsBackend → OpenGL
-```
-
-Window ownership uses composition: no `WindowOpenGL`/`WindowMetal` hierarchy exists. Future `MetalBackend` and `VulkanBackend` implementations will implement the private backend contract, with their own private surface integration. Public windows/resources need no per-API subclasses.
-
-The [current learning plan](../ROADMAP.md#current-focus---opengl-scenes) focuses on a small OpenGL 3D scene and then a bounded grass experiment, adding camera/input/math support as needed. Asteroids camera/sprite work remains separately selectable. Keep the implemented boundary provisional and pause speculative portability expansion. Indexed drawing, additional vertex formats, depth targets, passes, and richer bindings are added when needed. Before implementing Metal, settle shared coordinate conventions and specify shader artifacts, device/surface ownership, in-flight work, resize/recreation, and resource retirement in its RFC. A second backend may revise the shared interface and must migrate the existing examples alongside any change.
-
-Only OpenGL is compiled today; backend selection remains a private factory and platform hook with one linked implementation. Add build selection when a second real backend exists. Windows/Linux SDK/runtime verification and browser integration remain pending. Do not create empty future-backend directories or advertise unsupported build choices.
+The prior experiment is preserved at commit `e9cf616` on `archive/multi-backend-experiment`, with its analysis in RFC 9999. Windows/Linux SDK/runtime checks and browser integration remain pending. Do not create future backend hierarchies or advertise unsupported build choices.

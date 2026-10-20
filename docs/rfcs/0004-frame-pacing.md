@@ -7,7 +7,7 @@
 
 ## Problem
 
-The original settings described here used `WindowConfig::vsync`. The ownership refactor in [RFC 9999](9999-multi-backend-rendering-research.md) moves that setting to `ApplicationConfig::graphics.vsync` while retaining this pacing behavior; see the [current development guide](../development.md#current-implementation).
+The OpenGL-focused design in [RFC 0006](0006-opengl-focused-rendering.md) uses `WindowConfig::vsync`, restoring the setting from the temporary device-owned configuration while retaining the pacing policy below. Zero-sized targets use the remaining configured frame budget, or 16 ms when uncapped; minimized windows retain a separate 16 ms delay. See the [current development guide](../development.md#current-implementation).
 
 VSync alone follows the display refresh rate. When unavailable, the previous 16 ms post-swap delay added to rendering time, producing a variable rate without an explicit FPS cap.
 
@@ -15,7 +15,7 @@ VSync alone follows the display refresh rate. When unavailable, the previous 16 
 
 `ApplicationConfig` groups window settings and `maxFps`, defaulting to 60. Zero disables software pacing. `WindowConfig::vsync` independently requests swap interval 1 or 0, defaulting to enabled. Failure to set the interval is logged; software pacing still applies when configured.
 
-`Application` owns pacing, while `Window` owns presentation and VSync. Measure callback work with `SDL_GetTicksNS`, including drawable queries, rendering, and buffer swap. Round the nanosecond frame interval up and call `SDL_DelayPrecise` only for the remaining budget after successful presentation. Each callback starts a fresh budget, so slow frames and stalls never cause catch-up rendering. SDL remains responsible for callback delivery and events. Minimized/zero-sized windows retain a separate 16 ms idle delay, including in uncapped mode.
+`Application` owns pacing, while `Window` owns presentation and VSync. Measure callback work with `SDL_GetTicksNS`, including drawable queries, rendering, and buffer swap. Round the nanosecond frame interval up and call `SDL_DelayPrecise` only for the remaining budget after successful presentation. Each callback starts a fresh budget, so slow frames and stalls never cause catch-up rendering. SDL remains responsible for callback delivery and events. Minimized windows retain a separate 16 ms idle delay. Zero-sized windows skip rendering and use the remaining configured frame budget, or 16 ms when uncapped.
 
 ## Alternatives
 

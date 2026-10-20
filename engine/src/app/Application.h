@@ -6,19 +6,17 @@
 #include <core/Types.h>
 
 #include "../platform/Window.h"
-#include "../rendering/GraphicsDevice.h"
-#include "../rendering/RenderFrame.h"
+#include "../rendering/Renderer.h"
 
 namespace frostwind {
 
 struct ApplicationConfig {
     WindowConfig window;
-    GraphicsConfig graphics;
     // Zero disables software pacing; VSync is configured separately.
     u32 maxFps = 60;
 };
 
-// Derived GPU members die before GraphicsDevice, which dies before Window.
+// Derived GPU members die before the base Window and its OpenGL context.
 class Application {
 public:
     using Factory = std::unique_ptr<Application> (*)();
@@ -34,20 +32,17 @@ public:
     static void SDLCALL onQuit(void* appstate, SDL_AppResult result);
 
 protected:
-    // Called after the window/device are ready. Create persistent GPU owners
-    // here; false fails startup and destroys the partially initialized example.
+    // Called after Window has initialized SDL, the context, and GLAD.
     virtual bool initialize() = 0;
     virtual SDL_AppResult handleEvent(const SDL_Event& event);
-    // Borrow an active frame for this callback only. Continue requests submit;
-    // success/failure or an exception abandons unfinished work. Check frame ops.
-    virtual SDL_AppResult render(RenderFrame& frame) = 0;
-    // Resource initialization accessor; valid during initialize and callbacks.
-    GraphicsDevice& graphics() { return graphics_; }
+    // Borrow the persistent renderer during this callback; do not retain it.
+    // Dimensions are drawable pixels. Continue presents; exit/failure skips swap.
+    virtual SDL_AppResult render(Renderer& renderer, int width, int height) = 0;
 
 private:
     SDL_AppResult iterate();
     Window window_;
-    GraphicsDevice graphics_;
+    Renderer renderer_;
     u64 frameIntervalNs_ = 0;
 };
 

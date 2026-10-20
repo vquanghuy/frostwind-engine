@@ -287,7 +287,7 @@ Document only these bindings in the example README. Manual camera pan/rotation/z
 
 ### Optional follow-up experiments
 
-The example’s purpose and technical success criteria are recorded in the [Asteroids README](../../examples/02-asteroids/README.md#purpose-and-scope). A complete playable game is not required. After the foundation is validated, optional experiments may extend the same example when they answer another concrete engine question:
+The example’s purpose and technical success criteria are recorded in the [Asteroids README](../../examples/02-asteroids/README.md#technical-purpose-and-scope). A complete playable game is not required. After the foundation is validated, optional experiments may extend the same example when they answer another concrete engine question:
 
 1. Introduce fixed-step simulation scheduling as needed, thrust acceleration and inertia, and an example-owned arena with screen wrapping. Define arena bounds independently of camera zoom and viewport size.
 2. Add moving asteroids, bullets, and simple circle-based collision checks, followed by asteroid splitting. Keep geometry/simulation independent of the graphics context. A physics library is not required for the initial collision rules.

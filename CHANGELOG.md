@@ -6,12 +6,11 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Added
 
-- Documentation: task-based rendering guide using textured-quad pseudocode, concise clear/draw explanations, and direct links to the working example, example-facing class reference, pipeline sharing, call/ownership/frame diagrams, current limits, and troubleshooting; public header comments clarify initialization, borrowing, and failure contracts.
+- Documentation: task-based rendering guide using textured-quad pseudocode, concise clear/draw explanations, and direct links to the working example, example-facing class reference, program/geometry sharing, call/ownership/lifecycle diagrams, current limits, and troubleshooting; public header comments clarify initialization, borrowing, and failure contracts.
 - Documentation: README references to LearnOpenGL and Rastertek's OpenGL tutorials, with guidance for adapting examples to the engine and its OpenGL 3.3 baseline.
-- Engine: scoped `RenderFrame` acquisition, clears, vertex draws, submission/abandonment, opaque device-backed `Buffer`/`Shader`/`Texture2D`/`GraphicsPipeline` owners, shader-layout validation, and per-frame resource retention.
+- Engine: direct OpenGL `VertexBuffer` owning interleaved float attributes/VBO/VAO and a concrete `Renderer` for color clears and triangle-range draws; `Application` owns viewport setup.
 - Engine: CPU-only `Image` PNG/JPEG loading with explicit dimension limits and local bottom-left row conversion, independent of graphics initialization.
-- Engine: concrete `GraphicsDevice` facade, private abstract `GraphicsBackend`, and the first OpenGL implementation for graphics initialization and presentation, with a private abstract `WindowSurface` providing one controlled SDL-access boundary for concrete surfaces. Additional backends remain planned.
-- Documentation: root `ROADMAP.md`, organized into themed phases using Dovyski's roadmap template, and RFC 9999 for extracting the existing OpenGL backend, migrating all three examples, and later exploring Metal, Vulkan, mesh shading, and ray tracing; the initial OpenGL boundary is implemented, while other APIs remain planned.
+- Documentation: root `ROADMAP.md` using Dovyski's themed template; RFC 0006 records direct OpenGL rendering ownership, while RFC 9999 preserves the deferred multi-backend and advanced-feature research.
 - Documentation: roadmap ideas for grass/vegetation, water/fluid simulation, and a physics sandbox, with initial scopes, prerequisites, and guidance for turning ideas into example experiments.
 - Asteroids and Mini Artillery: separate runnable OpenGL window scaffolds, CMake executable targets, and runtime SDL packaging; all build presets now select all three examples. Gameplay and runtime art remain planned.
 - Documentation: README links to Agent Sprite Forge for sprite creation and NormalMap-Online for height-to-normal conversion, with example asset provenance guidance.
@@ -25,12 +24,17 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Engine: Application owns and passes a persistent concrete Renderer to `render(Renderer&, width, height)`; Renderer handles clearing and triangle draw submission, while VertexBuffer handles storage/layout/binding without drawing itself. All examples use the renderer reference.
+- Engine: removed the separate RenderCommands module and renamed shared private context/error helpers to OpenGLChecks. Application sets the viewport directly; Renderer handles clearing and drawing.
+- Engine: simplified OpenGL ownership: Window now owns context creation, GLAD, VSync, and presentation; Texture2D performs its own GL uploads/binding; linked ShaderProgram provides activation, uniform lookup, and integer/float/vec2/3/4/mat4 setters. GPU owners retain creating-context checks and automatic cleanup.
+- Engine: supplied Renderer and drawable dimensions to rendering callbacks and restored `WindowConfig::vsync`; retained callback failures/exceptions, initialization retry, resource-before-context teardown, drawable viewport sizing, and software pacing.
+- Documentation: aligned the README, structure/usage/development guides, project instructions, roadmap, and all examples with RFC 0006; the multi-backend checkpoint remains on `archive/multi-backend-experiment`.
 - Documentation: renamed the former RFC 0006 to `9999-multi-backend-rendering-research.md`, reserved the last-sorting number for deferred research, and updated references/status. Preserved the architecture, ownership, OpenGL/Metal/Vulkan pipeline comparison, shader-variant and attachment analysis; the implemented OpenGL setup remains documented separately and detailed scene/grass learning steps live in the roadmap.
 - Textured Quad: folded the example-owned `QuadRenderer` into `QuadDemo`, keeping resource creation, Escape handling, and clear/scale/draw callbacks together; added an ownership diagram to the example README and aligned the rendering guide/structure notes.
 - Documentation: recorded the OpenGL-first learning plan in RFC 9999 and aligned the roadmap/current guidance: retain the provisional rendering boundary, develop a small 3D scene and bounded grass experiment, and defer additional backends and shader-portability infrastructure.
-- Textured Quad: migrated geometry, texture, pipeline, and scale parameters to engine resources and frame drawing; retained the crate image, orientation, nearest sampling, and square scaling. Asteroids and Mini Artillery now clear through the same frame interface.
-- Engine: changed rendering callbacks to `render(RenderFrame&)`, added protected `graphics()` access for resource initialization, and made GLAD a private implementation dependency. Public rendering headers and examples no longer expose native graphics types/calls.
-- Engine: separated SDL window/video ownership from OpenGL context and presentation ownership; `Application` now destroys example GPU resources before the device/context, then the window. Moved VSync from `WindowConfig::vsync` to `ApplicationConfig::graphics.vsync`, retaining independent application frame pacing.
+- Textured Quad: uses VertexBuffer, ShaderProgram, Texture2D, and the borrowed Renderer through engine methods, with a regular vec2 scale uniform; retained crate pixels, orientation, sampling, and square scaling. Asteroids and Mini Artillery use the engine color-clear function.
+- Textured Quad: split clearing, shader activation, uniform updates, texture binding, and drawing into individually checked steps with operation-specific diagnostics. Rendering methods still report failures through return values; SDL callback boundaries catch application exceptions.
+- Engine: kept GLAD as a private implementation dependency; public rendering headers and examples require no native graphics calls or GLAD headers.
 - Documentation: accepted RFC 9999 for staged implementation and recorded its initial ownership refactor; completed the shared frame/resource migration through all three examples.
 - Documentation: aligned the README technical approach and project structure guide with draft RFC 9999, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
 - Documentation: expanded draft RFC 9999 with concrete window/device composition, private backend inheritance and surface integration, resource/frame contracts, and staged example migration criteria.
@@ -42,7 +46,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Removed
 
-- Engine: public OpenGL `ShaderProgram` binding/uniform-location API, static texture-support initialization, direct texture binding, and transitional `GraphicsDevice::present()`; use device-backed shaders/pipelines/resources and scoped frames.
+- Engine: experimental GraphicsDevice/GraphicsBackend, WindowSurface integration hierarchy, opaque resource registries, separate Shader stages, GraphicsPipeline descriptions, and scoped RenderFrame submission. The prior experiment is preserved in Git. Static texture-support initialization remains removed.
 
 ## 0.3.0 - 2026-10-14 (milestone)
 

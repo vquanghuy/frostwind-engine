@@ -3,6 +3,10 @@
 #include <exception>
 #include <memory>
 
+#include <glad/gl.h>
+
+#include "../rendering/OpenGLChecks.h"
+
 namespace frostwind {
 
 SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, const ApplicationConfig& config)
@@ -17,7 +21,7 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
         if (!application->window_.initialize(config.window)) {
             return SDL_APP_FAILURE;
         }
-        if (!application->graphics_.initialize(application->window_, config.graphics) || !application->initialize()) {
+        if (!application->initialize()) {
             return SDL_APP_FAILURE;
         }
         // Round up so integer division never raises the requested FPS ceiling.
@@ -78,13 +82,12 @@ SDL_AppResult Application::iterate()
         SDL_Delay(16);
         return SDL_APP_CONTINUE;
     }
-    RenderFrame frame;
-    const auto status = graphics_.beginFrame(frame);
-    if (status == FrameStatus::Failed) {
+    int width = 0, height = 0;
+    if (!window_.pixelSize(width, height)) {
+        SDL_Log("Window pixel size query failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    if (status == FrameStatus::Unavailable) {
-        // A zero-size/recreating target must not busy-loop with an uncapped app.
+    if (width <= 0 || height <= 0) {
         const u64 budget = frameIntervalNs_ ? frameIntervalNs_ : 16 * SDL_NS_PER_MS;
         const u64 elapsed = SDL_GetTicksNS() - frameStart;
         if (elapsed < budget) {
@@ -92,11 +95,19 @@ SDL_AppResult Application::iterate()
         }
         return SDL_APP_CONTINUE;
     }
-    const SDL_AppResult result = render(frame);
-    if (result != SDL_APP_CONTINUE) {
-        return result; // The scoped frame abandons on early exit or exception.
+    if (!window_.makeCurrent() || !detail::requireOpenGL("Viewport")) {
+        SDL_Log("Could not prepare the OpenGL rendering context: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
     }
-    if (!graphics_.submit(frame)) {
+    glViewport(0, 0, width, height);
+    if (!detail::checkOpenGL("Viewport")) {
+        return SDL_APP_FAILURE;
+    }
+    const SDL_AppResult result = render(renderer_, width, height);
+    if (result != SDL_APP_CONTINUE) {
+        return result;
+    }
+    if (!window_.present()) {
         return SDL_APP_FAILURE;
     }
     // Rendering and swap blocking consume the budget. Late frames start fresh

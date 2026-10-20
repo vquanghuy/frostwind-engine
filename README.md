@@ -1,8 +1,8 @@
 ![Frostwind](docs/assets/frostwind-logo.png)
 
-An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Planned capabilities include 2D/3D physics integrations and multiple graphics APIs.
+An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Current rendering focuses on OpenGL; 2D/3D physics integrations are planned.
 
-> **Status:** Native macOS rendering is implemented through engine-owned frames, resources, and pipelines. Textured Quad loads shaders and a crate image and draws through the shared engine interface; Asteroids and Mini Artillery use it for their background clears. OpenGL is the first private backend. Camera, audio, physics, terrain destruction, and additional graphics backends remain planned.
+> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/vertex owners, CPU image loading, and the Textured Quad example are implemented. Asteroids and Mini Artillery remain window scaffolds. Camera, audio, physics, terrain destruction, and 3D systems are planned; other graphics APIs are deferred research.
 
 Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was initially named Toybox. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-frostwind-engine-and-examples.md).
 
@@ -28,29 +28,27 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 | Native development | macOS on Apple Silicon; Windows x64 and Linux x86_64 scaffolds remain unverified |
 | Graphics | OpenGL 3.3 Core baseline, GLAD 2.0.8; SDL3 window/context integration |
 | SDL | 3.4.18 official macOS universal dynamic framework |
-| Rendering resources | Device-backed Buffer, Shader, Texture2D, and GraphicsPipeline; CPU Image loading; scoped RenderFrame clears and vertex draws |
+| Rendering resources | Direct OpenGL Texture2D, ShaderProgram, and VertexBuffer owners; CPU Image loading; Renderer clear/draw operations and Application viewport handling |
 | Math and debug UI | GLM and Dear ImGui planned |
 | Image loading | stb_image 2.28; PNG/JPEG decoding |
 | Audio | SDL3 built-in audio planned; SDL3_mixer if richer playback is needed |
 | 2D physics and terrain | Box2D 3.x and Clipper2 planned |
 | 3D physics | Planned; library selection deferred |
-| Rendering architecture | Concrete SDL Window, public GraphicsDevice/resource/frame facades, private abstract GraphicsBackend, and OpenGL implementation; examples contain no native graphics calls |
-| Additional graphics APIs | Planned: Metal on macOS and Vulkan on Windows/Linux, after extracting the existing OpenGL implementation |
+| Rendering architecture | Window owns SDL/context/GLAD/presentation; resources perform their own OpenGL operations; examples use engine methods |
+| Additional graphics APIs | Deferred research; no backend compatibility requirement for current OpenGL development |
 | Browser | Planned Emscripten/WebAssembly and WebGL 2 through its GLES3 interface; not configured |
 
 OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.
 
-The [engine roadmap](ROADMAP.md) records the intended learning sequence: extract the existing OpenGL backend, develop 2D/3D fundamentals, then explore Metal, Vulkan, and optional advanced rendering.
+The [engine roadmap](ROADMAP.md) records intended learning phases. Our [current focus](ROADMAP.md#current-focus---opengl-scenes) is a small OpenGL 3D scene followed by a bounded grass experiment, adding reusable rendering facilities as those scenes need them.
 
-Our [current learning plan](ROADMAP.md#current-focus---opengl-scenes) focuses on a small OpenGL 3D scene followed by a bounded grass experiment. Keep the implemented rendering boundary provisional and let examples drive extensions; additional backends and shader-portability tooling are deferred.
-
-All three examples use shared frame operations, and Textured Quad uses device-backed resources and a pipeline. [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md) preserves the multi-backend architecture and OpenGL/Metal/Vulkan comparison as deferred research. Compatibility with future backends is not a requirement for current OpenGL changes.
+[RFC 0006](docs/rfcs/0006-opengl-focused-rendering.md) records the current direct OpenGL design. All three examples use engine operations; resources manage their GL objects without a device, pipeline, or backend hierarchy. The prior multi-backend experiment is preserved at commit `e9cf616` on `archive/multi-backend-experiment` and in deferred [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md).
 
 ## Project structure
 
 ### Current layout
 
-This tree shows the implemented repository, including the shared rendering interface backed by OpenGL.
+This tree shows the implemented repository, with the OpenGL-focused rendering owners.
 
 ```text
 frostwind-engine/
@@ -62,8 +60,8 @@ frostwind-engine/
 │   └── src/
 │       ├── core/               # Primitive type aliases
 │       ├── app/                # Application lifecycle and frame coordination
-│       ├── platform/           # SDL Window, private setup and OpenGL surface
-│       └── rendering/          # Device, frames, resources, images, private backend
+│       ├── platform/           # SDL window, OpenGL context/loading/presentation
+│       └── rendering/          # Shader programs, textures, vertex buffers, images
 ├── examples/
 │   ├── 01-textured-quad/       # Implemented code, CMake target, and runtime assets
 │   ├── 02-asteroids/           # Window scaffold, CMake target, and planning artwork
@@ -80,45 +78,25 @@ Engine code uses namespace `frostwind`; example code stays outside it. Headers l
 
 ### Rendering layout
 
-The [structure guide](docs/project-structure.md) describes the implemented OpenGL boundary. Public resource and frame headers contain no native graphics API types. Native operations and GPU storage live in the private backend.
+[Window](engine/src/platform/Window.h) owns SDL video/window/context, GLAD initialization, VSync, and presentation. [Application](engine/src/app/Application.h) owns a persistent Renderer and coordinates callbacks, viewport sizing, and software frame pacing.
 
 ```text
 engine/src/
-├── core/Types.h
-├── app/
-│   └── Application.h, Application.cpp
-├── platform/
-│   ├── Window.h, Window.cpp                    # Concrete SDL window owner
-│   ├── internal/
-│   │   ├── WindowGraphicsSetup.h              # Private setup-hook declaration
-│   │   └── WindowSurface.h, .cpp              # Abstract private window access
-│   └── opengl/
-│       └── OpenGLWindowSurface.h, .cpp         # Context and SDL integration
+├── app/Application.h, .cpp
+├── platform/Window.h, .cpp
 └── rendering/
-    ├── GraphicsDevice.h, .cpp                  # Concrete public facade
-    ├── GraphicsTypes.h                        # Shared descriptions/configuration
-    ├── RenderFrame.h, .cpp                     # Scoped drawing interface
-    ├── Buffer.h, .cpp
-    ├── Texture2D.h, .cpp
-    ├── Shader.h, .cpp
-    ├── GraphicsPipeline.h, .cpp
-    ├── Image.h, .cpp                          # CPU image loading
-    ├── StbImage.cpp
-    ├── internal/
-    │   ├── GraphicsBackend.h                  # Private abstract interface
-    │   ├── GraphicsBackendFactory.h
-    │   └── ResourceHandle.h
-    └── backends/opengl/
-        ├── OpenGLBackend.h, .cpp              # Concrete backend implementation
-        ├── OpenGLResources.h, .cpp
-        └── OpenGLCommands.cpp
+    ├── Texture2D.h, .cpp       # Direct RGBA8 upload, file loading, texture binding
+    ├── ShaderProgram.h, .cpp   # Vertex/fragment linking, use, typed uniform setters
+    ├── Renderer.h, .cpp        # Clear and draw submission
+    ├── VertexBuffer.h, .cpp    # Vertex upload and attribute layout
+    ├── Image.h, .cpp           # CPU PNG/JPEG loading
+    ├── OpenGLChecks.h, .cpp          # Private context/error checks
+    └── StbImage.cpp
 ```
 
-`Application` owns a concrete `Window` and `GraphicsDevice`. The device owns the private `OpenGLBackend`, which implements `GraphicsBackend` and owns `OpenGLWindowSurface`. The private abstract `WindowSurface` base is the window's only graphics friend; concrete surfaces inherit protected SDL access from it. `Window` retains SDL window state; the device owns graphics initialization, frame acquisition, and submission/presentation. VSync is configured through `ApplicationConfig::graphics.vsync`.
+Examples implement `initialize()` and `render(renderer, width, height)`, borrowing Application's persistent Renderer and owning resource members that are destroyed before the base Window/context. Shader programs are activated explicitly, uniforms use cached locations, and textures and vertex buffers manage their bindings while Renderer submits draws. Native calls stay inside engine implementations; GLAD remains private to the engine target.
 
-Examples initialize their resources through the protected `graphics()` accessor and receive a borrowed `RenderFrame&` in each rendering callback. The frame provides the acquired target dimensions, clearing, and draws with complete pipeline/resource/parameter bindings. `Application` submits continuing frames and automatically abandons early exits or exceptions. GPU resource owners borrow their device and must be destroyed before it; native resource records referenced by a frame remain retained until completion.
-
-Later `MetalBackend` and `VulkanBackend` implementations would inherit from the same private backend interface. They would not require per-API public windows or resource subclasses. Keep those implementations out of the tree until work begins. The [remaining rendering boundary work](docs/project-structure.md#remaining-rendering-boundary-work) describes future extensions and platform verification.
+The [structure guide](docs/project-structure.md) explains lifetime and packaging; the [rendering guide](docs/rendering-guide.md) demonstrates the actual example. There is no abstract backend/surface, device facade, pipeline description, or per-frame submission object.
 
 ## Build and run
 

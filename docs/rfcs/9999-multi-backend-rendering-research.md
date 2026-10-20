@@ -12,6 +12,8 @@ The number **9999** is reserved to keep this deferred proposal after active RFCs
 
 The sections below preserve the investigated design and its historical decisions. Future-backend requirements are conditional on explicitly reviving this research, not instructions to implement them now. Only the OpenGL foundation exists. The [roadmap](../../ROADMAP.md) records current priorities; the [structure guide](../project-structure.md) and [rendering guide](../rendering-guide.md) describe the working code.
 
+**Historical snapshot:** The device/frame/pipeline/backend setup described below is preserved at commit `e9cf616` on `archive/multi-backend-experiment`. It has been replaced on the working branch by the direct OpenGL design in [RFC 0006](0006-opengl-focused-rendering.md). References below to current implementation/status describe that saved experiment, not the present source tree.
+
 ## Problem
 
 Frostwind needs a rendering boundary that lets examples keep their application behavior and engine drawing operations when another graphics API is introduced. OpenGL is the working foundation; the intended later backends are Metal on macOS and Vulkan on Windows/Linux. Native graphics APIs organize equivalent rendering behavior differently, so copying one API's object model into the public interface would make later migrations harder.

@@ -1,16 +1,10 @@
 add_library(frostwind STATIC
     src/app/Application.cpp
     src/platform/Window.cpp
-    src/platform/internal/WindowSurface.cpp
-    src/platform/opengl/OpenGLWindowSurface.cpp
-    src/rendering/GraphicsDevice.cpp
-    src/rendering/backends/opengl/OpenGLBackend.cpp
-    src/rendering/backends/opengl/OpenGLResources.cpp
-    src/rendering/backends/opengl/OpenGLCommands.cpp
-    src/rendering/RenderFrame.cpp
-    src/rendering/Buffer.cpp
-    src/rendering/Shader.cpp
-    src/rendering/GraphicsPipeline.cpp
+    src/rendering/Renderer.cpp
+    src/rendering/OpenGLChecks.cpp
+    src/rendering/VertexBuffer.cpp
+    src/rendering/ShaderProgram.cpp
     src/rendering/Image.cpp
     src/rendering/Texture2D.cpp
     src/rendering/StbImage.cpp
