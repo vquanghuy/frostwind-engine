@@ -33,6 +33,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Diagnostics: prefix engine/example logs and authored exception messages with their source class or example name, preserving nested error context at application callback boundaries.
+- Engine: remove per-resource context pointers and identity checks from Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray. Keep OpenGL availability and initialization checks; GPU cleanup relies on the single-context application lifetime.
 - Engine: simplify Texture2D uploads by relying on default pixel-unpack state and no unpack buffer binding; remove unused unpack-state queries and restoration. Tightly packed RGBA8 rows satisfy the default four-byte alignment.
 - Dependencies: owner-supplied GLAD 2.0.8 regeneration retains OpenGL 3.3 Core and adds 18 selected extension definitions/loading paths. RFC 0006 records each selection and its purpose; the dependency record preserves exact settings/checksums. Texture2D uses generated anisotropy constants and support flags instead of handwritten tokens; other extension features remain unimplemented.
 - Documentation: refresh the Textured Cube previews with the owner’s latest Desktop capture, preserving the earlier PNG and caption as history.

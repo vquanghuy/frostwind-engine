@@ -2,8 +2,6 @@
 
 #include <core/Types.h>
 
-struct SDL_GLContextState;
-
 namespace frostwind {
 
 // Owns immutable vertex bytes. The creating context must be current for GPU
@@ -26,7 +24,6 @@ public:
 private:
     u32 buffer_ = 0;
     usize byteCount_ = 0;
-    SDL_GLContextState* context_ = nullptr;
 };
 
 } // namespace frostwind

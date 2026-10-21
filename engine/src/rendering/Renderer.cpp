@@ -29,30 +29,30 @@ struct VertexArrayBinding {
 
 void Renderer::clear(Color color) const
 {
-    detail::requireOpenGL("Color clear");
+    detail::requireOpenGL("[Renderer] Color clear");
     if (!std::isfinite(color.r) || !std::isfinite(color.g) || !std::isfinite(color.b) || !std::isfinite(color.a)) {
-        throw std::runtime_error("Color clear requires finite RGBA components.");
+        throw std::runtime_error("[Renderer] Color clear requires finite RGBA components.");
     }
     glDisable(GL_SCISSOR_TEST);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT);
-    detail::checkOpenGL("Color clear");
+    detail::checkOpenGL("[Renderer] Color clear");
 }
 
 void Renderer::clearDepth() const
 {
-    detail::requireOpenGL("Depth clear");
+    detail::requireOpenGL("[Renderer] Depth clear");
     glDisable(GL_SCISSOR_TEST);
     glDepthMask(GL_TRUE);
     glClearDepth(1.0);
     glClear(GL_DEPTH_BUFFER_BIT);
-    detail::checkOpenGL("Depth clear");
+    detail::checkOpenGL("[Renderer] Depth clear");
 }
 
 void Renderer::setDepthTest(bool enabled) const
 {
-    detail::requireOpenGL("Depth test");
+    detail::requireOpenGL("[Renderer] Depth test");
     if (enabled) {
         glEnable(GL_DEPTH_TEST);
     } else {
@@ -60,12 +60,12 @@ void Renderer::setDepthTest(bool enabled) const
     }
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
-    detail::checkOpenGL("Depth test");
+    detail::checkOpenGL("[Renderer] Depth test");
 }
 
 void Renderer::setBackFaceCulling(bool enabled) const
 {
-    detail::requireOpenGL("Back-face culling");
+    detail::requireOpenGL("[Renderer] Back-face culling");
     if (enabled) {
         glEnable(GL_CULL_FACE);
     } else {
@@ -73,24 +73,24 @@ void Renderer::setBackFaceCulling(bool enabled) const
     }
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-    detail::checkOpenGL("Back-face culling");
+    detail::checkOpenGL("[Renderer] Back-face culling");
 }
 
 void Renderer::drawTriangles(const VertexArray& vertexArray) const
 {
-    detail::requireOpenGL("Triangle draw");
+    detail::requireOpenGL("[Renderer] Triangle draw");
     const auto* indices = vertexArray.indexBuffer();
     const usize count = indices ? vertexArray.indexCount() : vertexArray.vertexCount();
     if (!count || count % 3 || count > usize(std::numeric_limits<GLsizei>::max())) {
-        throw std::runtime_error("Triangle draw requires a nonempty complete triangle list within the GL count limit.");
+        throw std::runtime_error("[Renderer] Triangle draw requires a nonempty complete triangle list within the GL count limit.");
     }
     if (indices && indices->maxIndex() >= vertexArray.vertexCount()) {
-        throw std::runtime_error("Triangle draw references a vertex outside the vertex buffer.");
+        throw std::runtime_error("[Renderer] Triangle draw references a vertex outside the vertex buffer.");
     }
     GLint program = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
     if (!program) {
-        throw std::runtime_error("Activate a shader program before drawing vertices.");
+        throw std::runtime_error("[Renderer] Activate a shader program before drawing vertices.");
     }
     {
         const VertexArrayBinding restore;
@@ -102,7 +102,7 @@ void Renderer::drawTriangles(const VertexArray& vertexArray) const
             glDrawArrays(GL_TRIANGLES, 0, drawCount);
         }
     }
-    detail::checkOpenGL(indices ? "Indexed triangle draw" : "Triangle draw");
+    detail::checkOpenGL(indices ? "[Renderer] Indexed triangle draw" : "[Renderer] Triangle draw");
 }
 
 } // namespace frostwind

@@ -4,7 +4,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include <SDL3/SDL.h>
 #include <glad/gl.h>
 
 #include "GraphicsChecks.h"
@@ -33,7 +32,7 @@ struct VertexBindings {
 
 VertexArray::~VertexArray() noexcept
 {
-    if (array_ && detail::canDestroy(context_, "Vertex array destruction")) {
+    if (array_) {
         glDeleteVertexArrays(1, &array_);
     }
 }
@@ -50,36 +49,35 @@ void VertexArray::initialize(const VertexBuffer& vertices, const IndexBuffer& in
 
 void VertexArray::initialize(const VertexBuffer& vertices, const IndexBuffer* indices, const VertexLayout& layout)
 {
-    detail::requireOpenGL("Vertex array initialization");
+    detail::requireOpenGL("[VertexArray] Vertex array initialization");
     if (array_ || !vertices.byteCount() || !layout.stride || vertices.byteCount() % layout.stride ||
         layout.stride > usize(std::numeric_limits<GLsizei>::max()) || layout.attributes.empty()) {
-        throw std::runtime_error("Vertex array initialization requires an empty owner, initialized vertices, and a valid layout.");
+        throw std::runtime_error("[VertexArray] Vertex array initialization requires an empty owner, initialized vertices, and a valid layout.");
     }
     if (indices && !indices->indexCount()) {
-        throw std::runtime_error("Vertex array initialization requires an initialized IndexBuffer when supplied.");
+        throw std::runtime_error("[VertexArray] Vertex array initialization requires an initialized IndexBuffer when supplied.");
     }
     GLint maxAttributes = 0;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttributes);
-    detail::checkOpenGL("Vertex attribute limit query");
+    detail::checkOpenGL("[VertexArray] Vertex attribute limit query");
     if (maxAttributes <= 0) {
-        throw std::runtime_error("Vertex attribute limit must be positive.");
+        throw std::runtime_error("[VertexArray] Vertex attribute limit must be positive.");
     }
     for (auto it = layout.attributes.begin(); it != layout.attributes.end(); ++it) {
         if (it->components < 1 || it->components > 4 || it->location >= u32(maxAttributes) ||
             it->offset > layout.stride || usize(it->components) * sizeof(f32) > layout.stride - it->offset) {
-            throw std::runtime_error("Vertex attribute exceeds the stride or current context's limits.");
+            throw std::runtime_error("[VertexArray] Vertex attribute exceeds the stride or current context's limits.");
         }
         for (auto previous = layout.attributes.begin(); previous != it; ++previous) {
             if (previous->location == it->location) {
-                throw std::runtime_error("Vertex attribute locations must be unique.");
+                throw std::runtime_error("[VertexArray] Vertex attribute locations must be unique.");
             }
         }
     }
     VertexArray candidate;
-    candidate.context_ = SDL_GL_GetCurrentContext();
     glGenVertexArrays(1, &candidate.array_);
     if (!candidate.array_) {
-        throw std::runtime_error("Could not create OpenGL vertex array.");
+        throw std::runtime_error("[VertexArray] Could not create OpenGL vertex array.");
     }
     {
         const VertexBindings restore;
@@ -90,14 +88,13 @@ void VertexArray::initialize(const VertexBuffer& vertices, const IndexBuffer* in
                 layout.stride, reinterpret_cast<const void*>(attribute.offset));
             glEnableVertexAttribArray(attribute.location);
         }
-        detail::checkOpenGL("Vertex attribute layout");
+        detail::checkOpenGL("[VertexArray] Vertex attribute layout");
         if (indices) {
             indices->bind();
         }
     }
-    detail::checkOpenGL("Vertex array initialization");
+    detail::checkOpenGL("[VertexArray] Vertex array initialization");
     std::swap(array_, candidate.array_);
-    std::swap(context_, candidate.context_);
     vertexCount_ = vertices.byteCount() / layout.stride;
     indexCount_ = indices ? indices->indexCount() : 0;
     indices_ = indices;
@@ -105,9 +102,12 @@ void VertexArray::initialize(const VertexBuffer& vertices, const IndexBuffer* in
 
 void VertexArray::bind() const
 {
-    detail::requireContext(context_, "Vertex array binding");
+    detail::requireOpenGL("[VertexArray] Vertex array binding");
+    if (!array_) {
+        throw std::runtime_error("[VertexArray] VertexArray must be initialized before use.");
+    }
     glBindVertexArray(array_);
-    detail::checkOpenGL("Vertex array binding");
+    detail::checkOpenGL("[VertexArray] Vertex array binding");
 }
 
 } // namespace frostwind

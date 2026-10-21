@@ -19,7 +19,7 @@ f32 selectAnisotropy(const TextureSampling& sampling)
 {
     if ((sampling.filter != TextureFilter::Nearest && sampling.filter != TextureFilter::Trilinear) ||
         !std::isfinite(sampling.anisotropy) || sampling.anisotropy < 1) {
-        throw std::runtime_error("Texture sampling requires a known filter and finite anisotropy >= 1.");
+        throw std::runtime_error("[Texture2D] Texture sampling requires a known filter and finite anisotropy >= 1.");
     }
     if (sampling.anisotropy == 1) {
         return 1;
@@ -29,9 +29,9 @@ f32 selectAnisotropy(const TextureSampling& sampling)
     if (supported) {
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maximum);
     }
-    detail::checkOpenGL("Texture anisotropy limit query");
+    detail::checkOpenGL("[Texture2D] Texture anisotropy limit query");
     if (!std::isfinite(maximum) || maximum < 1) {
-        throw std::runtime_error("Texture anisotropy limit is invalid.");
+        throw std::runtime_error("[Texture2D] Texture anisotropy limit is invalid.");
     }
     return std::min(sampling.anisotropy, maximum);
 }
@@ -40,7 +40,7 @@ f32 selectAnisotropy(const TextureSampling& sampling)
 
 Texture2D::~Texture2D() noexcept
 {
-    if (texture_ && detail::canDestroy(context_, "Texture destruction")) {
+    if (texture_) {
         glDeleteTextures(1, &texture_);
     }
 }
@@ -48,24 +48,23 @@ Texture2D::~Texture2D() noexcept
 void Texture2D::initializeRGBA8(int width, int height, const byte* pixels, usize byteCount,
     const TextureSampling& sampling)
 {
-    detail::requireOpenGL("Texture initialization");
+    detail::requireOpenGL("[Texture2D] Texture initialization");
     if (texture_ || width <= 0 || height <= 0 || !pixels) {
-        throw std::runtime_error("Texture initialization requires an empty owner, positive dimensions, and pixels.");
+        throw std::runtime_error("[Texture2D] Texture initialization requires an empty owner, positive dimensions, and pixels.");
     }
     const f32 anisotropy = selectAnisotropy(sampling);
     GLint maxSize = 0;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
     const usize w = width, h = height;
-    detail::checkOpenGL("Texture limit query");
+    detail::checkOpenGL("[Texture2D] Texture limit query");
     if (width > maxSize || height > maxSize ||
         w > std::numeric_limits<usize>::max() / 4 / h || byteCount != w * h * 4) {
-        throw std::runtime_error("Texture dimensions or RGBA8 byte count are invalid.");
+        throw std::runtime_error("[Texture2D] Texture dimensions or RGBA8 byte count are invalid.");
     }
     Texture2D candidate;
-    candidate.context_ = SDL_GL_GetCurrentContext();
     glGenTextures(1, &candidate.texture_);
     if (!candidate.texture_) {
-        throw std::runtime_error("Could not create OpenGL texture.");
+        throw std::runtime_error("[Texture2D] Could not create OpenGL texture.");
     }
     GLint binding = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &binding);
@@ -83,23 +82,22 @@ void Texture2D::initializeRGBA8(int width, int height, const byte* pixels, usize
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     glBindTexture(GL_TEXTURE_2D, binding);
-    detail::checkOpenGL("Texture upload");
+    detail::checkOpenGL("[Texture2D] Texture upload");
     std::swap(texture_, candidate.texture_);
-    std::swap(context_, candidate.context_);
     if (sampling.anisotropy > 1) {
-        SDL_Log("Texture anisotropy requested %gx; applied %gx.", sampling.anisotropy, anisotropy);
+        SDL_Log("[Texture2D] Texture anisotropy requested %gx; applied %gx.", sampling.anisotropy, anisotropy);
     }
 }
 
 void Texture2D::initializeFromFile(const std::filesystem::path& path, const TextureSampling& sampling)
 {
-    detail::requireOpenGL("Texture file loading");
+    detail::requireOpenGL("[Texture2D] Texture file loading");
     if (texture_) {
-        throw std::runtime_error("Texture file loading requires an empty owner and current context.");
+        throw std::runtime_error("[Texture2D] Texture file loading requires an empty owner and current context.");
     }
     GLint maxSize = 0;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
-    detail::checkOpenGL("Texture limit query");
+    detail::checkOpenGL("[Texture2D] Texture limit query");
     Image image;
     image.load(path, maxSize);
     initializeRGBA8(image.width(), image.height(), image.pixels().data(), image.pixels().size(), sampling);
@@ -107,16 +105,19 @@ void Texture2D::initializeFromFile(const std::filesystem::path& path, const Text
 
 void Texture2D::bind(u32 unit) const
 {
-    detail::requireContext(context_, "Texture binding");
+    detail::requireOpenGL("[Texture2D] Texture binding");
+    if (!texture_) {
+        throw std::runtime_error("[Texture2D] Texture2D must be initialized before use.");
+    }
     GLint units = 0;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &units);
     if (units <= 0 || unit >= u32(units)) {
-        throw std::runtime_error("Texture unit exceeds the current context's limit.");
+        throw std::runtime_error("[Texture2D] Texture unit exceeds the current context's limit.");
     }
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindSampler(unit, 0);
     glBindTexture(GL_TEXTURE_2D, texture_);
-    detail::checkOpenGL("Texture binding");
+    detail::checkOpenGL("[Texture2D] Texture binding");
 }
 
 } // namespace frostwind

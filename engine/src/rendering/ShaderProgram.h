@@ -5,8 +5,6 @@
 
 #include <core/Types.h>
 
-struct SDL_GLContextState;
-
 namespace frostwind {
 
 // Owns a linked OpenGL vertex/fragment program. Its creating context must be
@@ -40,7 +38,6 @@ public:
 private:
     void requireWritable(int location) const;
     u32 program_ = 0;
-    SDL_GLContextState* context_ = nullptr;
 };
 
 } // namespace frostwind

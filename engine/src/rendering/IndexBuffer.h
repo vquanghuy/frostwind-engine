@@ -2,8 +2,6 @@
 
 #include <core/Types.h>
 
-struct SDL_GLContextState;
-
 namespace frostwind {
 
 // Owns immutable u32 indices. The creating context must be current for GPU
@@ -27,7 +25,6 @@ public:
 
 private:
     u32 buffer_ = 0;
-    SDL_GLContextState* context_ = nullptr;
     usize indexCount_ = 0;
     u32 maxIndex_ = 0;
 };

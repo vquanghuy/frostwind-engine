@@ -46,6 +46,7 @@ Prefer implicit numeric conversions when they preserve the intended value, inclu
 
 - Keep platform/resource constructors empty and establish fallible resources through explicit initialization. Initialization is a one-time operation unless repeat initialization is deliberately supported.
 - Check external API return values. Rendering resource initialization/use, CPU image loading, and renderer operations throw `std::runtime_error` with the failed operation and diagnostic; their command methods return `void`. Log once at the application callback boundary. Keep Window's SDL-facing boolean results checked and propagated.
+- Prefix logs and authored exception messages with `[ClassName]` (for example, `[Window]` or `[Texture2D]`); example startup/control messages use their demo or example name. Include the caller's prefix in shared OpenGL-check operation strings. Preserve the original diagnostic when adding callback or file context, and log each failure once at the callback boundary. Keep SDL logging and ordinary exceptions; no logging wrapper is required.
 - Required uniform lookup throws for missing/inactive names; valid lookup returns a program-local location. Destructors and cleanup guards never throw. Restore promised GL bindings before propagating an exception.
 - Never allow C++ exceptions to unwind through C callbacks. Convert exceptions into the API's error result at callback boundaries that perform throwing operations.
 - Keep cleanup automatic. Avoid adding manual cleanup branches for each initialization failure.

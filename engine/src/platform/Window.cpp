@@ -10,7 +10,7 @@ namespace frostwind {
 Window::~Window()
 {
     if (context_ && !SDL_GL_DestroyContext(context_)) {
-        SDL_Log("OpenGL context destruction failed: %s", SDL_GetError());
+        SDL_Log("[Window] OpenGL context destruction failed: %s", SDL_GetError());
     }
     if (window_) {
         SDL_DestroyWindow(window_);
@@ -24,13 +24,13 @@ Window::~Window()
 bool Window::initialize(const WindowConfig& config)
 {
     if (window_ || config.width <= 0 || config.height <= 0 || config.msaaSamples < 0 || config.msaaSamples == 1) {
-        SDL_Log("Window initialization requires an empty owner, positive dimensions, and MSAA samples of 0 or at least 2.");
+        SDL_Log("[Window] Window initialization requires an empty owner, positive dimensions, and MSAA samples of 0 or at least 2.");
         return false;
     }
     Window candidate;
     candidate.videoInitialized_ = SDL_InitSubSystem(SDL_INIT_VIDEO);
     if (!candidate.videoInitialized_) {
-        SDL_Log("SDL video initialization failed: %s", SDL_GetError());
+        SDL_Log("[Window] SDL video initialization failed: %s", SDL_GetError());
         return false;
     }
     // SDL requires context attributes before window creation.
@@ -47,29 +47,29 @@ bool Window::initialize(const WindowConfig& config)
         !SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0) ||
         !SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, config.msaaSamples > 0 ? 1 : 0) ||
         !SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, config.msaaSamples)) {
-        SDL_Log("OpenGL attributes failed: %s", SDL_GetError());
+        SDL_Log("[Window] OpenGL attributes failed: %s", SDL_GetError());
         return false;
     }
     candidate.window_ = SDL_CreateWindow(config.title.c_str(), config.width, config.height,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (!candidate.window_) {
-        SDL_Log("Window creation failed: %s", SDL_GetError());
+        SDL_Log("[Window] Window creation failed: %s", SDL_GetError());
         return false;
     }
     candidate.context_ = SDL_GL_CreateContext(candidate.window_);
     if (!candidate.context_ || !candidate.makeCurrent()) {
-        SDL_Log("OpenGL context creation/activation failed: %s", SDL_GetError());
+        SDL_Log("[Window] OpenGL context creation/activation failed: %s", SDL_GetError());
         return false;
     }
     const int version = gladLoadGL(SDL_GL_GetProcAddress);
     if (version == 0 || !GLAD_GL_VERSION_3_3) {
-        SDL_Log("GLAD could not load the required OpenGL 3.3 Core functions.");
+        SDL_Log("[Window] GLAD could not load the required OpenGL 3.3 Core functions.");
         return false;
     }
     if (config.depthBuffer) {
         int depthBits = 0;
         if (!SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthBits) || depthBits < 24) {
-            SDL_Log("The 3D window requires at least 24 depth bits: %s", SDL_GetError());
+            SDL_Log("[Window] The 3D window requires at least 24 depth bits: %s", SDL_GetError());
             return false;
         }
     }
@@ -78,23 +78,23 @@ bool Window::initialize(const WindowConfig& config)
         if (!SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &sampleBuffers) ||
             !SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &samples) ||
             sampleBuffers < 1 || samples < config.msaaSamples) {
-            SDL_Log("The window requires at least %d MSAA samples; obtained %d: %s",
+            SDL_Log("[Window] The window requires at least %d MSAA samples; obtained %d: %s",
                 config.msaaSamples, samples, SDL_GetError());
             return false;
         }
         glEnable(GL_MULTISAMPLE);
         if (glGetError() != GL_NO_ERROR) {
-            SDL_Log("Could not enable OpenGL multisampling.");
+            SDL_Log("[Window] Could not enable OpenGL multisampling.");
             return false;
         }
-        SDL_Log("MSAA requested %d samples; actual framebuffer has %d samples.", config.msaaSamples, samples);
+        SDL_Log("[Window] MSAA requested %d samples; actual framebuffer has %d samples.", config.msaaSamples, samples);
     }
-    SDL_Log("OpenGL target 3.3 Core; actual context %s; renderer: %s; detected %d.%d",
+    SDL_Log("[Window] OpenGL target 3.3 Core; actual context %s; renderer: %s; detected %d.%d",
         reinterpret_cast<const char*>(glGetString(GL_VERSION)),
         reinterpret_cast<const char*>(glGetString(GL_RENDERER)),
         GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
     if (!SDL_GL_SetSwapInterval(config.vsync ? 1 : 0)) {
-        SDL_Log("Could not set the requested swap interval: %s. Software frame pacing remains independent.", SDL_GetError());
+        SDL_Log("[Window] Could not set the requested swap interval: %s. Software frame pacing remains independent.", SDL_GetError());
     }
     std::swap(window_, candidate.window_);
     std::swap(context_, candidate.context_);
@@ -120,7 +120,7 @@ bool Window::makeCurrent() const
 bool Window::present() const
 {
     if (!makeCurrent() || !SDL_GL_SwapWindow(window_)) {
-        SDL_Log("OpenGL presentation failed: %s", SDL_GetError());
+        SDL_Log("[Window] OpenGL presentation failed: %s", SDL_GetError());
         return false;
     }
     return true;

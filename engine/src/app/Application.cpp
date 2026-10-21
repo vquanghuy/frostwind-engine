@@ -16,7 +16,7 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
     try {
         auto application = factory ? factory() : nullptr;
         if (!application) {
-            SDL_Log("Application factory did not create an application.");
+            SDL_Log("[Application] Application factory did not create an application.");
             return SDL_APP_FAILURE;
         }
         if (!application->window_.initialize(config.window)) {
@@ -32,9 +32,9 @@ SDL_AppResult SDLCALL Application::onInit(void** appstate, Factory factory, cons
         *appstate = application.release();
         return SDL_APP_CONTINUE;
     } catch (const std::exception& error) {
-        SDL_Log("Application initialization failed: %s", error.what());
+        SDL_Log("[Application] Application initialization failed: %s", error.what());
     } catch (...) {
-        SDL_Log("Application initialization failed with an unknown exception.");
+        SDL_Log("[Application] Application initialization failed with an unknown exception.");
     }
     return SDL_APP_FAILURE;
 }
@@ -62,9 +62,9 @@ SDL_AppResult SDLCALL Application::onEvent(void* appstate, SDL_Event* event)
         }
         return application.handleEvent(*event);
     } catch (const std::exception& error) {
-        SDL_Log("Application event failed: %s", error.what());
+        SDL_Log("[Application] Application event failed: %s", error.what());
     } catch (...) {
-        SDL_Log("Application event failed with an unknown exception.");
+        SDL_Log("[Application] Application event failed with an unknown exception.");
     }
     return SDL_APP_FAILURE;
 }
@@ -74,9 +74,9 @@ SDL_AppResult SDLCALL Application::onIterate(void* appstate)
     try {
         return static_cast<Application*>(appstate)->iterate();
     } catch (const std::exception& error) {
-        SDL_Log("Application frame failed: %s", error.what());
+        SDL_Log("[Application] Application frame failed: %s", error.what());
     } catch (...) {
-        SDL_Log("Application frame failed with an unknown exception.");
+        SDL_Log("[Application] Application frame failed with an unknown exception.");
     }
     return SDL_APP_FAILURE;
 }
@@ -108,7 +108,7 @@ SDL_AppResult Application::iterate()
     }
     int width = 0, height = 0;
     if (!window_.pixelSize(width, height)) {
-        SDL_Log("Window pixel size query failed: %s", SDL_GetError());
+        SDL_Log("[Application] Window pixel size query failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
     if (width <= 0 || height <= 0) {
@@ -123,12 +123,12 @@ SDL_AppResult Application::iterate()
         return SDL_APP_CONTINUE;
     }
     if (!window_.makeCurrent()) {
-        SDL_Log("Could not prepare the OpenGL rendering context: %s", SDL_GetError());
+        SDL_Log("[Application] Could not prepare the OpenGL rendering context: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    detail::requireOpenGL("Viewport");
+    detail::requireOpenGL("[Application] Viewport");
     glViewport(0, 0, width, height);
-    detail::checkOpenGL("Viewport");
+    detail::checkOpenGL("[Application] Viewport");
     if (active_) {
         const f32 elapsedNs = frameStart - previousUpdateNs_;
         const f32 deltaSeconds = hasUpdateTimestamp_ ?

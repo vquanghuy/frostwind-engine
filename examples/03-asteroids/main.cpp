@@ -13,7 +13,7 @@ class AsteroidsApp final : public frostwind::Application {
 protected:
     bool initialize() override
     {
-        SDL_Log("Frostwind Asteroids scaffold initialized. Scene and gameplay are pending. Press Escape or close the window to quit.");
+        SDL_Log("[Asteroids] Frostwind Asteroids scaffold initialized. Scene and gameplay are pending. Press Escape or close the window to quit.");
         return true;
     }
 

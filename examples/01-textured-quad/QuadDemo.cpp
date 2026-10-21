@@ -12,7 +12,7 @@ bool QuadDemo::initialize()
 {
     const char* basePath = SDL_GetBasePath();
     if (!basePath) {
-        SDL_Log("Could not locate example assets: %s", SDL_GetError());
+        SDL_Log("[QuadDemo] Could not locate example assets: %s", SDL_GetError());
         return false;
     }
     const auto assetDirectory = std::filesystem::u8path(basePath) / "assets";
@@ -33,7 +33,7 @@ bool QuadDemo::initialize()
     const int textureLocation = program_.uniformLocation("uTexture");
     program_.use();
     program_.setInt(textureLocation, 0);
-    SDL_Log("Frostwind textured quad initialized. Press Escape or close the window to quit.");
+    SDL_Log("[QuadDemo] Frostwind textured quad initialized. Press Escape or close the window to quit.");
     return true;
 }
 

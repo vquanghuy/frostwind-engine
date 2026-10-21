@@ -406,3 +406,29 @@ remains. All four native examples built successfully. The focused native samplin
 check passed on Apple M1 Pro/OpenGL 4.1, including exact 3×2 RGBA8 upload/readback
 with default alignment, mip averages, anisotropy limits/fallback, texture binding
 restoration, and mip-generation failure/retry. No screenshots were captured.
+
+### Single-context resource lifetime (2026-10-21)
+
+Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray no longer
+store creating-context pointers or compare context identities. Operations retain
+OpenGL availability and initialized-owner checks. Destructors delete their owned
+GL objects directly; the application's single context must remain current until
+all GPU owners have been destroyed. This replaces the context-identity checks
+and skip-deletion behavior described in earlier validation records.
+
+All four native examples built successfully. Existing native sampling, graphics,
+lifecycle, cube, and quad checks passed on Apple M1 Pro/OpenGL 4.1, covering upload
+failure/retry, depth/culling/MSAA, shader uniforms and drawing, application failure
+cleanup, and GPU deletion before context/window teardown. The cube retained its
+controls and filtering, and the quad retained framebuffer hash
+`1129920399774065595` in both runs. No screenshots were captured.
+
+### Diagnostic source prefixes (2026-10-21)
+
+Engine logs and authored exceptions now carry class prefixes; example logs carry
+the demo/example name. Shared OpenGL checks retain the caller's prefix, and
+Application preserves resource prefixes when reporting callback failures.
+The native preset built all four examples and all three CTest checks passed.
+The native lifecycle check passed with assertions for prefixed initialization,
+event, and frame failures, retaining one callback log per failure and correct
+GPU/context teardown. Source coverage and whitespace checks passed.

@@ -4,8 +4,6 @@
 
 #include <core/Types.h>
 
-struct SDL_GLContextState;
-
 namespace frostwind {
 
 enum class TextureFilter { Nearest, Trilinear };
@@ -40,7 +38,6 @@ public:
 
 private:
     u32 texture_ = 0;
-    SDL_GLContextState* context_ = nullptr;
 };
 
 } // namespace frostwind

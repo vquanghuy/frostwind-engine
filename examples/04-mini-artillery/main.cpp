@@ -13,7 +13,7 @@ class MiniArtilleryApp final : public frostwind::Application {
 protected:
     bool initialize() override
     {
-        SDL_Log("Frostwind Mini Artillery scaffold initialized. Terrain and gameplay are pending. Press Escape or close the window to quit.");
+        SDL_Log("[MiniArtillery] Frostwind Mini Artillery scaffold initialized. Terrain and gameplay are pending. Press Escape or close the window to quit.");
         return true;
     }
 

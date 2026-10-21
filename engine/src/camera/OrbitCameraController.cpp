@@ -38,7 +38,7 @@ void OrbitCameraController::reset(PerspectiveCamera& camera, const OrbitCameraCo
         config.distance < config.minDistance || config.distance > config.maxDistance ||
         config.pitchLimit <= 0 || config.pitchLimit > 1.56f || std::abs(config.pitch) > config.pitchLimit ||
         config.angularSpeed < 0 || config.distanceSpeed < 0) {
-        throw std::runtime_error("Orbit camera requires finite values, positive distance bounds, pitch within a safe limit, and nonnegative speeds.");
+        throw std::runtime_error("[OrbitCameraController] Orbit camera requires finite values, positive distance bounds, pitch within a safe limit, and nonnegative speeds.");
     }
     auto candidate = config;
     candidate.yaw = std::remainder(candidate.yaw, glm::two_pi<f32>());
@@ -50,14 +50,14 @@ void OrbitCameraController::update(PerspectiveCamera& camera, const OrbitCameraI
 {
     if (!validAxis(input.horizontal) || !validAxis(input.vertical) || !validAxis(input.distance) ||
         !std::isfinite(deltaSeconds) || deltaSeconds < 0) {
-        throw std::runtime_error("Orbit camera requires input axes in [-1, 1] and finite nonnegative elapsed seconds.");
+        throw std::runtime_error("[OrbitCameraController] Orbit camera requires input axes in [-1, 1] and finite nonnegative elapsed seconds.");
     }
     auto candidate = state_;
     candidate.yaw += input.horizontal * candidate.angularSpeed * deltaSeconds;
     candidate.pitch += input.vertical * candidate.angularSpeed * deltaSeconds;
     candidate.distance += input.distance * candidate.distanceSpeed * deltaSeconds;
     if (!std::isfinite(candidate.yaw) || !std::isfinite(candidate.pitch) || !std::isfinite(candidate.distance)) {
-        throw std::runtime_error("Orbit camera movement is not finite.");
+        throw std::runtime_error("[OrbitCameraController] Orbit camera movement is not finite.");
     }
     candidate.yaw = std::remainder(candidate.yaw, glm::two_pi<f32>());
     candidate.pitch = std::clamp(candidate.pitch, -candidate.pitchLimit, candidate.pitchLimit);

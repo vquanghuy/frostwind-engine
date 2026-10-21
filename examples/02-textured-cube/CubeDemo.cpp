@@ -16,7 +16,7 @@ bool CubeDemo::initialize()
 {
     const char* basePath = SDL_GetBasePath();
     if (!basePath) {
-        SDL_Log("Could not locate cube assets: %s", SDL_GetError());
+        SDL_Log("[CubeDemo] Could not locate cube assets: %s", SDL_GetError());
         return false;
     }
     const auto assets = std::filesystem::u8path(basePath) / "assets";
@@ -57,7 +57,7 @@ bool CubeDemo::initialize()
     program_.use();
     program_.setInt(textureLocation, 0);
     resetScene();
-    SDL_Log("Textured Cube: arrows orbit, W/S move closer/farther, Space pauses rotation, R resets, Escape quits.");
+    SDL_Log("[CubeDemo] Textured Cube: arrows orbit, W/S move closer/farther, Space pauses rotation, R resets, Escape quits.");
     return true;
 }
 

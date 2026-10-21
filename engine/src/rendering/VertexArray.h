@@ -4,8 +4,6 @@
 
 #include <core/Types.h>
 
-struct SDL_GLContextState;
-
 namespace frostwind {
 
 class VertexBuffer;
@@ -50,7 +48,6 @@ private:
     usize vertexCount_ = 0;
     usize indexCount_ = 0;
     const IndexBuffer* indices_ = nullptr;
-    SDL_GLContextState* context_ = nullptr;
 };
 
 } // namespace frostwind
