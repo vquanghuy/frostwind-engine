@@ -4,9 +4,25 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ## [Unreleased]
 
-### Added
+Unreleased work is grouped by date, newest first, based on the relevant Git commits in their recorded time zones.
+
+### 2026-10-21
+
+#### Added
 
 - Documentation: reserved RFC 9998 (formerly 0008) preserves WebGPU migration and pipeline/layout analysis as deferred research alongside multiple-backend RFC 9999, with WebGPU Unleashed as a learning reference. Restored C++17/OpenGL scene work as the active direction; no renderer migration or toolchain change is selected.
+
+#### Changed
+
+- Diagnostics: prefix engine/example logs and authored exception messages with their source class or example name, preserving nested error context at application callback boundaries.
+- Engine: remove per-resource context pointers and identity checks from Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray. Keep OpenGL availability and initialization checks; GPU cleanup relies on the single-context application lifetime.
+- Engine: simplify Texture2D uploads by relying on default pixel-unpack state and no unpack buffer binding; remove unused unpack-state queries and restoration. Tightly packed RGBA8 rows satisfy the default four-byte alignment.
+- Dependencies: owner-supplied GLAD 2.0.8 regeneration retains OpenGL 3.3 Core and adds 18 selected extension definitions/loading paths. RFC 0006 records each selection and its purpose; the dependency record preserves exact settings/checksums. Texture2D uses generated anisotropy constants and support flags instead of handwritten tokens; other extension features remain unimplemented.
+
+### 2026-10-20
+
+#### Added
+
 - Engine: reusable CPU-only `OrbitCameraController` composed with PerspectiveCamera, with configurable target, angular/distance speeds, pitch/distance limits, and validated movement inputs. PerspectiveCamera exposes its validated pose; Textured Cube delegates orbit movement to the controller while retaining key bindings, camera setup, and cube animation.
 - Engine: per-texture sampling options for trilinear filtering with generated mipmaps and capability-checked anisotropy. Textured Cube requests 16× anisotropy, clamped to the supported limit with a logged fallback; Textured Quad retains nearest filtering.
 - Textured Cube: second learning example with indexed 3D cube geometry, explicit model/view/projection matrices, keyboard orbit/distance controls, elapsed-time rotation, pause/reset, depth testing/back-face culling, 4× MSAA, and a 120 FPS cap with VSync. Owner-supplied capture preserved below; lighting/shadows/skyboxes remain planned.
@@ -20,23 +36,9 @@ All notable changes to Frostwind and its examples are documented in this file.
 - Engine: direct OpenGL `VertexBuffer` owning immutable vertex bytes and a concrete `Renderer` for color clears and complete triangle draws; `Application` owns viewport setup.
 - Engine: CPU-only `Image` PNG/JPEG loading with explicit dimension limits and local bottom-left row conversion, independent of graphics initialization.
 - Documentation: root `ROADMAP.md` using Dovyski's themed template; RFC 0006 records direct OpenGL rendering ownership, while RFC 9999 preserves the deferred multi-backend and advanced-feature research.
-- Documentation: roadmap ideas for grass/vegetation, water/fluid simulation, and a physics sandbox, with initial scopes, prerequisites, and guidance for turning ideas into example experiments.
-- Asteroids and Mini Artillery: separate runnable OpenGL window scaffolds, CMake executable targets, and runtime SDL packaging; all build presets now select all three examples. Gameplay and runtime art remain planned.
-- Documentation: README links to Agent Sprite Forge for sprite creation and NormalMap-Online for height-to-normal conversion, with example asset provenance guidance.
-- Mini Artillery: generated side-view concept matching the detailed Asteroids material direction; retained as design reference, with gameplay and runtime assets still planned.
-- Asteroids: generated transparent ship and meteor art prototypes with prompt provenance; matching normal maps and runtime validation remain planned.
-- Generated realistic and softer Asteroids concepts preserved alongside the original pack reference; draft RFC 0005 records the detailed sprite art direction, a common-source normal-map bake workflow, and an example-owned scrolling/parallax starfield.
-- Owner-supplied Space Shooter pack scene preserved as an attributed visual reference for the planned Asteroids example.
-- Draft RFC 0005 for the upcoming GLM-backed pixel-unit 2D camera, keyboard state, elapsed-time movement, and reusable sprite rendering in a separate Asteroids example, with a Kenney sprite sourcing plan and later gameplay stages; implementation remains planned.
-- Engine: `u64` primitive alias for unsigned 64-bit values, used for application frame timing.
-- Engine: configurable application FPS cap (60 by default, 0 disables software pacing) using monotonic nanosecond timing and precise waits for the remaining frame budget; independently configurable VSync.
 
-### Changed
+#### Changed
 
-- Diagnostics: prefix engine/example logs and authored exception messages with their source class or example name, preserving nested error context at application callback boundaries.
-- Engine: remove per-resource context pointers and identity checks from Texture2D, ShaderProgram, VertexBuffer, IndexBuffer, and VertexArray. Keep OpenGL availability and initialization checks; GPU cleanup relies on the single-context application lifetime.
-- Engine: simplify Texture2D uploads by relying on default pixel-unpack state and no unpack buffer binding; remove unused unpack-state queries and restoration. Tightly packed RGBA8 rows satisfy the default four-byte alignment.
-- Dependencies: owner-supplied GLAD 2.0.8 regeneration retains OpenGL 3.3 Core and adds 18 selected extension definitions/loading paths. RFC 0006 records each selection and its purpose; the dependency record preserves exact settings/checksums. Texture2D uses generated anisotropy constants and support flags instead of handwritten tokens; other extension features remain unimplemented.
 - Documentation: refresh the Textured Cube previews with the owner’s latest Desktop capture, preserving the earlier PNG and caption as history.
 - Documentation: add a leftmost preview column to the README example table, using owner-supplied demo screenshots and clearly labeled concepts for planned games.
 - Examples: inserted `02-textured-cube` and moved Asteroids/Mini Artillery sources and planning artwork to `03-asteroids` / `04-mini-artillery`; retained their target names, runtime output paths, behavior, and assets. All build presets include the cube.
@@ -57,15 +59,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 - Textured Quad: uses VertexBuffer, IndexBuffer, VertexArray, ShaderProgram, Texture2D, and the borrowed Renderer through engine methods, with a regular vec2 scale uniform; retained crate pixels, orientation, sampling, and square scaling. Asteroids and Mini Artillery use the engine color-clear function.
 - Engine: kept GLAD as a private implementation dependency; public rendering headers and examples require no native graphics calls or GLAD headers.
 - Documentation: accepted RFC 9999 for staged implementation and recorded its initial ownership refactor; completed the shared frame/resource migration through all three examples.
-- Documentation: aligned the README technical approach and project structure guide with draft RFC 9999, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
-- Documentation: expanded draft RFC 9999 with concrete window/device composition, private backend inheritance and surface integration, resource/frame contracts, and staged example migration criteria.
-- Examples: numbered source directories as `01-textured-quad`, `03-asteroids`, and `04-mini-artillery` for suggested learning order; updated build and documentation paths while retaining target names and executable output paths.
-- Asteroids: placed the selected concept first in its README and specified mouse heading, heading-relative WASD movement, and Escape to quit; camera follows automatically at fixed rotation/zoom, while manual camera controls are deferred to another example.
-- Asteroids: documented its purpose as a focused engine experiment, planned technical challenges and validation evidence, and completion criteria independent of a fully functional game.
-- Examples: organized planned Asteroids and Mini Artillery around their own READMEs with embedded concepts, the Asteroids art progression and selected style, preserved older artwork, and example-owned `docs/assets/` provenance; historical milestone captures remain central. RFC 0005 also records NormalMap-Online as a candidate offline height-to-normal tool.
-- Engine: replaced the fixed post-swap fallback delay with application-owned pacing that includes rendering and swap time and avoids catch-up frames after stalls. Application startup now takes `ApplicationConfig` containing window settings and the FPS cap.
 
-### Removed
+#### Removed
 
 - Engine: experimental GraphicsDevice/GraphicsBackend, WindowSurface integration hierarchy, opaque resource registries, separate Shader stages, GraphicsPipeline descriptions, and scoped RenderFrame submission. The prior experiment is preserved in Git. Static texture-support initialization remains removed.
 
@@ -81,6 +76,52 @@ All notable changes to Frostwind and its examples are documented in this file.
 *Frostwind Textured Cube on macOS Apple M1 Pro, captured manually by the owner on 2026-10-20. The running example displays the textured 3D cube; lighting and shadows remain planned.*
 
 </details>
+
+### 2026-10-19
+
+#### Changed
+
+- Documentation: aligned the README technical approach and project structure guide with draft RFC 9999, explicitly separating the implemented layout from proposed window/device/backend ownership and source organization.
+- Documentation: expanded draft RFC 9999 with concrete window/device composition, private backend inheritance and surface integration, resource/frame contracts, and staged example migration criteria.
+
+### 2026-10-18
+
+#### Added
+
+- Documentation: roadmap ideas for grass/vegetation, water/fluid simulation, and a physics sandbox, with initial scopes, prerequisites, and guidance for turning ideas into example experiments.
+- Asteroids and Mini Artillery: separate runnable OpenGL window scaffolds, CMake executable targets, and runtime SDL packaging; all build presets now select all three examples. Gameplay and runtime art remain planned.
+- Documentation: README links to Agent Sprite Forge for sprite creation and NormalMap-Online for height-to-normal conversion, with example asset provenance guidance.
+
+#### Changed
+
+- Examples: numbered source directories as `01-textured-quad`, `03-asteroids`, and `04-mini-artillery` for suggested learning order; updated build and documentation paths while retaining target names and executable output paths.
+
+### 2026-10-15
+
+#### Added
+
+- Mini Artillery: generated side-view concept matching the detailed Asteroids material direction; retained as design reference, with gameplay and runtime assets still planned.
+- Asteroids: generated transparent ship and meteor art prototypes with prompt provenance; matching normal maps and runtime validation remain planned.
+- Generated realistic and softer Asteroids concepts preserved alongside the original pack reference; draft RFC 0005 records the detailed sprite art direction, a common-source normal-map bake workflow, and an example-owned scrolling/parallax starfield.
+- Owner-supplied Space Shooter pack scene preserved as an attributed visual reference for the planned Asteroids example.
+- Draft RFC 0005 for the upcoming GLM-backed pixel-unit 2D camera, keyboard state, elapsed-time movement, and reusable sprite rendering in a separate Asteroids example, with a Kenney sprite sourcing plan and later gameplay stages; implementation remains planned.
+
+#### Changed
+
+- Asteroids: placed the selected concept first in its README and specified mouse heading, heading-relative WASD movement, and Escape to quit; camera follows automatically at fixed rotation/zoom, while manual camera controls are deferred to another example.
+- Asteroids: documented its purpose as a focused engine experiment, planned technical challenges and validation evidence, and completion criteria independent of a fully functional game.
+- Examples: organized planned Asteroids and Mini Artillery around their own READMEs with embedded concepts, the Asteroids art progression and selected style, preserved older artwork, and example-owned `docs/assets/` provenance; historical milestone captures remain central. RFC 0005 also records NormalMap-Online as a candidate offline height-to-normal tool.
+
+### 2026-10-14
+
+#### Added
+
+- Engine: `u64` primitive alias for unsigned 64-bit values, used for application frame timing.
+- Engine: configurable application FPS cap (60 by default, 0 disables software pacing) using monotonic nanosecond timing and precise waits for the remaining frame budget; independently configurable VSync.
+
+#### Changed
+
+- Engine: replaced the fixed post-swap fallback delay with application-owned pacing that includes rendering and swap time and avoids catch-up frames after stalls. Application startup now takes `ApplicationConfig` containing window settings and the FPS cap.
 
 ## 0.3.0 - 2026-10-14 (milestone)
 
