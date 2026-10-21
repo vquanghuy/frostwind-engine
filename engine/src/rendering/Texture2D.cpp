@@ -15,11 +15,6 @@
 namespace frostwind {
 namespace {
 
-// EXT/ARB_texture_filter_anisotropic and OpenGL 4.6 share these tokens.
-// They are absent from our pinned OpenGL 3.3-only GLAD header.
-constexpr GLenum textureMaxAnisotropy = 0x84FE;
-constexpr GLenum maxTextureMaxAnisotropy = 0x84FF;
-
 f32 selectAnisotropy(const TextureSampling& sampling)
 {
     if ((sampling.filter != TextureFilter::Nearest && sampling.filter != TextureFilter::Trilinear) ||
@@ -29,15 +24,10 @@ f32 selectAnisotropy(const TextureSampling& sampling)
     if (sampling.anisotropy == 1) {
         return 1;
     }
-    GLint major = 0, minor = 0;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-    const bool supported = major > 4 || (major == 4 && minor >= 6) ||
-        SDL_GL_ExtensionSupported("GL_EXT_texture_filter_anisotropic") ||
-        SDL_GL_ExtensionSupported("GL_ARB_texture_filter_anisotropic");
+    const bool supported = GLAD_GL_EXT_texture_filter_anisotropic || GLAD_GL_ARB_texture_filter_anisotropic;
     GLfloat maximum = 1;
     if (supported) {
-        glGetFloatv(maxTextureMaxAnisotropy, &maximum);
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maximum);
     }
     detail::checkOpenGL("Texture anisotropy limit query");
     if (!std::isfinite(maximum) || maximum < 1) {
@@ -77,36 +67,21 @@ void Texture2D::initializeRGBA8(int width, int height, const byte* pixels, usize
     if (!candidate.texture_) {
         throw std::runtime_error("Could not create OpenGL texture.");
     }
-    GLint binding = 0, alignment = 0, rowLength = 0, skipPixels = 0, skipRows = 0, unpackBuffer = 0;
+    GLint binding = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &binding);
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignment);
-    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &rowLength);
-    glGetIntegerv(GL_UNPACK_SKIP_PIXELS, &skipPixels);
-    glGetIntegerv(GL_UNPACK_SKIP_ROWS, &skipRows);
-    glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &unpackBuffer);
     glBindTexture(GL_TEXTURE_2D, candidate.texture_);
     const bool trilinear = sampling.filter == TextureFilter::Trilinear;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, trilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, trilinear ? GL_LINEAR : GL_NEAREST);
     if (anisotropy > 1) {
-        glTexParameterf(GL_TEXTURE_2D, textureMaxAnisotropy, anisotropy);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     if (trilinear) {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
-    glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLength);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, skipPixels);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, skipRows);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, unpackBuffer);
     glBindTexture(GL_TEXTURE_2D, binding);
     detail::checkOpenGL("Texture upload");
     std::swap(texture_, candidate.texture_);

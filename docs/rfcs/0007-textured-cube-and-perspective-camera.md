@@ -56,7 +56,7 @@ graphics backends are later increments.
 - **Texture sampling:** per-initialization `TextureSampling` defaults to nearest/no
   mipmaps, preserving Textured Quad. Trilinear generates the mipmap chain,
   uses linear magnification, and keeps clamp-to-edge wrapping. The cube requests
-  16× anisotropy, checking EXT/ARB support or OpenGL 4.6 core, clamping to the
+  16× anisotropy, checking GLAD's EXT/ARB support flags, clamping to the
   supported maximum and logging the applied level. Unsupported contexts retain
   trilinear filtering at anisotropy 1. Binding/unpack restoration and failed
   upload cleanup/retry remain part of the texture contract.

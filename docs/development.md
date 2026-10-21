@@ -105,7 +105,7 @@ The static engine library contains Application, Window, Renderer, Texture2D, Sha
 
 Examples override `initialize()`, `handleEvent(event)`, and `render(Renderer& renderer, int width, int height)`, with an optional `update(f32 deltaSeconds)` before rendering. Update delta uses monotonic callback starts, first/resumed 0 and a 0.1-second stall clamp. Focus loss pauses updates/clears keys; update exit/failure skips render/present. This is separate from fixed-step simulation. Application owns one persistent Renderer, makes the context current, sets the viewport from drawable pixels, passes the renderer by reference, and presents continuing callbacks. Renderer clears color/depth, controls depth testing/back-face culling, and submits draws; examples do not retain the callback reference or own another renderer. Resources require their creating context to remain current and outlive them. Derived members are destroyed before the base Window/context, including after failed startup. Context checks diagnose misuse without switching contexts or retaining the window. Native graphics calls stay in engine implementations; GLAD includes remain private.
 
-The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. Textured Quad uses GLSL 330, a regular `vec2 uScale`, a unit-0 sampler, four vertices/six indices, and the packaged crate image. ShaderProgram provides activation, cached uniform lookup, integer/float/vec2/3/4 and column-major mat4 writes. VertexBuffer owns vertex bytes; IndexBuffer owns u32 indices and cached bounds; VertexArray owns the layout/buffer associations and stores vertex/index counts. Renderer draws the whole array through one `drawTriangles(vertexArray)` method, selecting indexed or sequential drawing automatically and restoring the prior VAO. Texture2D validates/upload RGBA8 bytes or composes CPU PNG/JPEG decoding and upload, preserving unpack state. No static texture-support setup or padded quad parameter block is needed.
+The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a compatible 4.1 context. Textured Quad uses GLSL 330, a regular `vec2 uScale`, a unit-0 sampler, four vertices/six indices, and the packaged crate image. ShaderProgram provides activation, cached uniform lookup, integer/float/vec2/3/4 and column-major mat4 writes. VertexBuffer owns vertex bytes; IndexBuffer owns u32 indices and cached bounds; VertexArray owns the layout/buffer associations and stores vertex/index counts. Renderer draws the whole array through one `drawTriangles(vertexArray)` method, selecting indexed or sequential drawing automatically and restoring the prior VAO. Texture2D validates/upload RGBA8 bytes or composes CPU PNG/JPEG decoding and upload, preserving the prior texture binding and expecting default pixel-unpack state with no unpack buffer bound. No static texture-support setup or padded quad parameter block is needed.
 
 Textured Cube uses a 120 FPS software cap and 4× MSAA with VSync requested. The other examples retain a 60 FPS cap with VSync requested. MSAA sample count is checked and logged at initialization; an explicit unsupported request fails rather than silently disabling anti-aliasing. `ApplicationConfig::maxFps` chooses another cap; 0 disables software pacing. Set `config.window.vsync = false` too when measuring uncapped rendering. Render/swap time counts toward the callback budget and slow frames do not create catch-up work. Minimized windows use a separate idle delay; zero-sized targets use the remaining budget or a 16 ms uncapped fallback. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
@@ -370,3 +370,39 @@ cube capture. Its unchanged PNG is preserved as the [updated M005 image](assets/
 and now appears in the root README preview, cube README, and current changelog
 image. The earlier M005 PNG and caption remain in the changelog history.
 No rendering code or verification claims changed for this image refresh.
+
+### GLAD extension selection validation (2026-10-21)
+
+The owner supplied regenerated GLAD 2.0.8 files targeting OpenGL 3.3 Core with
+18 selected extensions and all generator options disabled. The [RFC 0006
+area/purpose table](rfcs/0006-opengl-focused-rendering.md#glad-extension-selection)
+and dependency inventory were checked against every generated extension flag;
+recorded source/header checksums match, and the platform header/licenses remain
+unchanged. Generated files were retained as supplied without local patches.
+Texture2D uses generated anisotropy constants and EXT/ARB flags without querying
+the context version, retaining supported-limit clamping and isotropic fallback.
+
+The native preset built all four examples; the engine-only test build passed all
+three CTest checks. Native sampling/cube/quad checks under `build/cube-check/`
+ran from `/private/tmp` with approved window access on Apple M1 Pro/OpenGL 4.1.
+They verified actual 16× anisotropy, individually selected EXT/ARB flag paths,
+injected 4× clamping, unsupported fallback, mip averages, invalid requests,
+binding/unpack restoration, and mip-generation failure/retry. The cube retained
+11 mip levels and 4× MSAA; its controls, resize, startup cleanup/retry, and exit
+checks passed. Textured Quad matched its prior framebuffer hash
+`1129920399774065595` in both runs. No screenshots were captured.
+
+Local documentation links/anchors and extension-table coverage were checked.
+The other exported extension APIs have not been exercised or integrated into
+engine rendering. This update does not establish compute, debugging callbacks,
+Windows/Linux/browser support, or completion of remaining manual checks.
+
+### Simplified texture uploads (2026-10-21)
+
+Texture2D now expects default pixel-unpack state and no unpack buffer bound,
+removing unpack queries, setters, and restoration. This supersedes the unpack-state
+preservation contract in earlier validation records; texture binding restoration
+remains. All four native examples built successfully. The focused native sampling
+check passed on Apple M1 Pro/OpenGL 4.1, including exact 3×2 RGBA8 upload/readback
+with default alignment, mip averages, anisotropy limits/fallback, texture binding
+restoration, and mip-generation failure/retry. No screenshots were captured.

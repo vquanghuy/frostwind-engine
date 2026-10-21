@@ -33,6 +33,8 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Changed
 
+- Engine: simplify Texture2D uploads by relying on default pixel-unpack state and no unpack buffer binding; remove unused unpack-state queries and restoration. Tightly packed RGBA8 rows satisfy the default four-byte alignment.
+- Dependencies: owner-supplied GLAD 2.0.8 regeneration retains OpenGL 3.3 Core and adds 18 selected extension definitions/loading paths. RFC 0006 records each selection and its purpose; the dependency record preserves exact settings/checksums. Texture2D uses generated anisotropy constants and support flags instead of handwritten tokens; other extension features remain unimplemented.
 - Documentation: refresh the Textured Cube previews with the owner’s latest Desktop capture, preserving the earlier PNG and caption as history.
 - Documentation: add a leftmost preview column to the README example table, using owner-supplied demo screenshots and clearly labeled concepts for planned games.
 - Examples: inserted `02-textured-cube` and moved Asteroids/Mini Artillery sources and planning artwork to `03-asteroids` / `04-mini-artillery`; retained their target names, runtime output paths, behavior, and assets. All build presets include the cube.

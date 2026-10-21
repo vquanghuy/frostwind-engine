@@ -29,7 +29,8 @@ public:
     Texture2D& operator=(const Texture2D&) = delete;
 
     // Positive dimensions within GL_MAX_TEXTURE_SIZE; exactly width*height*4
-    // bytes, bottom row first. Upload preserves binding and pixel-unpack state.
+    // bytes, bottom row first. Requires default pixel-unpack state and no unpack
+    // buffer bound. Upload preserves the prior texture binding.
     // One-time after success; failed initialization cleans up and permits retry.
     void initializeRGBA8(int width, int height, const byte* pixels, usize byteCount,
         const TextureSampling& sampling = {});

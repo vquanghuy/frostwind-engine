@@ -50,6 +50,51 @@ Engine graphics calls remain in implementation files. Resource headers expose pr
 
 Delete the device/frame/pipeline/backend/surface abstraction and its resource identities. `GraphicsChecks.h/.cpp` provides only private context/error checks shared by the direct owners. This helper does not dispatch resource operations or manage lifetime. A concrete Renderer handles clear/draw submission. Application owns that persistent renderer and performs viewport setup directly. There is no backend interface or per-frame renderer allocation.
 
+### GLAD extension selection
+
+Updated on 2026-10-21 using the owner-supplied GLAD 2.0.8 generation: retain
+**OpenGL 3.3 Core**, with the following 18 explicitly selected extensions.
+All generator options remain disabled, including the internal loader; SDL
+continues to supply `SDL_GL_GetProcAddress`. The [dependency record](../../external/glad/README.integration.md)
+preserves the exact generator settings, source/header checksums, and licenses.
+Each extension name below links to its Khronos specification.
+
+| Area | Selected extensions | Why included |
+| --- | --- | --- |
+| Texture filtering | [GL_EXT_texture_filter_anisotropic](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt), [GL_ARB_texture_filter_anisotropic](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_texture_filter_anisotropic.txt) | Provide named anisotropy parameters and runtime support flags for the cube's angled surfaces. Retain both extension variants for driver coverage; clamp requests to the supported limit. |
+| Diagnostics | [GL_KHR_debug](https://registry.khronos.org/OpenGL/extensions/KHR/KHR_debug.txt), [GL_ARB_debug_output](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_debug_output.txt) | Prepare optional driver error/performance messages; KHR also provides resource labels and debug groups. ARB is an older diagnostic alternative. No debug callback is installed by this update. |
+| Texture allocation | [GL_ARB_texture_storage](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_texture_storage.txt) | Prepare immutable allocation of texture formats, dimensions, and mip levels for future texture/render-target work. Current uploads still use `glTexImage2D`. |
+| Format capabilities | [GL_ARB_internalformat_query](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_internalformat_query.txt), [GL_ARB_internalformat_query2](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_internalformat_query2.txt) | Prepare queries for format capabilities and supported sample counts when choosing future render-target formats. |
+| Compressed texture assets | [GL_EXT_texture_compression_s3tc](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_compression_s3tc.txt), [GL_ARB_texture_compression_bptc](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_texture_compression_bptc.txt) | Prepare GPU-compressed texture formats for larger asset sets. This does not add compressed-asset loading or replace the current PNG/JPEG decoder. |
+| Cubemap arrays | [GL_ARB_texture_cube_map_array](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_texture_cube_map_array.txt) | Prepare multiple environment probes or point-light shadow maps. A single skybox can use ordinary core cubemaps without this extension. |
+| Buffer streaming | [GL_ARB_buffer_storage](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_buffer_storage.txt) | Prepare immutable buffer storage and persistent mapping for later frequently updated geometry/instance data, with synchronization designed when used. |
+| Indirect drawing | [GL_ARB_draw_indirect](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_draw_indirect.txt), [GL_ARB_multi_draw_indirect](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_multi_draw_indirect.txt), [GL_ARB_base_instance](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_base_instance.txt), [GL_ARB_shader_draw_parameters](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_shader_draw_parameters.txt) | Prepare indirect draw parameters, draw batching, instance offsets, and shader-visible draw identifiers for later grass/voxel experiments. Basic instanced grass remains possible in core 3.3. |
+| GPU compute and storage | [GL_ARB_compute_shader](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_compute_shader.txt), [GL_ARB_shader_storage_buffer_object](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_shader_storage_buffer_object.txt), [GL_ARB_shader_image_load_store](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_shader_image_load_store.txt) | Reserve declarations for optional future GPU culling, particles, or simulation on suitable platforms. This does not implement compute or make it available on the development Mac. |
+
+This is a declaration/loader selection, not a new minimum capability set or a
+commitment to implement every listed feature. Only anisotropic filtering is
+currently used by engine code. Other features remain driven by concrete examples;
+the current lighting/Asteroids/grass sequence does not require GPU compute.
+
+Check runtime support, required entry points, and each feature's complete version/
+extension prerequisites before using it. In particular, ARB_compute_shader
+requires OpenGL 4.2; exporting it does not make it usable on a 3.3 context or the
+development Mac's 4.1 context. Future advanced paths must preserve a working
+baseline or explicitly define a separate example requirement. No compatibility
+profile, C++ upgrade, graphics backend, or capability hierarchy is introduced.
+
+Texture2D uses GLAD's generated anisotropy constants and EXT/ARB support flags;
+support is determined by those flags without querying the context version.
+The EXT and ARB parameter tokens have identical values. Trilinear/mipmap sampling
+remains the fallback if anisotropy is unavailable, and the actual applied limit
+continues to be logged. Enabling GLAD definitions does not enable features itself.
+
+Executed builds, flag/fallback checks, and native rendering results are recorded
+in the [extension validation record](../development.md#glad-extension-selection-validation-2026-10-21).
+
+See also the [OpenGL 3.3 Core specification](https://registry.khronos.org/OpenGL/specs/gl/glspec33.core.pdf)
+and [GLAD generation and runtime checks](https://github.com/Dav1dde/glad/wiki/C).
+
 ### Window and Application
 
 Window sets context attributes before SDL window creation, creates/makes current its context, loads GLAD through SDL, and requests the configured swap interval. `WindowConfig` owns `vsync` again. Startup uses a scoped candidate so failures release completed context/window/video stages and permit retry. Successful repeated initialization is rejected. Native handles remain private with no graphics friend classes.
@@ -60,7 +105,7 @@ Retain application-owned software pacing from [RFC 0004](0004-frame-pacing.md), 
 
 ### Texture2D and Image
 
-Texture2D owns a native texture and calls OpenGL directly for creation/upload/binding/deletion. Validate positive dimensions, exact RGBA8 byte count, overflow, and the current context's maximum texture size. Upload preserves the previous binding on the active texture unit and pixel-unpack alignment, row length, skips, and unpack-buffer binding. Failed upload deletes its partial texture and permits retry.
+Texture2D owns a native texture and calls OpenGL directly for creation/upload/binding/deletion. Validate positive dimensions, exact RGBA8 byte count, overflow, and the current context's maximum texture size. Upload preserves the previous binding on the active texture unit. It expects default pixel-unpack state and no pixel unpack buffer bound; tightly packed RGBA8 rows satisfy the default four-byte alignment. No unpack-state queries or changes are needed for current uploads. Failed upload deletes its partial texture and permits retry.
 
 Keep nearest filtering, clamp-to-edge wrapping, and no mipmaps. `bind(unit)` selects a validated unit and this texture's sampling without exposing its handle. The texture is independent of shader/program ownership; a sampler uniform selects the same unit.
 
