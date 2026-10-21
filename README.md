@@ -36,7 +36,7 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 | 2D physics and terrain | Box2D 3.x and Clipper2 planned |
 | 3D physics | Planned; library selection deferred |
 | Rendering architecture | Window owns SDL/context/GLAD/presentation; resources perform their own OpenGL operations; examples use engine methods |
-| Additional graphics APIs | Deferred research; no backend compatibility requirement for current OpenGL development |
+| Additional graphics APIs | Deferred research: [WebGPU](docs/rfcs/9998-webgpu-migration-research.md) and [multiple backends](docs/rfcs/9999-multi-backend-rendering-research.md); no backend compatibility requirement for current OpenGL development |
 | Browser | Planned Emscripten/WebAssembly and WebGL 2 through its GLES3 interface; not configured |
 
 OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.

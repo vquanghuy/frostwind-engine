@@ -6,6 +6,7 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 ### Added
 
+- Documentation: reserved RFC 9998 (formerly 0008) preserves WebGPU migration and pipeline/layout analysis as deferred research alongside multiple-backend RFC 9999, with WebGPU Unleashed as a learning reference. Restored C++17/OpenGL scene work as the active direction; no renderer migration or toolchain change is selected.
 - Engine: reusable CPU-only `OrbitCameraController` composed with PerspectiveCamera, with configurable target, angular/distance speeds, pitch/distance limits, and validated movement inputs. PerspectiveCamera exposes its validated pose; Textured Cube delegates orbit movement to the controller while retaining key bindings, camera setup, and cube animation.
 - Engine: per-texture sampling options for trilinear filtering with generated mipmaps and capability-checked anisotropy. Textured Cube requests 16× anisotropy, clamped to the supported limit with a logged fallback; Textured Quad retains nearest filtering.
 - Textured Cube: second learning example with indexed 3D cube geometry, explicit model/view/projection matrices, keyboard orbit/distance controls, elapsed-time rotation, pause/reset, depth testing/back-face culling, 4× MSAA, and a 120 FPS cap with VSync. Owner-supplied capture preserved below; lighting/shadows/skyboxes remain planned.

@@ -10,6 +10,7 @@
 - [C++ coding conventions and resource ownership](coding-conventions.md)
 - [Contributing and commit messages](contributing.md)
 - [RFC process and index](rfcs/README.md)
+- [Deferred WebGPU research and learning references](rfcs/9998-webgpu-migration-research.md)
 - [Textured-quad example](../examples/01-textured-quad/README.md)
 - [Textured Cube, matrix conventions, and camera controls](../examples/02-textured-cube/README.md)
 - [Asteroids window scaffold, planned features, and sprite prototypes](../examples/03-asteroids/README.md)

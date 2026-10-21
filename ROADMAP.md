@@ -62,6 +62,12 @@ The next phase builds on rendering resources and camera/input foundations to exp
 
 Extend the rendering interface through the needs of this small scene before pursuing advanced GPU features.
 
+## Deferred graphics research
+
+[WebGPU migration (RFC 9998)](docs/rfcs/9998-webgpu-migration-research.md) and [multiple graphics backends (RFC 9999)](docs/rfcs/9999-multi-backend-rendering-research.md) are research topics, not prerequisites for lighting, Asteroids, or grass. Retain C++17/OpenGL and add capabilities through concrete examples. Revisit these topics only when learning a new API, browser delivery, GPU compute, or a measured limitation becomes an explicitly selected objective. WebGPU research includes the [WebGPU Unleashed learning reference](https://shi-yan.github.io/webgpuunleashed/).
+
+The Metal/Vulkan phases below preserve possible future directions; they are not scheduled implementation commitments.
+
 ## Phase 4 - Metal backend
 
 If native API learning is selected later, use the working OpenGL 2D/3D scenes as a baseline for a Metal experiment. Reconsider architecture at that time; the current direct wrappers do not promise backend portability. This phase is deferred while OpenGL scenes are the active objective; reconsider it when native API learning is explicitly selected. A dedicated RFC will establish API/OS baselines, shader tooling, and lifetime rules. The intended capabilities are:
