@@ -225,4 +225,16 @@ CPU `Image` loading needs no context. GPU uploads and shader compilation require
 | Aliased texture detail on angled faces | Use trilinear mipmaps and capability-checked anisotropy; MSAA addresses geometric edges |
 | Need instancing or richer sampling | Add further operations for a concrete example |
 
-PNG/JPEG decoding, RGBA8 textures with nearest or trilinear/mipmap sampling and optional anisotropy, float vertex attributes, u32 indexed and non-indexed triangle lists, perspective camera math, optional depth/MSAA, depth/culling controls, and vertex/fragment GLSL programs are implemented. Lighting systems, stencil operations, instanced geometry, other backends, and browser builds remain future work. Continue with Textured Cube in the roadmap; preserve Textured Quad and both scaffolds as the engine grows.
+PNG/JPEG decoding, RGBA8 textures with nearest or trilinear/mipmap sampling and optional anisotropy, float vertex attributes, u32 indexed and non-indexed triangle lists, perspective camera math, optional depth/MSAA, depth/culling controls, and vertex/fragment GLSL programs are implemented. Reusable engine lighting/material systems, stencil operations, instanced geometry, other backends, and browser builds remain future work. Continue with Textured Cube in the roadmap; preserve Textured Quad and both scaffolds as the engine grows.
+
+[Implemented RFC 0008](rfcs/0008-basic-lighting.md) demonstrates example-owned
+ambient/diffuse/Phong specular calculations and direct uniform uploads in
+Textured Cube. Its shaders add normals and world-space varyings; CubeDemo caches
+locations, uploads fixed scene settings after linking, and sends camera position
+with matrices each frame. It uses existing setVec3/setFloat/setMat4 operations.
+The inverse-transpose normal matrix is computed in the vertex shader.
+See [native checks](development.md#cube-lighting-validation-2026-10-22).
+
+Reusable material/mesh/model architecture, includes, and built-in shader systems
+remain proposals in [draft RFC 0009](rfcs/0009-materials-meshes-and-shader-composition.md),
+with [Filament](https://google.github.io/filament/Materials.md.html) as a reference.

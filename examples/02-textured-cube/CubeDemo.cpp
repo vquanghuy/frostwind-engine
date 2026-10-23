@@ -20,22 +20,22 @@ bool CubeDemo::initialize()
         return false;
     }
     const auto assets = std::filesystem::u8path(basePath) / "assets";
-    struct Vertex { frostwind::f32 x, y, z, u, v; };
-    // Four vertices per face keep each face's bottom-left UV orientation.
+    struct Vertex { frostwind::f32 x, y, z, u, v, nx, ny, nz; };
+    // Separate vertices preserve each face's UV orientation and sharp normal.
     // Every face is counterclockwise when viewed from outside the cube.
     constexpr Vertex vertices[] = {
-        {-0.5f,-0.5f, 0.5f, 0,0}, { 0.5f,-0.5f, 0.5f, 1,0},
-        { 0.5f, 0.5f, 0.5f, 1,1}, {-0.5f, 0.5f, 0.5f, 0,1}, // +Z
-        { 0.5f,-0.5f,-0.5f, 0,0}, {-0.5f,-0.5f,-0.5f, 1,0},
-        {-0.5f, 0.5f,-0.5f, 1,1}, { 0.5f, 0.5f,-0.5f, 0,1}, // -Z
-        { 0.5f,-0.5f, 0.5f, 0,0}, { 0.5f,-0.5f,-0.5f, 1,0},
-        { 0.5f, 0.5f,-0.5f, 1,1}, { 0.5f, 0.5f, 0.5f, 0,1}, // +X
-        {-0.5f,-0.5f,-0.5f, 0,0}, {-0.5f,-0.5f, 0.5f, 1,0},
-        {-0.5f, 0.5f, 0.5f, 1,1}, {-0.5f, 0.5f,-0.5f, 0,1}, // -X
-        {-0.5f, 0.5f, 0.5f, 0,0}, { 0.5f, 0.5f, 0.5f, 1,0},
-        { 0.5f, 0.5f,-0.5f, 1,1}, {-0.5f, 0.5f,-0.5f, 0,1}, // +Y
-        {-0.5f,-0.5f,-0.5f, 0,0}, { 0.5f,-0.5f,-0.5f, 1,0},
-        { 0.5f,-0.5f, 0.5f, 1,1}, {-0.5f,-0.5f, 0.5f, 0,1}, // -Y
+        {-0.5f,-0.5f, 0.5f, 0,0, 0, 0, 1}, { 0.5f,-0.5f, 0.5f, 1,0, 0, 0, 1},
+        { 0.5f, 0.5f, 0.5f, 1,1, 0, 0, 1}, {-0.5f, 0.5f, 0.5f, 0,1, 0, 0, 1}, // +Z
+        { 0.5f,-0.5f,-0.5f, 0,0, 0, 0, -1}, {-0.5f,-0.5f,-0.5f, 1,0, 0, 0, -1},
+        {-0.5f, 0.5f,-0.5f, 1,1, 0, 0, -1}, { 0.5f, 0.5f,-0.5f, 0,1, 0, 0, -1}, // -Z
+        { 0.5f,-0.5f, 0.5f, 0,0, 1, 0, 0}, { 0.5f,-0.5f,-0.5f, 1,0, 1, 0, 0},
+        { 0.5f, 0.5f,-0.5f, 1,1, 1, 0, 0}, { 0.5f, 0.5f, 0.5f, 0,1, 1, 0, 0}, // +X
+        {-0.5f,-0.5f,-0.5f, 0,0, -1, 0, 0}, {-0.5f,-0.5f, 0.5f, 1,0, -1, 0, 0},
+        {-0.5f, 0.5f, 0.5f, 1,1, -1, 0, 0}, {-0.5f, 0.5f,-0.5f, 0,1, -1, 0, 0}, // -X
+        {-0.5f, 0.5f, 0.5f, 0,0, 0, 1, 0}, { 0.5f, 0.5f, 0.5f, 1,0, 0, 1, 0},
+        { 0.5f, 0.5f,-0.5f, 1,1, 0, 1, 0}, {-0.5f, 0.5f,-0.5f, 0,1, 0, 1, 0}, // +Y
+        {-0.5f,-0.5f,-0.5f, 0,0, 0, -1, 0}, { 0.5f,-0.5f,-0.5f, 1,0, 0, -1, 0},
+        { 0.5f,-0.5f, 0.5f, 1,1, 0, -1, 0}, {-0.5f,-0.5f, 0.5f, 0,1, 0, -1, 0}, // -Y
     };
     constexpr frostwind::u32 indices[] = {
          0, 1, 2,  2, 3, 0,   4, 5, 6,  6, 7, 4,
@@ -46,6 +46,7 @@ bool CubeDemo::initialize()
     indices_.initialize(indices, std::size(indices));
     vertexArray_.initialize(vertices_, indices_, {sizeof(Vertex), {
         {0, 3, offsetof(Vertex, x)}, {1, 2, offsetof(Vertex, u)},
+        {2, 3, offsetof(Vertex, nx)},
     }});
     texture_.initializeFromFile(assets / "textures" / "crate.png",
         {frostwind::TextureFilter::Trilinear, 16});
@@ -53,9 +54,22 @@ bool CubeDemo::initialize()
     modelLocation_ = program_.uniformLocation("uModel");
     viewLocation_ = program_.uniformLocation("uView");
     projectionLocation_ = program_.uniformLocation("uProjection");
+    cameraPositionLocation_ = program_.uniformLocation("uCameraPosition");
     const int textureLocation = program_.uniformLocation("uTexture");
+    const int lightDirectionLocation = program_.uniformLocation("uLightDirection");
+    const int lightColorLocation = program_.uniformLocation("uLightColor");
+    const int ambientColorLocation = program_.uniformLocation("uAmbientColor");
+    const int specularColorLocation = program_.uniformLocation("uSpecularColor");
+    const int shininessLocation = program_.uniformLocation("uShininess");
     program_.use();
     program_.setInt(textureLocation, 0);
+    // A shallow light angle makes a visible reflection sweep across the side
+    // faces from the initial orbit view. Values remain example-owned policy.
+    program_.setVec3(lightDirectionLocation, 0.4f, -0.1f, -0.6f);
+    program_.setVec3(lightColorLocation, 0.8f, 0.8f, 0.8f);
+    program_.setVec3(ambientColorLocation, 0.192f, 0.192f, 0.192f);
+    program_.setVec3(specularColorLocation, 0.8f, 0.8f, 0.8f);
+    program_.setFloat(shininessLocation, 16);
     resetScene();
     SDL_Log("[CubeDemo] Textured Cube: arrows orbit, W/S move closer/farther, Space pauses rotation, R resets, Escape quits.");
     return true;
@@ -120,6 +134,8 @@ SDL_AppResult CubeDemo::render(frostwind::Renderer& renderer, int width, int hei
     program_.setMat4(modelLocation_, glm::value_ptr(model));
     program_.setMat4(viewLocation_, glm::value_ptr(camera_.view()));
     program_.setMat4(projectionLocation_, glm::value_ptr(camera_.projection()));
+    const auto& cameraPosition = camera_.position();
+    program_.setVec3(cameraPositionLocation_, cameraPosition.x, cameraPosition.y, cameraPosition.z);
     texture_.bind();
     renderer.drawTriangles(vertexArray_);
     return SDL_APP_CONTINUE;

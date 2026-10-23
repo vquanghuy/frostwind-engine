@@ -6,10 +6,34 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 Unreleased work is grouped by date, newest first, based on the relevant Git commits in their recorded time zones.
 
+### 2026-10-22
+
+#### Changed
+
+- Textured Cube: increase ambient RGB from 0.16 to 0.192 (20%) to brighten faces away from the directional light.
+
+#### Fixed
+
+- Textured Cube: tune the light angle, specular color, and shininess so the initial camera sees a clear specular highlight. The original light elevation and narrow exponent made the specular term effectively invisible from that view. Verified the difference with numerical readback of actual cube geometry; restart the rebuilt demo to use the new values.
+
+#### Added
+
+- Documentation: preserve the owner’s Desktop lighting capture from 2026-10-22 at 21:15:03 and use it in the root/cube READMEs and changelog; retain older unlit captures and captions.
+- Textured Cube: example-owned directional lighting with ambient fill, Lambert diffuse, Phong specular color/shininess, per-face normals, inverse-transpose normal transformation, and camera-dependent highlights. Uploads use existing ShaderProgram operations; no engine architecture changes. RFC 0008 is implemented; RFC 0009 remains draft.
+- Validation: native builds, engine-only/three CTest checks, actual CubeDemo callbacks and shader-failure cleanup, and controlled floating-point shader readback passed. See the [development record](docs/development.md#cube-lighting-validation-2026-10-22). The owner-supplied lit capture is embedded below; historical unlit captures remain preserved.
+
+![Frostwind Textured Cube with directional lighting](docs/assets/milestones/textured-cube-lighting-2026-10-22.png)
+
+*Frostwind Textured Cube with ambient, diffuse, and Phong specular lighting on
+macOS Apple M1 Pro, captured manually by the owner on 2026-10-22 at 21:15:03.
+Original PNG preserved byte-for-byte. Shadows and normal maps remain unimplemented.*
+
 ### 2026-10-21
 
 #### Added
 
+- Documentation: draft RFC 0009 records the proposed engine structure, Material/response components, CPU/GPU geometry, Mesh/Model ownership and placement, shader includes/built-ins/bindings, phased validation, and Filament/Khronos references. It remains separate from RFC 0008; implementation is on hold.
+- Documentation: draft RFC 0008 explains lighting theory and proposes ambient/diffuse/Phong specular shading directly in Textured Cube, with example-owned normals, shader equations, and direct uniform uploads through existing engine APIs. Preserves the detailed crate/SVG theory figure and records broader material/mesh/model/shader architecture separately in draft RFC 0009, with Filament references. Implementation awaits the owner's explicit mark.
 - Documentation: reserved RFC 9998 (formerly 0008) preserves WebGPU migration and pipeline/layout analysis as deferred research alongside multiple-backend RFC 9999, with WebGPU Unleashed as a learning reference. Restored C++17/OpenGL scene work as the active direction; no renderer migration or toolchain change is selected.
 
 #### Changed

@@ -2,7 +2,7 @@
 
 An experimental C++ game engine for **2D and 3D games**, developed through practical examples. Current rendering focuses on OpenGL; 2D/3D physics integrations are planned.
 
-> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/buffer/vertex-array owners, CPU image loading, elapsed-time updates, keyboard state, a perspective camera, and the Textured Quad/Textured Cube examples are implemented. Asteroids and Mini Artillery remain window scaffolds. Audio, physics, terrain destruction, 2D sprites/camera, and lighting are planned; other graphics APIs are deferred research.
+> **Status:** Native SDL3/OpenGL rendering, direct texture/shader/buffer/vertex-array owners, CPU image loading, elapsed-time updates, keyboard state, a perspective camera, and the Textured Quad/Textured Cube examples with example-owned directional Phong lighting on the cube are implemented. Asteroids and Mini Artillery remain window scaffolds. Audio, physics, terrain destruction, 2D sprites/camera, and reusable engine lighting/material systems are planned; other graphics APIs are deferred research.
 
 Frostwind grew out of Mini Artillery, a destructible-terrain experiment, and was initially named Toybox. The engine now lives separately from its examples in this repository; existing releases and milestone screenshots retain their original history. See the [changelog](CHANGELOG.md) and [RFC 0003](docs/rfcs/0003-frostwind-engine-and-examples.md).
 
@@ -15,7 +15,7 @@ Example directories use two-digit prefixes for a suggested learning order: Textu
 | Preview | Example | Status |
 | :---: | --- | --- |
 | [<img src="docs/assets/milestones/m004-frostwind-textured-quad.png" alt="Textured Quad running on macOS" width="220">](docs/assets/milestones/m004-frostwind-textured-quad.png)<br>Screenshot | [Textured Quad](examples/01-textured-quad/README.md) | Implemented: shader/image-file loading and an indexed quad with four vertices and six indices |
-| [<img src="docs/assets/milestones/m005-frostwind-textured-cube-updated.png" alt="Textured Cube running on macOS" width="220">](docs/assets/milestones/m005-frostwind-textured-cube-updated.png)<br>Screenshot | [Textured Cube](examples/02-textured-cube/README.md) | Implemented: rotating indexed cube, orbit camera, depth/culling, 4× MSAA, and a 120 FPS cap with VSync |
+| [<img src="docs/assets/milestones/textured-cube-lighting-2026-10-22.png" alt="Textured Cube with directional lighting running on macOS" width="220">](docs/assets/milestones/textured-cube-lighting-2026-10-22.png)<br>Screenshot | [Textured Cube](examples/02-textured-cube/README.md) | Implemented: rotating indexed cube, orbit camera, ambient/diffuse/Phong specular lighting, depth/culling, 4× MSAA, and a 120 FPS cap with VSync |
 | [<img src="examples/03-asteroids/docs/assets/asteroids-realistic-concept-v1.png" alt="Asteroids concept artwork; gameplay is not implemented" width="220">](examples/03-asteroids/docs/assets/asteroids-realistic-concept-v1.png)<br>Concept — planned | [Asteroids](examples/03-asteroids/README.md) | Runnable window scaffold; 2D camera/mouse aiming/sprites, lighting, and gameplay planned |
 | [<img src="examples/04-mini-artillery/docs/assets/mini-artillery-realistic-concept-v1.png" alt="Mini Artillery concept artwork; gameplay is not implemented" width="220">](examples/04-mini-artillery/docs/assets/mini-artillery-realistic-concept-v1.png)<br>Concept — planned | [Mini Artillery](examples/04-mini-artillery/README.md) | Runnable window scaffold; tanks, projectiles, and destructible terrain planned |
 
@@ -41,7 +41,7 @@ Asteroids and Mini Artillery each have a minimal executable that opens a plain O
 
 OpenGL and the current 2D example are the starting point, not limits on Frostwind's scope. Introduce new systems through concrete examples rather than building unused abstractions.
 
-The [engine roadmap](ROADMAP.md) records intended learning phases. Our [current focus](ROADMAP.md#current-focus---opengl-scenes) starts with [Textured Cube](examples/02-textured-cube/README.md) for matrices and camera experiments, then basic lighting before returning to Asteroids. Grass remains a later bounded experiment.
+The [engine roadmap](ROADMAP.md) records intended learning phases. Our [current focus](ROADMAP.md#current-focus---opengl-scenes) starts with [Textured Cube](examples/02-textured-cube/README.md) for matrices and camera experiments, with basic lighting now implemented before returning to Asteroids. Grass remains a later bounded experiment.
 
 [RFC 0006](docs/rfcs/0006-opengl-focused-rendering.md) records the current direct OpenGL design. All four examples use engine operations; resources manage their GL objects without a device, pipeline, or backend hierarchy. The prior multi-backend experiment is preserved at commit `e9cf616` on `archive/multi-backend-experiment` and in deferred [RFC 9999](docs/rfcs/9999-multi-backend-rendering-research.md).
 
@@ -144,6 +144,7 @@ Third-party files remain pinned under `external/`, shared by the engine and exam
 
 ## Learning references
 
+- [Filament](https://google.github.io/filament/) and its [Materials Guide](https://google.github.io/filament/Materials.md.html) — references for future material/shader architecture research. [RFC 0008](docs/rfcs/0008-basic-lighting.md) records lighting theory applied directly in Textured Cube; proposed engine structure and reusable material/mesh/model/shader components are recorded separately in [draft RFC 0009](docs/rfcs/0009-materials-meshes-and-shader-composition.md).
 - [LearnOpenGL](https://learnopengl.com/) — step-by-step modern OpenGL tutorials covering shaders, transformations, cameras, lighting, model loading, and advanced rendering. Adapt examples to Frostwind's SDL lifecycle and engine interfaces; check version requirements for advanced and guest articles.
 - [Rastertek: OpenGL 4.0 on Linux tutorials](https://www.rastertek.com/tutgl4linux.html) — rendering fundamentals, lighting, shadows, water, instancing, and other effects. Many techniques can be adapted to Frostwind's OpenGL 3.3 baseline; review shader versions and API requirements per tutorial. Hardware tessellation requires functionality beyond that baseline.
 

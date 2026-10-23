@@ -109,7 +109,7 @@ The baseline is OpenGL 3.3 Core with GLAD 2.0.8; the development Mac supplies a 
 
 Textured Cube uses a 120 FPS software cap and 4× MSAA with VSync requested. The other examples retain a 60 FPS cap with VSync requested. MSAA sample count is checked and logged at initialization; an explicit unsupported request fails rather than silently disabling anti-aliasing. `ApplicationConfig::maxFps` chooses another cap; 0 disables software pacing. Set `config.window.vsync = false` too when measuring uncapped rendering. Render/swap time counts toward the callback budget and slow frames do not create catch-up work. Minimized windows use a separate idle delay; zero-sized targets use the remaining budget or a 16 ms uncapped fallback. See [RFC 0004](rfcs/0004-frame-pacing.md).
 
-PerspectiveCamera with a composed OrbitCameraController, keyboard state, elapsed-time updates, optional depth/MSAA, and depth/culling controls are implemented for Textured Cube. Camera2D, mouse state, audio, physics, terrain destruction, lighting, and instancing remain planned. Multi-backend work is deferred; the prior implementation is archived at `e9cf616` on `archive/multi-backend-experiment`, with research in RFC 9999. Windows/Linux and browser support remain unverified. Opt-in CTest checks cover camera/input math and update coordination; additional native validation artifacts remain under ignored `build/`.
+PerspectiveCamera with a composed OrbitCameraController, keyboard state, elapsed-time updates, optional depth/MSAA, and depth/culling controls are implemented for Textured Cube. Textured Cube now has example-owned ambient/diffuse/Phong specular lighting through direct uniform uploads. Camera2D, mouse state, audio, physics, terrain destruction, reusable engine lighting/material systems, and instancing remain planned. Multi-backend work is deferred; the prior implementation is archived at `e9cf616` on `archive/multi-backend-experiment`, with research in RFC 9999. Windows/Linux and browser support remain unverified. Opt-in CTest checks cover camera/input math and update coordination; additional native validation artifacts remain under ignored `build/`.
 
 ## Verification record
 
@@ -432,3 +432,52 @@ The native preset built all four examples and all three CTest checks passed.
 The native lifecycle check passed with assertions for prefixed initialization,
 event, and frame failures, retaining one callback log per failure and correct
 GPU/context teardown. Source coverage and whitespace checks passed.
+
+### Cube lighting validation (2026-10-22)
+
+The native preset configured and built all four examples on Apple M1 Pro.
+A fresh engine-only configuration under `build/cube-tests/` built successfully;
+all three context-free CTest checks passed (camera/input, orbit, application
+update). No engine implementation or public API changes were needed.
+
+Temporary validation under `build/lighting-check/` compiled the actual CubeDemo
+and linked the static engine, then ran from `/private/tmp` with approved macOS
+display access. It verified initialization and native frames with 4× MSAA and
+16× anisotropy, required uniforms, pause/orbit/reset, camera-distance changes,
+rotation resuming after reset, resize callback success, and synthetic Escape
+exit. Checks confirmed camera position changes while the world-space light
+remains fixed. Instrumented program deletion occurred with a current context;
+a missing packaged fragment shader returned failure with null appstate and no
+remaining context. This expected failure logged once at the application boundary.
+
+The actual cube GLSL files were also rendered into a temporary floating-point
+target using controlled geometry and a one-pixel texture. Numerical readback
+checks passed for ambient-only/perpendicular/back-facing light, front-facing
+diffuse, light-direction reversal, aligned specular, moving-camera highlights,
+no specular on unlit faces, coincident camera/fragment safety, sampled alpha,
+and inverse-transpose normals with rotation plus nonuniform scaling. No image
+or screenshot files were captured. The real 24 vertex positions/UVs and all 36
+indices were checked against the prior cube; the six new unit normals agree
+with outward winding.
+
+Visual appearance/tuning, Retina sizing, interactive minimize/restore, and IDE
+use remain manual. Windows/Linux/browser remain unverified. Other examples built
+but were not rerun for framebuffer parity in this increment. Historical unlit
+captures and captions remain preserved; the owner supplied the [lit capture](assets/milestones/textured-cube-lighting-2026-10-22.png)
+on 2026-10-22 at 21:15:03.
+
+#### Initial-view specular correction (2026-10-22)
+
+After the owner reported no visible shine, a focused check replayed the actual
+CubeDemo draw geometry and default model/camera uniforms into a floating-point
+target. Subtracting the same draw with specular disabled measured the specular
+contribution, without saving images. Original light (-0.4, -0.7, -0.6), specular
+RGB 0.25, and exponent 32 produced a zero measured contribution at the default
+view. With light (0.4, -0.1, -0.6), specular RGB 0.8, and exponent 16, the peak
+was 0.168258 and 2,476 pixels exceeded 0.04 at 320×240. These are linear numerical
+differences in the test target, not a color-calibrated visual measurement.
+
+The native preset rebuilt successfully. The extended actual-geometry comparison
+and existing native callback, shader readback, and failure-cleanup checks passed.
+The scene tuning now exposes the reflection in the initial view; final visual
+appearance still benefits from owner inspection. No screenshots were captured.

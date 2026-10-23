@@ -2,7 +2,7 @@
 
 | Files | Source | License |
 | --- | --- | --- |
-| `shaders/cube.vert`, `shaders/cube.frag` | Original Frostwind Textured Cube shaders | Project [MIT license](../../../LICENSE) |
+| `shaders/cube.vert`, `shaders/cube.frag` | Original Frostwind Textured Cube shaders, extended with example-owned ambient/diffuse/Phong specular lighting on 2026-10-22 | Project [MIT license](../../../LICENSE) |
 | `textures/crate.png` | Unmodified copy of Textured Quad's crate, generated with OpenAI imagegen on 2026-10-14 at the owner's request | Project asset; distributed under the project [MIT license](../../../LICENSE) |
 
 The crate's original generation prompt and provenance are preserved in the

@@ -30,6 +30,7 @@ private:
     int modelLocation_ = -1;
     int viewLocation_ = -1;
     int projectionLocation_ = -1;
+    int cameraPositionLocation_ = -1;
     frostwind::f32 rotation_ = 0;
     bool rotating_ = true;
 };

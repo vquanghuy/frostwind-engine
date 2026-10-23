@@ -63,7 +63,7 @@ examples/
 | `core/Types.h` | Shared primitive aliases without runtime initialization |
 | Example `main.cpp` | Supply SDL callback adapters, factory, and application configuration |
 | `QuadDemo` | Own resources and paths, initialize the quad, handle Escape, calculate scale, and draw |
-| `CubeDemo` | Own cube geometry/assets, model animation, key bindings and initial camera settings, delegate orbit movement, upload matrices, and draw |
+| `CubeDemo` | Own cube geometry/assets, model animation, key bindings and initial camera settings, delegate orbit movement, upload matrices/camera and example-owned lighting values, and draw |
 
 Native graphics calls live in engine `.cpp` files. GLAD remains a private dependency and public resource headers require no native GL types or handle getters. SDL remains the application/event API. Additional camera/input, audio, physics, and terrain facilities arrive through examples that need them.
 
@@ -148,6 +148,24 @@ Preserve exact versions, licenses, provenance, framework symlinks, and header/bi
 
 ## Remaining rendering work
 
-Follow the [current roadmap](../ROADMAP.md#current-focus---opengl-scenes): Textured Cube transforms/camera, then basic lighting and a return to Asteroids. Depth/culling, perspective math, and indexed geometry are implemented; add further formats, lighting, and later instancing as concrete examples require them. Keep resource responsibilities direct and context ownership explicit. Multi-backend compatibility is not a current design requirement.
+### Cube lighting and deferred architecture
+
+[Implemented RFC 0008](rfcs/0008-basic-lighting.md) applies basic lighting directly
+in Textured Cube: 24 position/UV/normal vertices, inverse-transpose normal
+transformation in GLSL, ambient/diffuse/Phong specular shading, and direct
+ShaderProgram uploads. Fixed light/surface uniforms are set after linking;
+world-space camera position and matrices are updated each frame. Existing engine
+APIs and ownership remain unchanged. See [native validation](development.md#cube-lighting-validation-2026-10-22).
+
+[Draft RFC 0009](rfcs/0009-materials-meshes-and-shader-composition.md) separately
+records the [proposed project structure](rfcs/0009-materials-meshes-and-shader-composition.md#project-structure),
+material/surface/light components, geometry/Mesh and Model ownership, shader
+includes/bindings, and reference documents including Filament. This remains an
+unimplemented proposal; it does not change the implemented tree or authorize
+an overhaul as part of the cube lighting increment.
+
+### Other pending work
+
+Follow the [current roadmap](../ROADMAP.md#current-focus---opengl-scenes): Textured Cube transforms/camera, with basic lighting implemented before a return to Asteroids. Depth/culling, perspective math, and indexed geometry are implemented; add further formats, richer lighting, and later instancing as concrete examples require them. Keep resource responsibilities direct and context ownership explicit. Multi-backend compatibility is not a current design requirement.
 
 The prior experiment is preserved at commit `e9cf616` on `archive/multi-backend-experiment`, with its analysis in RFC 9999. Windows/Linux SDK/runtime checks and browser integration remain pending. Do not create future backend hierarchies or advertise unsupported build choices.
