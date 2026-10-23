@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560">
+  <title>Geometric Vectors in the Phong Reflection Model</title>
+  <desc>Normalized direction vectors and angle relationships at surface fragment P in Frostwind.</desc>
+
+  <defs>
+    <!-- Vector Arrow Markers -->
+    <marker id="marker-teal" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#0d9488" />
+    </marker>
+    <marker id="marker-amber" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#d97706" />
+    </marker>
+    <marker id="marker-coral" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#e11d48" />
+    </marker>
+    <marker id="marker-blue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#2563eb" />
+    </marker>
+    <marker id="marker-ray" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#b45309" />
+    </marker>
+
+    <!-- Sub-surface Hatch Pattern -->
+    <pattern id="surface-hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#cbd5e1" stroke-width="1.5" />
+    </pattern>
+  </defs>
+
+  <!-- Background Card -->
+  <rect x="0" y="0" width="960" height="560" rx="16" fill="#faf9f5" stroke="#e2e8f0" stroke-width="2" />
+
+  <!-- Diagram Title Header -->
+  <g transform="translate(40, 36)" font-family="system-ui, -apple-system, sans-serif">
+    <text x="0" y="0" font-size="20" font-weight="700" fill="#0f172a">Geometric Vectors &amp; Direction Conventions</text>
+    <text x="0" y="24" font-size="14" fill="#64748b">Normalized vectors and angle relationships at surface fragment P for directional Phong shading</text>
+  </g>
+
+  <!-- Sub-surface Solid Interior -->
+  <rect x="60" y="380" width="840" height="40" fill="url(#surface-hatch)" />
+  <rect x="60" y="380" width="840" height="40" fill="#f8fafc" fill-opacity="0.75" />
+
+  <!-- Surface Horizon Line -->
+  <line x1="60" y1="380" x2="900" y2="380" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" />
+  <text x="75" y="405" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#64748b">Surface Horizon (Tangent Plane)</text>
+
+  <!-- ================= GEOMETRY: Centered at P(480, 380) ================= -->
+  <g id="geometry">
+    <!-- Right-angle mark at P for normal N -->
+    <path d="M 480 364 L 496 364 L 496 380" fill="none" stroke="#94a3b8" stroke-width="1.5" />
+
+    <!-- Angle Arcs (R = 75px) -->
+    <!-- Arc for theta_L (Light angle): from (480, 305) to (431.8, 322.5) [40 degrees left] -->
+    <path d="M 480 305 A 75 75 0 0 0 431.8 322.5" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="3,3" />
+    <text x="446" y="296" font-family="Georgia, serif" font-size="18" font-style="italic" font-weight="bold" fill="#b45309">θ</text>
+
+    <!-- Arc for theta_R (Reflection angle): from (480, 305) to (528.2, 322.5) [40 degrees right] -->
+    <path d="M 480 305 A 75 75 0 0 1 528.2 322.5" fill="none" stroke="#be123c" stroke-width="2" stroke-dasharray="3,3" />
+    <text x="506" y="296" font-family="Georgia, serif" font-size="18" font-style="italic" font-weight="bold" fill="#be123c">θ</text>
+
+    <!-- Arc for alpha (Specular alignment angle): from R(40 deg) to V(65 deg) at R = 150px -->
+    <!-- R point at 150px: (480 + 150*0.6428, 380 - 150*0.7660) = (576.4, 265.1) -->
+    <!-- V point at 150px: (480 + 150*0.9063, 380 - 150*0.4226) = (615.9, 316.6) -->
+    <path d="M 576.4 265.1 A 150 150 0 0 1 615.9 316.6" fill="none" stroke="#2563eb" stroke-width="2.5" />
+    <text x="612" y="284" font-family="Georgia, serif" font-size="18" font-style="italic" font-weight="bold" fill="#2563eb">α</text>
+
+    <!-- Incoming Light Ray (D_ray) traveling towards P -->
+    <line x1="210" y1="140" x2="330" y2="236" stroke="#b45309" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#marker-ray)" />
+    <g transform="translate(195, 125)" font-family="system-ui, -apple-system, sans-serif">
+      <circle cx="0" cy="0" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2" />
+      <path d="M-6 -6L6 6M6 -6L-6 6M0 -8L0 8M-8 0L8 0" stroke="#d97706" stroke-width="1.5" />
+      <text x="22" y="4" font-size="13" font-weight="700" fill="#b45309">Incoming Ray D<tspan font-size="10" dy="3">ray</tspan></text>
+      <text x="22" y="20" font-size="11" fill="#78350f">(travels from source into scene)</text>
+    </g>
+
+    <!-- Vector L (Surface to Light): from P(480, 380) to (313, 221) [Length = 250px, angle = 40 deg] -->
+    <line x1="480" y1="380" x2="319" y2="226" stroke="#d97706" stroke-width="3.5" marker-end="url(#marker-amber)" />
+    <g transform="translate(255, 250)" font-family="system-ui, -apple-system, sans-serif">
+      <rect x="-8" y="-18" width="130" height="42" rx="6" fill="#fff" fill-opacity="0.92" stroke="#fde68a" stroke-width="1" />
+      <text x="0" y="0" font-size="16" font-weight="700" fill="#b45309">L = -normalize(D<tspan font-size="11" dy="2">ray</tspan><tspan dy="-2">)</tspan></text>
+      <text x="0" y="16" font-size="12" font-weight="500" fill="#92400e">Surface → Light Source</text>
+    </g>
+
+    <!-- Vector N (Surface Normal): from P(480, 380) straight up to (480, 130) [Length = 250px] -->
+    <line x1="480" y1="380" x2="480" y2="138" stroke="#0d9488" stroke-width="3.5" marker-end="url(#marker-teal)" />
+    <g transform="translate(488, 140)" font-family="system-ui, -apple-system, sans-serif">
+      <rect x="0" y="-12" width="132" height="38" rx="6" fill="#fff" fill-opacity="0.92" stroke="#ccfbf1" stroke-width="1" />
+      <text x="8" y="6" font-size="16" font-weight="700" fill="#0f766e">N (Surface Normal)</text>
+      <text x="8" y="20" font-size="12" font-weight="500" fill="#115e59">Outward unit normal</text>
+    </g>
+
+    <!-- Vector R (Reflected Ray): from P(480, 380) to (641, 226) [Length = 250px, angle = 40 deg] -->
+    <line x1="480" y1="380" x2="635" y2="231" stroke="#e11d48" stroke-width="3.5" marker-end="url(#marker-coral)" />
+    <g transform="translate(645, 230)" font-family="system-ui, -apple-system, sans-serif">
+      <rect x="-6" y="-18" width="144" height="42" rx="6" fill="#fff" fill-opacity="0.92" stroke="#fecdd3" stroke-width="1" />
+      <text x="0" y="0" font-size="15" font-weight="700" fill="#be123c">R = reflect(-L, N)</text>
+      <text x="0" y="16" font-size="12" font-weight="500" fill="#9f1239">Mirrored ray (equal θ)</text>
+    </g>
+
+    <!-- Vector V (View Direction to Camera): from P(480, 380) to (725, 265) [Length = 270px, angle = 65 deg] -->
+    <line x1="480" y1="380" x2="719" y2="268" stroke="#2563eb" stroke-width="3.5" marker-end="url(#marker-blue)" />
+    <g transform="translate(735, 265)" font-family="system-ui, -apple-system, sans-serif">
+      <rect x="-6" y="-18" width="154" height="42" rx="6" fill="#fff" fill-opacity="0.92" stroke="#bfdbfe" stroke-width="1" />
+      <text x="0" y="0" font-size="15" font-weight="700" fill="#1d4ed8">V (View Direction)</text>
+      <text x="0" y="16" font-size="12" font-weight="500" fill="#1e40af">Surface → Camera Eye</text>
+    </g>
+
+    <!-- Camera Icon Indicator -->
+    <g transform="translate(740, 218)" fill="#2563eb">
+      <rect x="0" y="4" width="22" height="15" rx="3" fill="#3b82f6" />
+      <polygon points="22,7 30,3 30,20 22,16" fill="#1d4ed8" />
+      <circle cx="11" cy="11.5" r="4" fill="#eff6ff" />
+      <text x="36" y="16" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#1e40af">Camera</text>
+    </g>
+
+    <!-- Surface Fragment P -->
+    <circle cx="480" cy="380" r="6" fill="#0f172a" />
+    <circle cx="480" cy="380" r="2.5" fill="#ffffff" />
+    <text x="480" y="405" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-weight="bold" fill="#0f172a">Fragment P</text>
+  </g>
+
+  <!-- ================= SUMMARY CARDS (Bottom Row) ================= -->
+  <g transform="translate(60, 440)" font-family="system-ui, -apple-system, sans-serif">
+    <!-- Card 1: Diffuse Alignment -->
+    <g transform="translate(0, 0)">
+      <rect width="265" height="90" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+      <rect width="5" height="90" rx="2" fill="#d97706" />
+      <text x="18" y="24" font-size="13" font-weight="700" fill="#b45309">1. Diffuse Term (Lambert)</text>
+      <text x="18" y="46" font-size="14" font-family="monospace" font-weight="600" fill="#0f172a">cos θ = max(N · L, 0)</text>
+      <text x="18" y="68" font-size="11.5" fill="#64748b">Maximum when facing light (θ=0°);</text>
+      <text x="18" y="82" font-size="11.5" fill="#64748b">Zero when perpendicular or behind</text>
+    </g>
+
+    <!-- Card 2: Reflection Symmetry -->
+    <g transform="translate(287, 0)">
+      <rect width="265" height="90" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+      <rect width="5" height="90" rx="2" fill="#e11d48" />
+      <text x="18" y="24" font-size="13" font-weight="700" fill="#be123c">2. Reflection Law</text>
+      <text x="18" y="46" font-size="14" font-family="monospace" font-weight="600" fill="#0f172a">R = reflect(-L, N)</text>
+      <text x="18" y="68" font-size="11.5" fill="#64748b">GLSL reflect expects incident ray -L;</text>
+      <text x="18" y="82" font-size="11.5" fill="#64748b">Equal angle θ on both sides of N</text>
+    </g>
+
+    <!-- Card 3: Specular Highlight -->
+    <g transform="translate(575, 0)">
+      <rect width="265" height="90" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+      <rect width="5" height="90" rx="2" fill="#2563eb" />
+      <text x="18" y="24" font-size="13" font-weight="700" fill="#1d4ed8">3. Specular Term (Phong)</text>
+      <text x="18" y="46" font-size="14" font-family="monospace" font-weight="600" fill="#0f172a">cos<tspan font-size="10" dy="-5">s</tspan><tspan dy="5">α = pow(max(R · V, 0), s)</tspan></text>
+      <text x="18" y="68" font-size="11.5" fill="#64748b">Highlight peaks when V aligns with R;</text>
+      <text x="18" y="82" font-size="11.5" fill="#64748b">Strictly zero if light is behind (N · L ≤ 0)</text>
+    </g>
+  </g>
+</svg>

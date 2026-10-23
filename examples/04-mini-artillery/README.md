@@ -2,6 +2,8 @@
 
 Mini Artillery is a Frostwind example inspired by Gunbound and Pocket Tanks. It will exercise 2D destructible terrain, projectile impacts, and bodies settling on modified ground. **Status:** runnable window scaffold with a separate `frostwind-mini-artillery` CMake target. It opens a plain dark-green OpenGL window; terrain, tanks, gameplay, and imported runtime assets remain planned. The earlier Mini Artillery window/checkerboard scaffold is now the [textured-quad example](../01-textured-quad/README.md).
 
+**Priority:** scene and game development are deferred while engine features are developed and validated through smaller technical examples. Revisit this example after the relevant 2D rendering, terrain geometry, and physics foundations are demonstrated. The plans below remain future scope. See the [current roadmap](../../ROADMAP.md#current-focus---opengl-scenes).
+
 ## Concept art
 
 ![Mini Artillery detailed game concept](docs/assets/mini-artillery-realistic-concept-v1.png)

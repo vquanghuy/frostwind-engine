@@ -6,6 +6,22 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 Unreleased work is grouped by date, newest first, based on the relevant Git commits in their recorded time zones.
 
+### 2026-10-23
+
+#### Changed
+
+- Documentation: update the PBR and Water Simulation expected-output previews to retain the mountain-and-sky background used by the earlier examples. Preserve prior concepts and edit prompts; skybox imagery does not add environment lighting or reflections.
+- Planning: defer Asteroids and Mini Artillery scene/game development until relevant engine foundations have been demonstrated through smaller technical examples. Remove the automatic return to Asteroids after cube lighting; preserve both scaffolds and concepts. Select normal mapping + skybox, then shadow mapping, Dear ImGui, physics simulation, water simulation, instanced grass, PBR, static glTF model rendering, and skeletal animation. RFCs 0005/0009 remain drafts.
+
+#### Added
+
+- Documentation: separate the Phong lighting theory guide from RFC 0008’s implementation record, add vector and normal-matrix diagrams, refresh the component illustration, and update documentation links. Clarify documentation-only validation in project guidance.
+- Planning: select Instanced Grass after Water Simulation and before PBR, targeting a horizon-reaching field with grass-textured ground under instanced blades, root-anchored wind, patch culling/distance-based detail, and ImGui controls. Replace the initial small-patch preview with a full-field concept; preserve both versions and prompts. Local interaction and persistent bending remain later increments.
+- Planning: add a bounded shallow-water simulation example after Physics Simulation and before PBR, with fixed-step ripples, disturbances, boundary reflection, simple lighting, and ImGui controls. Add its expected-output concept, exact prompt, and provenance; numerical solver design and richer water rendering remain future work.
+
+- Documentation: list each selected roadmap stage as an individual planned example in the README’s Engine and examples table, with concept previews where available and links to scoped roadmap entries. Preserve existing directory names and mark both game scaffolds as deferred.
+- Documentation: add individual expected-output concept previews for all nine planned technical examples to the README table: Normal Mapping + Skybox, Shadow Mapping, Dear ImGui, Physics Simulation, Water Simulation, Instanced Grass, PBR, glTF Model Rendering, and Skeletal Animation. Record prompts/provenance and distinguish illustrative assets, controls, and values from implemented behavior. Preserve the earlier comparison diagram separately.
+
 ### 2026-10-22
 
 #### Changed

@@ -10,8 +10,8 @@ a 120 FPS cap with VSync for the development display.
 ambient fill, Lambert diffuse shading, and Phong specular highlights. Light and
 surface settings and uniform uploads belong to this example; engine APIs are
 unchanged. Normal maps, shadows, skyboxes, model loading, and mouse look remain
-future experiments. See [RFC 0008](../../docs/rfcs/0008-basic-lighting.md) for theory
-and implementation, [RFC 0007](../../docs/rfcs/0007-textured-cube-and-perspective-camera.md)
+future experiments. See [basic lighting theory](../../docs/concepts/lighting-theory.md) for concepts,
+[RFC 0008](../../docs/rfcs/0008-basic-lighting.md) for implementation architecture, [RFC 0007](../../docs/rfcs/0007-textured-cube-and-perspective-camera.md)
 for the foundation, and [lighting validation](../../docs/development.md#cube-lighting-validation-2026-10-22)
 for executed checks and remaining manual verification.
 
@@ -124,7 +124,7 @@ each term; no additional controls or lighting UI were added.
 
 This is a learning approximation on the existing RGBA8/output path, with no
 explicit sRGB/linear-light workflow, shadows, indirect light, or normal maps.
-The theory figure in RFC 0008 is conceptual, not a rendering reference image.
+The theory figure in the [lighting theory guide](../../docs/concepts/lighting-theory.md) is conceptual, not a rendering reference image.
 
 ## Ownership and extension points
 

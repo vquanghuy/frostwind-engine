@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="370" viewBox="0 0 960 370">
+  <title>The Normal Matrix and Non-Uniform Scale</title>
+  <desc>Comparison of untransformed normals, naive model matrix transform, and inverse-transpose normal matrix transform under non-uniform scaling.</desc>
+
+  <defs>
+    <!-- Vector Arrow Markers -->
+    <marker id="marker-teal" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#0d9488" />
+    </marker>
+    <marker id="marker-red" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#dc2626" />
+    </marker>
+    <marker id="marker-tangent" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7Z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <!-- Background Card -->
+  <rect x="0" y="0" width="960" height="370" rx="16" fill="#faf9f5" stroke="#e2e8f0" stroke-width="2" />
+
+  <!-- Title Header -->
+  <g transform="translate(40, 34)" font-family="system-ui, -apple-system, sans-serif">
+    <text x="0" y="0" font-size="19" font-weight="700" fill="#0f172a">The Normal Matrix &amp; Non-Uniform Scaling</text>
+    <text x="0" y="22" font-size="13" fill="#64748b">Why transformed normals require the inverse-transpose (M⁻¹)ᵀ to preserve surface perpendicularity</text>
+  </g>
+
+  <!-- ================= PANEL 1: Original Geometry ================= -->
+  <g transform="translate(30, 75)" font-family="system-ui, -apple-system, sans-serif">
+    <rect width="280" height="265" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect width="280" height="36" rx="10" fill="#f8fafc" />
+    <rect y="26" width="280" height="10" fill="#f8fafc" />
+    <line x1="0" y1="36" x2="280" y2="36" stroke="#e2e8f0" stroke-width="1" />
+    <text x="16" y="24" font-size="13.5" font-weight="700" fill="#0f172a">1. Original Geometry</text>
+    <text x="180" y="24" font-size="11" font-weight="600" fill="#64748b">Identity (1×)</text>
+
+    <!-- Surface line with slope (dx=140, dy=-100) centered at P1(140, 185) -->
+    <line x1="60" y1="242" x2="220" y2="128" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Tangent Vector T: from P1(140, 185) to (196, 145) -->
+    <line x1="140" y1="185" x2="198" y2="144" stroke="#64748b" stroke-width="2.5" marker-end="url(#marker-tangent)" />
+    <text x="204" y="145" font-size="12" font-weight="700" fill="#475569">T</text>
+
+    <!-- True Normal Vector N: from P1(140, 185) to (95, 122) [dx=-45, dy=-63] -->
+    <line x1="140" y1="185" x2="98" y2="126" stroke="#0d9488" stroke-width="3" marker-end="url(#marker-teal)" />
+    <text x="75" y="122" font-size="14" font-weight="700" fill="#0f766e">N</text>
+
+    <!-- Right-angle square marker at P1 -->
+    <!-- Tangent unit: (0.814, -0.581), Normal unit: (-0.581, -0.814) -->
+    <path d="M 128.4 168.7 L 144.7 157.1 L 156.3 173.4" fill="none" stroke="#0d9488" stroke-width="1.5" />
+
+    <!-- Fragment P1 -->
+    <circle cx="140" cy="185" r="4.5" fill="#0f172a" />
+    <text x="140" y="206" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0f172a">Fragment P</text>
+
+    <!-- Status Badge -->
+    <rect x="16" y="222" width="248" height="30" rx="6" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" />
+    <text x="140" y="242" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">✔ T · N = 0 (Perpendicular)</text>
+  </g>
+
+  <!-- ================= PANEL 2: Naive Transform with M ================= -->
+  <g transform="translate(340, 75)" font-family="system-ui, -apple-system, sans-serif">
+    <rect width="280" height="265" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect width="280" height="36" rx="10" fill="#fef2f2" />
+    <rect y="26" width="280" height="10" fill="#fef2f2" />
+    <line x1="0" y1="36" x2="280" y2="36" stroke="#fecaca" stroke-width="1" />
+    <text x="16" y="24" font-size="13.5" font-weight="700" fill="#991b1b">2. Naive Transform (M · N)</text>
+    <text x="195" y="24" font-size="11" font-weight="600" fill="#dc2626">Scale X × 2.0</text>
+
+    <!-- Stretched surface line (dx=200, dy=-50) centered at P2(140, 185) -->
+    <line x1="40" y1="210" x2="240" y2="160" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Stretched Tangent Vector T': from P2(140, 185) to (212, 167) -->
+    <line x1="140" y1="185" x2="214" y2="166" stroke="#64748b" stroke-width="2.5" marker-end="url(#marker-tangent)" />
+    <text x="220" y="170" font-size="12" font-weight="700" fill="#475569">T'</text>
+
+    <!-- Naively scaled normal M*N: dx stretches by 2.0 (-90), dy remains -63 -->
+    <!-- Vector from P2(140, 185) to (50, 122) -->
+    <line x1="140" y1="185" x2="56" y2="126" stroke="#dc2626" stroke-width="3" marker-end="url(#marker-red)" />
+    <text x="40" y="118" font-size="13" font-weight="700" fill="#b91c1c">M · N</text>
+
+    <!-- Arc showing broken angle (~125 degrees) -->
+    <path d="M 170 177.5 A 32 32 0 0 0 115 167.5" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3,3" />
+    <text x="136" y="156" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">~125°</text>
+
+    <!-- Fragment P2 -->
+    <circle cx="140" cy="185" r="4.5" fill="#0f172a" />
+    <text x="140" y="206" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0f172a">Fragment P</text>
+
+    <!-- Status Badge -->
+    <rect x="16" y="222" width="248" height="30" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="1" />
+    <text x="140" y="242" text-anchor="middle" font-size="12" font-weight="700" fill="#b91c1c">✖ T' · (M · N) ≠ 0 (Tilts Incorrectly!)</text>
+  </g>
+
+  <!-- ================= PANEL 3: Normal Matrix (M^-1)^T ================= -->
+  <g transform="translate(650, 75)" font-family="system-ui, -apple-system, sans-serif">
+    <rect width="280" height="265" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect width="280" height="36" rx="10" fill="#f0fdf4" />
+    <rect y="26" width="280" height="10" fill="#f0fdf4" />
+    <line x1="0" y1="36" x2="280" y2="36" stroke="#bbf7d0" stroke-width="1" />
+    <text x="16" y="24" font-size="13.5" font-weight="700" fill="#15803d">3. Normal Matrix (M⁻¹)ᵀ</text>
+    <text x="195" y="24" font-size="11" font-weight="600" fill="#16a34a">Corrected</text>
+
+    <!-- Stretched surface line (identical to Panel 2) -->
+    <line x1="40" y1="210" x2="240" y2="160" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Stretched Tangent Vector T' -->
+    <line x1="140" y1="185" x2="214" y2="166" stroke="#64748b" stroke-width="2.5" marker-end="url(#marker-tangent)" />
+    <text x="220" y="170" font-size="12" font-weight="700" fill="#475569">T'</text>
+
+    <!-- Correct normal: dx is halved (-22.5), dy is -63 -->
+    <!-- Vector from P3(140, 185) to (117, 122) -->
+    <line x1="140" y1="185" x2="119" y2="128" stroke="#0d9488" stroke-width="3" marker-end="url(#marker-teal)" />
+    <text x="108" y="118" font-size="13" font-weight="700" fill="#0f766e">N'</text>
+
+    <!-- Right-angle square marker at P3 with T' -->
+    <!-- T' dir: (0.970, -0.243), N' dir: (-0.243, -0.970) -->
+    <path d="M 135.1 165.6 L 154.5 160.7 L 159.4 180.1" fill="none" stroke="#0d9488" stroke-width="1.5" />
+
+    <!-- Fragment P3 -->
+    <circle cx="140" cy="185" r="4.5" fill="#0f172a" />
+    <text x="140" y="206" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0f172a">Fragment P</text>
+
+    <!-- Status Badge -->
+    <rect x="16" y="222" width="248" height="30" rx="6" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" />
+    <text x="140" y="242" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">✔ T' · N' = 0 (Perpendicular Preserved)</text>
+  </g>
+</svg>

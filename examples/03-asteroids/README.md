@@ -4,6 +4,8 @@ A planned Asteroids-themed 2D technical example for Frostwind. A spacecraft and 
 
 **Status:** runnable window scaffold with a separate `frostwind-asteroids` CMake target. It opens a plain dark-blue OpenGL window; camera, ship movement, sprites, lighting, gameplay, and imported runtime assets remain planned. [Textured Quad](../01-textured-quad/README.md) remains the working texture-rendering demo.
 
+**Priority:** scene and game development are deferred while engine features are developed and validated through smaller technical examples. Revisit this example once its 2D camera/input, sprite rendering, and intended lighting foundations are demonstrated. The scope below preserves the proposed direction; it is not the next implementation task. See the [current roadmap](../../ROADMAP.md#current-focus---opengl-scenes).
+
 ## Concept progression and art lineage
 
 Tracing the visual evolution from initial third-party reference to the selected 2D normal-mapped art direction:

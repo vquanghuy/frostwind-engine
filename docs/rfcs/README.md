@@ -21,7 +21,7 @@ Use RFCs to propose significant architecture changes and record the reasoning be
 | [0005: 2D camera, keyboard/mouse input, and sprites for Asteroids](0005-camera-keyboard-and-sprites.md) | Draft |
 | [0006: OpenGL-focused rendering](0006-opengl-focused-rendering.md) | Implemented |
 | [0007: Textured cube, perspective camera, and elapsed-time updates](0007-textured-cube-and-perspective-camera.md) | Implemented |
-| [0008: Basic lighting theory in Textured Cube](0008-basic-lighting.md) | Implemented |
+| [0008: Directional Phong lighting in Textured Cube](0008-basic-lighting.md) | Implemented |
 | [0009: Materials, meshes, models, and shader composition](0009-materials-meshes-and-shader-composition.md) | Draft |
 | [9998: WebGPU migration research](9998-webgpu-migration-research.md) | Deferred research |
 | [9999: Multi-backend rendering research](9999-multi-backend-rendering-research.md) | Deferred research |

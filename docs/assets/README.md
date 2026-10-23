@@ -11,16 +11,33 @@
 ## Lighting theory
 
 [`lighting/basic-lighting-theory.svg`](lighting/basic-lighting-theory.svg)
-illustrates the ambient, diffuse, and specular contributions proposed in
-[RFC 0008](../rfcs/0008-basic-lighting.md), including normal, light, reflection,
-and viewing directions. Combines detailed imagegen crate panels with SVG
-vector diagrams constructed on 2026-10-21, so reflection geometry has exact
-equal angles about the normal. The cropped `crate-lighting-panels.png` is embedded in the SVG; its inaccurate generated vector diagrams
-are excluded. The SVG is self-contained and needs no external image loading.
+illustrates the ambient, diffuse, and specular contributions explained in
+[Basic Lighting Theory](../concepts/lighting-theory.md) and implemented in
+[RFC 0008](../rfcs/0008-basic-lighting.md), presenting qualitative crate panels alongside per-term formulas.
+[`lighting/phong-vectors.svg`](lighting/phong-vectors.svg) illustrates the geometric direction vectors (N, L, D_ray, R, V) and angle relationships (θ, α) at surface fragment P.
+[`lighting/normal-matrix-scale.svg`](lighting/normal-matrix-scale.svg) illustrates the effect of non-uniform scaling on surface tangents and normals, showing how the inverse-transpose normal matrix (M⁻¹)ᵀ restores perpendicularity.
+The SVG diagrams are self-contained and need no external image loading.
 The [illustration record](lighting/basic-lighting-theory-prompt.md) preserves
-its prompts and the correction rationale. This is a qualitative theory
-illustration, not a screenshot, measured shader output, or runtime asset.
-Example-owned cube lighting is implemented; the illustration remains conceptual, not an engine capture. The owner-supplied lit capture is recorded below.
+its prompts and the correction rationale. These are qualitative theory
+illustrations, not screenshots, measured shader outputs, or runtime assets.
+Example-owned cube lighting is implemented; the illustrations remain conceptual, not engine captures. The owner-supplied lit capture is recorded below.
+
+## Planned scene features
+
+- [`lighting/normal-mapping-skybox-concept-v1.png`](lighting/normal-mapping-skybox-concept-v1.png): expected output for the normal-mapping + skybox example, with no cast ground shadow.
+- [`lighting/shadow-mapping-concept-v1.png`](lighting/shadow-mapping-concept-v1.png): expected output for the shadow-mapping example, adding a directional cast shadow to the scene.
+
+- [`lighting/imgui-concept-v1.png`](lighting/imgui-concept-v1.png): Dear ImGui expected-output concept.
+- [`lighting/physics-simulation-concept-v1.png`](lighting/physics-simulation-concept-v1.png): Physics Simulation expected-output concept.
+- [`lighting/water-simulation-concept-v2.png`](lighting/water-simulation-concept-v2.png): bounded shallow-water pool with ripples, simulation controls, and the mountain-and-sky background; version 1 is preserved in the provenance record.
+- [`lighting/instanced-grass-concept-v2.png`](lighting/instanced-grass-concept-v2.png): continuous wind-swept grassland to the horizon, combining grass-textured ground and instanced blades, mountain-and-sky background, and ImGui controls. The earlier small-patch concept is preserved in the provenance record.
+- [`lighting/pbr-concept-v2.png`](lighting/pbr-concept-v2.png): PBR sphere grid with the mountain-and-sky background; version 1 is preserved in the provenance record.
+- [`lighting/gltf-model-rendering-concept-v1.png`](lighting/gltf-model-rendering-concept-v1.png): glTF Model Rendering expected-output concept.
+- [`lighting/skeletal-animation-concept-v1.png`](lighting/skeletal-animation-concept-v1.png): Skeletal Animation expected-output concept.
+
+These generated 2026-10-23 concepts appear as individual previews in the root README. The first two and ImGui reuse the existing crate design; the others illustrate candidate technical scenes. They are planned visual targets, not screenshots. See [exact prompts, provenance, and limitations](lighting/example-output-concepts.md).
+
+The earlier [`lighting/scene-features-concept-v1.png`](lighting/scene-features-concept-v1.png) triptych remains preserved as a feature comparison; it is not an individual example preview. Its [original provenance](lighting/scene-features-concept.md) records the comparison’s different panel order and limitations.
 
 ## Milestone captures
 

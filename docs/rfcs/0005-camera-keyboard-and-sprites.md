@@ -5,6 +5,15 @@
 - **Supersedes:** None
 - **Superseded by:** None
 
+## Priority update (2026-10-23)
+
+Asteroids and Mini Artillery scene/game development are deferred while engine
+features are demonstrated through smaller technical examples. This RFC remains
+Draft and preserves a possible future Asteroids scene; its references to the
+“next implementation” or “current sprint” below do not select active work.
+Reconcile its APIs and sequencing with the [roadmap](../../ROADMAP.md#current-focus---opengl-scenes)
+before implementation.
+
 ## Foundation update (2026-10-20)
 
 [Textured Cube / RFC 0007](0007-textured-cube-and-perspective-camera.md) now
