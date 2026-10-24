@@ -6,6 +6,22 @@ All notable changes to Frostwind and its examples are documented in this file.
 
 Unreleased work is grouped by date, newest first, based on the relevant Git commits in their recorded time zones.
 
+### 2026-10-24
+
+#### Changed
+
+- Documentation: update the Deferred Rendering expected-output concept to use the same Nissan R34 visual target as glTF, retaining its many-light courtyard, skybox, and inspector. Preserve the rover version and edit prompt, and record reuse of the selected model in the future experiment.
+- Planning: add a basic see-through material test to PBR and alpha-mode/window handling to the glTF milestone, including depth/sorting validation and inspection of the Nissan’s actual material extensions. Keep glass in material settings and advanced transmission/refraction as a future experiment; no additional selected example is introduced.
+- Documentation: replace the glTF example’s rover preview with a generated Nissan R34 concept, link the owner-selected Sketchfab model in the README/roadmap, and record the intended loader target and screenshot-supplied metadata. Preserve the earlier concept and prompts; actual GLB import and runtime attribution/license verification remain pending.
+- Planning: combine glTF rendering, synchronous resource sharing, and basic ECS in one staged example; grow per-entity animation state and explicit update ordering during skeletal animation. Keep advanced ECS capabilities in the roadmap’s Future experiments table rather than prerequisites, preserving separate asset/GPU ownership and existing simple examples.
+
+#### Added
+
+- Planning: record Deferred Rendering as a future many-light comparison after model/resource/ECS foundations, with G-buffer inspection and explicit forward/transparent/MSAA considerations. Add its standalone README expected-output concept and provenance without changing the selected learning sequence or claiming implementation/performance.
+- Planning: select Post-processing after Dear ImGui, starting with an HDR scene target, exposure/tone mapping, FXAA, and UI-safe composition. Add a roadmap technique table covering bloom, color grading, vignette, depth of field, and motion blur as scoped follow-ups, with encoding/MSAA considerations and primary references.
+- Planning: select Instanced Particles after Instanced Grass and before PBR, reusing shared instancing operations for a bounded spark emitter with dynamic billboard data, lifetimes, explicit blending, and ImGui controls. Alpha-blended smoke and richer effects remain separate work.
+- Documentation: add standalone expected-output concepts and descriptions for both examples to the README, preserve prompts/provenance, and align project guidance and the selected sequence. Concepts do not establish implemented HDR, FXAA, particle behavior, or performance.
+
 ### 2026-10-23
 
 #### Changed

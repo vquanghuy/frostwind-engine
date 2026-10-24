@@ -28,14 +28,18 @@ Example-owned cube lighting is implemented; the illustrations remain conceptual,
 - [`lighting/shadow-mapping-concept-v1.png`](lighting/shadow-mapping-concept-v1.png): expected output for the shadow-mapping example, adding a directional cast shadow to the scene.
 
 - [`lighting/imgui-concept-v1.png`](lighting/imgui-concept-v1.png): Dear ImGui expected-output concept.
+- [`lighting/post-processing-concept-v1.png`](lighting/post-processing-concept-v1.png): 2026-10-24 post-processing expected-output concept, retaining the crate/skybox scene with HDR, exposure, tone-mapping and FXAA controls.
 - [`lighting/physics-simulation-concept-v1.png`](lighting/physics-simulation-concept-v1.png): Physics Simulation expected-output concept.
 - [`lighting/water-simulation-concept-v2.png`](lighting/water-simulation-concept-v2.png): bounded shallow-water pool with ripples, simulation controls, and the mountain-and-sky background; version 1 is preserved in the provenance record.
 - [`lighting/instanced-grass-concept-v2.png`](lighting/instanced-grass-concept-v2.png): continuous wind-swept grassland to the horizon, combining grass-textured ground and instanced blades, mountain-and-sky background, and ImGui controls. The earlier small-patch concept is preserved in the provenance record.
+- [`lighting/instanced-particles-concept-v1.png`](lighting/instanced-particles-concept-v1.png): 2026-10-24 one-emitter spark concept with billboard sprites, additive blending controls, and the mountain-and-sky background.
 - [`lighting/pbr-concept-v2.png`](lighting/pbr-concept-v2.png): PBR sphere grid with the mountain-and-sky background; version 1 is preserved in the provenance record.
-- [`lighting/gltf-model-rendering-concept-v1.png`](lighting/gltf-model-rendering-concept-v1.png): glTF Model Rendering expected-output concept.
+- [`lighting/gltf-model-rendering-concept-v2.png`](lighting/gltf-model-rendering-concept-v2.png): generated Nissan R34 expected-output concept for the glTF loader target, based on the [owner-selected model listing](https://sketchfab.com/3d-models/nissan-r34-brians-fast-furious-wwwvecarzcom-412aa249c2f548eebf64bdb35f3553af). The earlier rover concept remains preserved in the provenance record; this is not a render of the downloaded GLB.
 - [`lighting/skeletal-animation-concept-v1.png`](lighting/skeletal-animation-concept-v1.png): Skeletal Animation expected-output concept.
 
-These generated 2026-10-23 concepts appear as individual previews in the root README. The first two and ImGui reuse the existing crate design; the others illustrate candidate technical scenes. They are planned visual targets, not screenshots. See [exact prompts, provenance, and limitations](lighting/example-output-concepts.md).
+- [`lighting/deferred-rendering-concept-v2.png`](lighting/deferred-rendering-concept-v2.png): 2026-10-24 future many-light scene using the same Nissan R34 visual target as the glTF concept, retaining the mountain skybox and G-buffer/forward-comparison controls. Earlier rover concepts remain preserved in the provenance record.
+
+These concepts, generated on 2026-10-23 and 2026-10-24, appear as individual previews in the root README. The first two and ImGui reuse the existing crate design; the others illustrate candidate technical scenes. They are planned visual targets, not screenshots. See [exact prompts, provenance, and limitations](lighting/example-output-concepts.md).
 
 The earlier [`lighting/scene-features-concept-v1.png`](lighting/scene-features-concept-v1.png) triptych remains preserved as a feature comparison; it is not an individual example preview. Its [original provenance](lighting/scene-features-concept.md) records the comparison’s different panel order and limitations.
 
